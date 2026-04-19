@@ -2,8 +2,7 @@ services:
   - type: web
     name: zirve-app
     runtime: node
-    nodeVersion: 20.19.0
-    buildCommand: npm install && npm run build --webpack
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
