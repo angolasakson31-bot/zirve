@@ -2,5 +2,5 @@ services:
   - type: web
     name: zirve-app
     runtime: node
-    buildCommand: npm install && npm run build
+    buildCommand: node --version && npm --version && npm install && npm run build
     startCommand: npm start
