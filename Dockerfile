@@ -8,7 +8,7 @@ RUN npm install --legacy-peer-deps --no-optional --no-audit --no-fund
 
 # Build (memory limit only for next build, not npm install)
 COPY . .
-RUN NODE_OPTIONS=--max-old-space-size=400 npm run build
+RUN npm run build
 
 FROM node:20-slim AS runner
 WORKDIR /app
