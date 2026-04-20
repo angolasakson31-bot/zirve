@@ -2,7 +2,7 @@ import LeaderBoard from '@/components/LeaderBoard';
 import RatingCard from '@/components/RatingCard';
 import UploadForm from '@/components/UploadForm';
 import TrackCode from '@/components/TrackCode';
-import { Mountain, Zap } from 'lucide-react';
+import { Mountain, Zap, Upload, Star, Trophy, Search } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -37,6 +37,30 @@ export default function Home() {
               Kim olduğunu bilmeden fotoğrafları puanla. Halk kimi seçer, kim zirveye çıkar?
               Fotoğrafını yükle, takip kodunu al ve kaç kişinin beğendiğini gör.
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Nasıl Çalışır */}
+      <div className="border-b border-zinc-800/50 bg-zinc-950">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { icon: Upload, step: '1', text: 'Fotoğrafını yükle, takip kodunu al' },
+              { icon: Star,   step: '2', text: 'Rastgele gelen fotoğraflara puan ver' },
+              { icon: Trophy, step: '3', text: 'En yüksek skorlu fotoğraf günün lideri olur' },
+              { icon: Search, step: '4', text: 'Takip kodunla kendi puanını gör' },
+            ].map(({ icon: Icon, step, text }) => (
+              <div key={step} className="flex items-start gap-3 bg-zinc-900/60 rounded-xl p-3">
+                <div className="shrink-0 w-7 h-7 rounded-lg bg-amber-400/10 flex items-center justify-center">
+                  <Icon className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <div>
+                  <span className="text-zinc-600 text-xs">Adım {step}</span>
+                  <p className="text-zinc-300 text-xs mt-0.5 leading-relaxed">{text}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

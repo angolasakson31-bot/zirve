@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import UploadGate from '@/components/UploadGate';
 import { Shuffle, ChevronRight } from 'lucide-react';
@@ -14,6 +14,7 @@ export default function RatingCard() {
   const [result, setResult] = useState<RatedResult | null>(null);
   const [hover, setHover] = useState(0);
   const [noMore, setNoMore] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   const fetchRandom = useCallback(async () => {
     setLoading(true);
@@ -38,7 +39,15 @@ export default function RatingCard() {
     const { photo: updated } = await res.json();
     setResult({ average: updated.average, voteCount: updated.voteCount, myScore: score });
     setVoted(true);
+    setCountdown(3);
   };
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    if (countdown === 1) { const t = setTimeout(fetchRandom, 1000); return () => clearTimeout(t); }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, fetchRandom]);
 
   if (!photo && !loading && !noMore) {
     return (
@@ -125,6 +134,7 @@ export default function RatingCard() {
               <button onClick={fetchRandom}
                 className="w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-100 transition">
                 Sonraki <ChevronRight className="w-4 h-4" />
+                <span className="text-zinc-500 text-xs ml-1">({countdown})</span>
               </button>
             )}
           </div>
