@@ -85,8 +85,6 @@ function Inner() {
       <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-3">
         <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
         <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
-        <button onClick={() => { seenIds.current.clear(); load(); }}
-          className="mt-2 text-amber-400 underline text-sm">Tekrar dene</button>
       </div>
     );
   }
