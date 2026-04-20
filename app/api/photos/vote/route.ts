@@ -6,7 +6,11 @@ import { rateLimit } from '@/lib/rate-limit';
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(30);
-const LEADER_THRESHOLD = 1;
+const LEADER_THRESHOLD = 3;
+
+function weightedScore(average: number, voteCount: number) {
+  return average * Math.log(voteCount + 1);
+}
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
@@ -37,7 +41,11 @@ export async function POST(req: NextRequest) {
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD) {
       const currentLeader = await Photo.findOne({ isChampion: true });
-      const isNewLeader = !currentLeader || photo.average > (currentLeader as any).average;
+      const photoScore = weightedScore(photo.average, photo.voteCount);
+      const leaderScore = currentLeader
+        ? weightedScore((currentLeader as any).average, (currentLeader as any).voteCount)
+        : -1;
+      const isNewLeader = photoScore > leaderScore;
       if (isNewLeader && currentLeader?._id.toString() !== photo._id.toString()) {
         if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
         photo.isChampion = true;
