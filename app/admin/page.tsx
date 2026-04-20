@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle } from 'lucide-react';
+import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy } from 'lucide-react';
 import Image from 'next/image';
 
 interface AdminPhoto {
@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState('');
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [banningIps, setBanningIps] = useState<Set<string>>(new Set());
+  const [recalcing, setRecalcing] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -72,6 +73,17 @@ export default function AdminPage() {
       showToast('Fotoğraf silindi.');
     } else showToast('Silme başarısız.');
     setDeletingIds(s => { const n = new Set(s); n.delete(photo._id); return n; });
+  };
+
+  const recalcLeader = async () => {
+    setRecalcing(true);
+    const res = await fetch('/api/admin/recalc-leader', { method: 'POST', headers: headers(password) });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.champion ? 'Lider yeniden hesaplandı.' : 'Uygun fotoğraf bulunamadı.');
+      fetchPhotos(password);
+    } else showToast('Hata oluştu.');
+    setRecalcing(false);
   };
 
   const banIp = async (ip: string) => {
@@ -122,10 +134,16 @@ export default function AdminPage() {
             <h1 className="text-xl font-bold">Yönetici Paneli</h1>
             <span className="text-zinc-500 text-sm ml-2">({photos.length} fotoğraf)</span>
           </div>
-          <button onClick={() => fetchPhotos(password)} disabled={loading}
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition disabled:opacity-40">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Yenile
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={recalcLeader} disabled={recalcing}
+              className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition disabled:opacity-40">
+              <Trophy className={`w-4 h-4 ${recalcing ? 'animate-pulse' : ''}`} /> Lideri Hesapla
+            </button>
+            <button onClick={() => fetchPhotos(password)} disabled={loading}
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition disabled:opacity-40">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Yenile
+            </button>
+          </div>
         </div>
 
         {loading && photos.length === 0 && (
