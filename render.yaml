@@ -2,11 +2,16 @@ services:
   - type: web
     name: zirve-app
     runtime: node
+    nodeVersion: 20.19.0
     buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npm start
     plan: free
     region: oregon
     envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
       - key: MONGODB_URI
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
