@@ -1,19 +1,17 @@
-FROM public.ecr.aws/docker/library/node:20-slim AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# Memory limit for build
-ENV NODE_OPTIONS=--max-old-space-size=400
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Dependencies
+# Dependencies with bun (much faster than npm)
 COPY package.json ./
-RUN npm install --legacy-peer-deps --no-optional --no-audit --no-fund
+RUN bun install --no-optional
 
-# Build
+# Build (next build uses node internally)
 COPY . .
-RUN npm run build
+RUN bun run build
 
-FROM public.ecr.aws/docker/library/node:20-slim AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
