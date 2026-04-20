@@ -6,7 +6,7 @@ import { rateLimit } from '@/lib/rate-limit';
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(30);
-const LEADER_THRESHOLD = 20;
+const LEADER_THRESHOLD = 1;
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';

@@ -15,8 +15,17 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
     const [photo] = await Photo.aggregate([
-      { $match: { voters: { $nin: [ip] }, isChampion: false } },
+      {
+        $match: {
+          voters: { $nin: [ip] },
+          isChampion: false,
+          createdAt: { $gte: startOfDay },
+        },
+      },
       { $sample: { size: 1 } },
     ]);
 
