@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import UploadGate from '@/components/UploadGate';
 import { Shuffle, ChevronRight } from 'lucide-react';
@@ -14,7 +14,6 @@ export default function RatingCard() {
   const [result, setResult] = useState<RatedResult | null>(null);
   const [hover, setHover] = useState(0);
   const [noMore, setNoMore] = useState(false);
-  const [countdown, setCountdown] = useState(0);
 
   const fetchRandom = useCallback(async () => {
     setLoading(true);
@@ -39,15 +38,7 @@ export default function RatingCard() {
     const { photo: updated } = await res.json();
     setResult({ average: updated.average, voteCount: updated.voteCount, myScore: score });
     setVoted(true);
-    setCountdown(3);
   };
-
-  useEffect(() => {
-    if (countdown <= 0) return;
-    if (countdown === 1) { const t = setTimeout(fetchRandom, 1000); return () => clearTimeout(t); }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown, fetchRandom]);
 
   if (!photo && !loading && !noMore) {
     return (
@@ -94,23 +85,7 @@ export default function RatingCard() {
         <div className="animate-pulse bg-zinc-800 h-72" />
       ) : photo ? (
         <>
-          <div className="relative">
-            <ProtectedImage src={photo.url} alt="Puan ver" maxHeight={680} />
-            {voted && result && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
-                <div className="text-center">
-                  <p className="text-zinc-300 text-sm mb-1">Senin puanın</p>
-                  <p className="text-white font-black text-6xl">{result.myScore}</p>
-                </div>
-                <div className="h-px w-16 bg-zinc-600" />
-                <div className="text-center">
-                  <p className="text-zinc-300 text-sm mb-1">Topluluk ortalaması</p>
-                  <p className="text-amber-400 font-bold text-4xl">{result.average.toFixed(2)}</p>
-                  <p className="text-zinc-500 text-sm mt-1">{result.voteCount} oy</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <ProtectedImage src={photo.url} alt="Puan ver" maxHeight={680} />
 
           <div className="p-4 space-y-4">
             {!voted ? (
@@ -130,13 +105,26 @@ export default function RatingCard() {
                   ))}
                 </div>
               </>
-            ) : (
-              <button onClick={fetchRandom}
-                className="w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-100 transition">
-                Sonraki <ChevronRight className="w-4 h-4" />
-                <span className="text-zinc-500 text-xs ml-1">({countdown})</span>
-              </button>
-            )}
+            ) : result ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
+                  <div className="text-center">
+                    <p className="text-zinc-500 text-xs">Senin puanın</p>
+                    <p className="text-white font-black text-3xl">{result.myScore}</p>
+                  </div>
+                  <div className="w-px h-10 bg-zinc-700" />
+                  <div className="text-center">
+                    <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
+                    <p className="text-amber-400 font-black text-3xl">{result.average.toFixed(1)}</p>
+                    <p className="text-zinc-600 text-xs">{result.voteCount} oy</p>
+                  </div>
+                </div>
+                <button onClick={fetchRandom}
+                  className="w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-100 transition">
+                  Sonraki <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            ) : null}
           </div>
         </>
       ) : null}

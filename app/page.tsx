@@ -2,7 +2,7 @@ import LeaderBoard from '@/components/LeaderBoard';
 import RatingCard from '@/components/RatingCard';
 import UploadForm from '@/components/UploadForm';
 import TrackCode from '@/components/TrackCode';
-import { Mountain, Zap, Upload, Star, Trophy, Search } from 'lucide-react';
+import { Mountain, Zap } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -42,26 +42,18 @@ export default function Home() {
       </div>
 
       {/* Nasıl Çalışır */}
-      <div className="border-b border-zinc-800/50 bg-zinc-950">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { icon: Upload, step: '1', text: 'Fotoğrafını yükle, takip kodunu al' },
-              { icon: Star,   step: '2', text: 'Rastgele gelen fotoğraflara puan ver' },
-              { icon: Trophy, step: '3', text: 'En yüksek skorlu fotoğraf günün lideri olur' },
-              { icon: Search, step: '4', text: 'Takip kodunla kendi puanını gör' },
-            ].map(({ icon: Icon, step, text }) => (
-              <div key={step} className="flex items-start gap-3 bg-zinc-900/60 rounded-xl p-3">
-                <div className="shrink-0 w-7 h-7 rounded-lg bg-amber-400/10 flex items-center justify-center">
-                  <Icon className="w-3.5 h-3.5 text-amber-400" />
-                </div>
-                <div>
-                  <span className="text-zinc-600 text-xs">Adım {step}</span>
-                  <p className="text-zinc-300 text-xs mt-0.5 leading-relaxed">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="border-b border-zinc-800/50">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-x-6 gap-y-1">
+          {[
+            'Fotoğrafını yükle → takip kodunu al',
+            'Rastgele fotolara puan ver',
+            'En yüksek skor günün lideri',
+            'Kodunla kendi puanını gör',
+          ].map((text, i) => (
+            <span key={i} className="text-zinc-500 text-xs">
+              <span className="text-amber-400 font-bold mr-1">{i + 1}.</span>{text}
+            </span>
+          ))}
         </div>
       </div>
 
