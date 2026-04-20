@@ -1,6 +1,5 @@
-const ipRequests = new Map<string, { count: number; resetAt: number }>();
-
 export function rateLimit(maxPerMinute: number) {
+  const ipRequests = new Map<string, { count: number; resetAt: number }>();
   return (ip: string): boolean => {
     const now = Date.now();
     const entry = ipRequests.get(ip);
