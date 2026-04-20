@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Zirve — Körlemesine Puan Ver',
   description: 'Fotoğrafları körlemesine puan ver, zirveyi belirle.',
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
-const LEADER_THRESHOLD = 20; // minimum oy sayısı
+const checkLimit = rateLimit(30);
+const LEADER_THRESHOLD = 20;
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  if (!checkLimit(ip))
+    return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
+
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
     const { photoId, score } = await req.json();
 
     if (!photoId || typeof score !== 'number' || score < 1 || score > 10)
@@ -27,7 +32,6 @@ export async function POST(req: NextRequest) {
     photo.voters.push(ip);
     await photo.save();
 
-    // Lider değişimi kontrolü — eşik aşıldıysa ve mevcut liderden iyiyse
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD) {
       const currentLeader = await Photo.findOne({ isChampion: true });

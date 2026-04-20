@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
+const checkLimit = rateLimit(60);
+
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  if (!checkLimit(ip))
+    return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
+
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
     await connectDB();
 
-    // Kullanıcının daha önce oylamadığı, şampiyon olmayan rastgele bir fotoğraf
     const [photo] = await Photo.aggregate([
       { $match: { voters: { $nin: [ip] }, isChampion: false } },
       { $sample: { size: 1 } },
