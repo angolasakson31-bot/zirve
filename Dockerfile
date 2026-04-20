@@ -1,15 +1,14 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS=--max-old-space-size=400
 
 # Install dependencies
 COPY package.json ./
 RUN npm install --legacy-peer-deps --no-optional --no-audit --no-fund
 
-# Build
+# Build (memory limit only for next build, not npm install)
 COPY . .
-RUN npm run build
+RUN NODE_OPTIONS=--max-old-space-size=400 npm run build
 
 FROM node:20-slim AS runner
 WORKDIR /app
