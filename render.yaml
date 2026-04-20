@@ -1,13 +1,12 @@
 services:
   - type: web
     name: zirve-app
-    runtime: docker
-    dockerfilePath: ./Dockerfile
+    runtime: node
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    startCommand: npm start
     plan: free
     region: oregon
     envVars:
-      - key: PORT
-        value: 3000
       - key: MONGODB_URI
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
