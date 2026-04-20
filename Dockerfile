@@ -1,4 +1,4 @@
-FROM node:20-slim AS builder
+FROM public.ecr.aws/docker/library/node:20-slim AS builder
 WORKDIR /app
 
 # Memory limit for build
@@ -13,7 +13,7 @@ RUN npm install --legacy-peer-deps --no-optional --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM node:20-slim AS runner
+FROM public.ecr.aws/docker/library/node:20-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
