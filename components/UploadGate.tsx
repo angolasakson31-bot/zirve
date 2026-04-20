@@ -14,7 +14,7 @@ export default function UploadGate({ children, label }: Props) {
 
   return (
     <div className="relative rounded-2xl overflow-hidden">
-      <div className="pointer-events-none select-none brightness-50 saturate-50" style={{filter:'blur(3px)'}}>
+      <div className="pointer-events-none select-none brightness-50 saturate-50" style={{filter:'blur(10px)'}}>
         {children}
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/30">
