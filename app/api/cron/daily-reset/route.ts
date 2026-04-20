@@ -24,6 +24,12 @@ export async function POST(req: NextRequest) {
       await leader.save();
     }
 
+    // Archive all non-archived photos (today's active photos)
+    await Photo.updateMany(
+      { isArchived: false },
+      { $set: { isArchived: true } }
+    );
+
     return NextResponse.json({ ok: true, champion: leader?._id ?? null });
   } catch {
     return NextResponse.json({ error: 'Sıfırlama başarısız.' }, { status: 500 });

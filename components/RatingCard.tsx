@@ -3,21 +3,44 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
-import { useUploadGate } from '@/hooks/useUploadGate';
+import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
 
 interface Photo { _id: string; url: string; }
+
+const SEEN_STORAGE_PREFIX = 'zirve_seen_';
+
+function loadSeenFromStorage(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(SEEN_STORAGE_PREFIX + todayKey());
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveSeenToStorage(ids: Set<string>) {
+  try {
+    localStorage.setItem(SEEN_STORAGE_PREFIX + todayKey(), JSON.stringify(Array.from(ids)));
+  } catch {}
+}
 
 function Inner() {
   const [photo, setPhoto]     = useState<Photo | null>(null);
   const [loading, setLoading] = useState(false);
   const [noMore, setNoMore]   = useState(false);
-  const [selected, setSelected] = useState(0);       // seçilen puan (1-10), 0 = seçilmedi
+  const [selected, setSelected] = useState(0);
   const [average, setAverage]   = useState<number | null>(null);
   const [voteCount, setVoteCount] = useState<number | null>(null);
   const [hover, setHover]     = useState(0);
   const seenIds = useRef<Set<string>>(new Set());
+  const initialized = useRef(false);
 
   const load = useCallback(async () => {
+    if (!initialized.current) {
+      seenIds.current = loadSeenFromStorage();
+      initialized.current = true;
+    }
     setLoading(true);
     setSelected(0);
     setAverage(null);
@@ -33,6 +56,7 @@ function Inner() {
         setPhoto(null);
       } else {
         seenIds.current.add(String(data.photo._id));
+        saveSeenToStorage(seenIds.current);
         setPhoto(data.photo);
         setNoMore(false);
       }
@@ -42,12 +66,11 @@ function Inner() {
     setLoading(false);
   }, []);
 
-  // Fotoğrafı yüklendikten sonra hemen ilk fotoğrafı getir
   useEffect(() => { load(); }, [load]);
 
   const vote = async (score: number) => {
     if (!photo || selected) return;
-    setSelected(score); // anında seç, UI kilitleme
+    setSelected(score);
 
     try {
       const res  = await fetch('/api/photos/vote', {
@@ -59,9 +82,10 @@ function Inner() {
       if (res.ok && data.photo) {
         setAverage(data.photo.average);
         setVoteCount(data.photo.voteCount);
+        markVoted();
       }
     } catch {
-      // sessizce devam et, selected zaten set edildi
+      // sessizce devam et
     }
   };
 

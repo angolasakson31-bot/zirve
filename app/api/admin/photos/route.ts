@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   await connectDB();
   const photos = await Photo.find({})
     .sort({ createdAt: -1 })
-    .select('_id url cloudinaryId uploaderIp average voteCount isChampion createdAt trackingCode')
+    .select('_id url cloudinaryId uploaderIp average voteCount isChampion isArchived createdAt trackingCode')
     .lean();
   return NextResponse.json({ photos });
 }

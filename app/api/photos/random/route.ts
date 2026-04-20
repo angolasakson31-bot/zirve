@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
     const match: Record<string, unknown> = {
       voters: { $nin: [ip] },
       isChampion: false,
+      isArchived: false,
       createdAt: { $gte: startOfDay },
     };
 

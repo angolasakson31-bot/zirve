@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
 
     const photo = await Photo.findById(photoId);
     if (!photo) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
+    if (photo.isArchived) return NextResponse.json({ error: 'Arşivlenmiş fotoğrafa oy verilemez.' }, { status: 403 });
     if (photo.isChampion) return NextResponse.json({ error: 'Şampiyona oy verilemez.' }, { status: 403 });
     if (photo.voters.includes(ip)) return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
 

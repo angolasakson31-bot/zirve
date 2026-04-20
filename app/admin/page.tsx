@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy } from 'lucide-react';
+import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive } from 'lucide-react';
 import Image from 'next/image';
 
 interface AdminPhoto {
@@ -10,11 +10,47 @@ interface AdminPhoto {
   average: number;
   voteCount: number;
   isChampion: boolean;
+  isArchived: boolean;
   createdAt: string;
   trackingCode: string;
 }
 
+interface PhotoGroup {
+  dateLabel: string;
+  dateKey: string;
+  isToday: boolean;
+  photos: AdminPhoto[];
+}
+
 const SESSION_KEY = 'zirve_admin_pw';
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function groupPhotosByDate(photos: AdminPhoto[]): PhotoGroup[] {
+  const today = todayStr();
+  const map = new Map<string, AdminPhoto[]>();
+
+  for (const p of photos) {
+    const key = new Date(p.createdAt).toISOString().slice(0, 10);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(p);
+  }
+
+  const groups: PhotoGroup[] = [];
+  for (const [key, list] of map.entries()) {
+    const isToday = key === today;
+    const d = new Date(key);
+    const dateLabel = isToday
+      ? `Bugün — ${d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+      : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    groups.push({ dateKey: key, dateLabel, isToday, photos: list });
+  }
+
+  groups.sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+  return groups;
+}
 
 export default function AdminPage() {
   const [password, setPassword] = useState('');
@@ -119,6 +155,8 @@ export default function AdminPage() {
     );
   }
 
+  const groups = groupPhotosByDate(photos);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-8">
       {toast && (
@@ -154,45 +192,65 @@ export default function AdminPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {photos.map(photo => (
-            <div key={photo._id} className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-              <div className="relative aspect-square bg-zinc-800">
-                <Image src={photo.url} alt={photo.trackingCode} fill className="object-cover" unoptimized />
-                {photo.isChampion && (
-                  <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg">
-                    Şampiyon
-                  </div>
-                )}
-              </div>
-              <div className="p-3 space-y-2">
-                <div className="text-xs text-zinc-500 font-mono">{photo.trackingCode}</div>
-                <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>⭐ {photo.average.toFixed(1)}</span>
-                  <span>{photo.voteCount} oy</span>
-                </div>
-                <div className="text-xs text-zinc-600 font-mono truncate">{photo.uploaderIp}</div>
-                <div className="text-xs text-zinc-700">{new Date(photo.createdAt).toLocaleDateString('tr-TR')}</div>
-                <div className="flex gap-1.5 pt-1">
-                  <button
-                    onClick={() => deletePhoto(photo)}
-                    disabled={deletingIds.has(photo._id)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-red-950/50 hover:bg-red-900/60 border border-red-900/50 rounded-lg py-1.5 text-red-400 text-xs transition disabled:opacity-40"
-                  >
-                    <Trash2 className="w-3 h-3" /> Sil
-                  </button>
-                  <button
-                    onClick={() => banIp(photo.uploaderIp)}
-                    disabled={banningIps.has(photo.uploaderIp)}
-                    className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
-                  >
-                    <Ban className="w-3 h-3" /> Engelle
-                  </button>
-                </div>
-              </div>
+        {groups.map(group => (
+          <div key={group.dateKey} className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              {group.isToday ? (
+                <span className="text-amber-400 font-bold text-sm uppercase tracking-wide">{group.dateLabel}</span>
+              ) : (
+                <>
+                  <Archive className="w-4 h-4 text-zinc-500" />
+                  <span className="text-zinc-500 font-semibold text-sm">{group.dateLabel}</span>
+                </>
+              )}
+              <span className="text-zinc-600 text-xs">— {group.photos.length} fotoğraf</span>
             </div>
-          ))}
-        </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {group.photos.map(photo => (
+                <div key={photo._id} className={`bg-zinc-900 rounded-xl border overflow-hidden ${photo.isArchived ? 'border-zinc-800/50 opacity-75' : 'border-zinc-800'}`}>
+                  <div className="relative aspect-square bg-zinc-800">
+                    <Image src={photo.url} alt={photo.trackingCode} fill className="object-cover" unoptimized />
+                    {photo.isChampion && (
+                      <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg">
+                        Şampiyon
+                      </div>
+                    )}
+                    {photo.isArchived && (
+                      <div className="absolute top-1.5 right-1.5 bg-zinc-700/90 text-zinc-300 text-xs px-2 py-0.5 rounded-lg flex items-center gap-1">
+                        <Archive className="w-3 h-3" /> Arşiv
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <div className="text-xs text-zinc-500 font-mono">{photo.trackingCode}</div>
+                    <div className="flex items-center justify-between text-xs text-zinc-400">
+                      <span>⭐ {photo.average.toFixed(1)}</span>
+                      <span>{photo.voteCount} oy</span>
+                    </div>
+                    <div className="text-xs text-zinc-600 font-mono truncate">{photo.uploaderIp}</div>
+                    <div className="flex gap-1.5 pt-1">
+                      <button
+                        onClick={() => deletePhoto(photo)}
+                        disabled={deletingIds.has(photo._id)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-red-950/50 hover:bg-red-900/60 border border-red-900/50 rounded-lg py-1.5 text-red-400 text-xs transition disabled:opacity-40"
+                      >
+                        <Trash2 className="w-3 h-3" /> Sil
+                      </button>
+                      <button
+                        onClick={() => banIp(photo.uploaderIp)}
+                        disabled={banningIps.has(photo.uploaderIp)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
+                      >
+                        <Ban className="w-3 h-3" /> Engelle
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
 
         {!loading && photos.length === 0 && (
           <p className="text-center text-zinc-600 py-20">Henüz fotoğraf yok.</p>
