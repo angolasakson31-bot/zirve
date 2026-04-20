@@ -1,6 +1,7 @@
 'use client';
 import { useState, useCallback } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
+import UploadGate from '@/components/UploadGate';
 import { Shuffle, ChevronRight } from 'lucide-react';
 
 interface Photo { _id: string; url: string; }
@@ -41,19 +42,21 @@ export default function RatingCard() {
 
   if (!photo && !loading && !noMore) {
     return (
-      <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-10 flex flex-col items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center">
-          <Shuffle className="w-7 h-7 text-zinc-500" />
+      <UploadGate label="Oy vermek için önce bir fotoğraf yükle">
+        <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-10 flex flex-col items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center">
+            <Shuffle className="w-7 h-7 text-zinc-500" />
+          </div>
+          <div className="text-center">
+            <p className="text-white font-semibold mb-1">Bugünün Fotoğrafları</p>
+            <p className="text-zinc-400 text-sm">Rastgele bir fotoğraf getir ve puan ver.</p>
+          </div>
+          <button onClick={fetchRandom}
+            className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-black font-bold px-6 py-3 rounded-xl transition">
+            <Shuffle className="w-4 h-4" /> Rastgele Getir
+          </button>
         </div>
-        <div className="text-center">
-          <p className="text-white font-semibold mb-1">Bugünün Fotoğrafları</p>
-          <p className="text-zinc-400 text-sm">Rastgele bir fotoğraf getir ve puan ver.</p>
-        </div>
-        <button onClick={fetchRandom}
-          className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-black font-bold px-6 py-3 rounded-xl transition">
-          <Shuffle className="w-4 h-4" /> Rastgele Getir
-        </button>
-      </div>
+      </UploadGate>
     );
   }
 
@@ -68,6 +71,7 @@ export default function RatingCard() {
   }
 
   return (
+    <UploadGate label="Oy vermek için önce bir fotoğraf yükle">
     <div className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
@@ -127,5 +131,6 @@ export default function RatingCard() {
         </>
       ) : null}
     </div>
+    </UploadGate>
   );
 }

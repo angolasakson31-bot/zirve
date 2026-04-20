@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { markUploaded } from '@/hooks/useUploadGate';
 
 export default function UploadForm() {
   const [preview, setPreview] = useState<string | null>(null);
@@ -10,6 +11,31 @@ export default function UploadForm() {
   const [trackingCode, setTrackingCode] = useState('');
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const checkImageVariance = (dataUrl: string): Promise<boolean> =>
+    new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 64;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(true);
+        ctx.drawImage(img, 0, 0, size, size);
+        const { data } = ctx.getImageData(0, 0, size, size);
+        let sum = 0, sumSq = 0, n = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const v = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          sum += v; sumSq += v * v; n++;
+        }
+        const mean = sum / n;
+        const variance = sumSq / n - mean * mean;
+        resolve(variance > 80);
+      };
+      img.onerror = () => resolve(true);
+      img.src = dataUrl;
+    });
 
   const handleFile = (f: File) => {
     setFile(f);
@@ -43,6 +69,16 @@ export default function UploadForm() {
     if (!file) return;
     setUploading(true);
     setError('');
+
+    if (preview) {
+      const valid = await checkImageVariance(preview);
+      if (!valid) {
+        setError('Tamamen boş veya tek renkli görüntüler yüklenemez. Lütfen gerçek bir fotoğraf seçin.');
+        setUploading(false);
+        return;
+      }
+    }
+
     const form = new FormData();
     form.append('file', file);
     try {
@@ -50,6 +86,7 @@ export default function UploadForm() {
       const data = await res.json();
       if (!res.ok) setError(data.error || 'Hata oluştu.');
       else {
+        markUploaded();
         setTrackingCode(data.trackingCode);
         setPreview(null);
         setFile(null);

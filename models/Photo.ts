@@ -13,6 +13,7 @@ export interface IPhoto extends Document {
   isChampion: boolean;
   championDate: string | null;
   trackingCode: string;
+  fileHash: string;
   createdAt: Date;
 }
 
@@ -30,6 +31,7 @@ const PhotoSchema = new Schema<IPhoto>(
     isChampion:    { type: Boolean, default: false },
     championDate:  { type: String, default: null },
     trackingCode:  { type: String, required: true, unique: true },
+    fileHash:      { type: String, required: true },
   },
   { timestamps: true }
 );

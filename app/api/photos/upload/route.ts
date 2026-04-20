@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
@@ -7,6 +8,7 @@ import { rateLimit } from '@/lib/rate-limit';
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(5);
+const DAILY_UPLOAD_LIMIT = 5;
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -33,6 +35,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sadece JPEG, PNG veya WebP yükleyebilirsiniz.' }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // SHA-256 duplicate check
+    const fileHash = createHash('sha256').update(buffer).digest('hex');
+
+    await connectDB();
+
+    const duplicate = await Photo.exists({ fileHash });
+    if (duplicate)
+      return NextResponse.json({ error: 'Bu fotoğraf zaten yüklenmiş.' }, { status: 409 });
+
+    // Daily IP limit
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const todayCount = await Photo.countDocuments({ uploaderIp: ip, createdAt: { $gte: startOfDay } });
+    if (todayCount >= DAILY_UPLOAD_LIMIT)
+      return NextResponse.json({ error: `Bugün en fazla ${DAILY_UPLOAD_LIMIT} fotoğraf yükleyebilirsiniz.` }, { status: 429 });
+
     const uploadResult = await new Promise<{ public_id: string; secure_url: string }>((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         { folder: 'zirve', resource_type: 'image' },
@@ -42,8 +61,6 @@ export async function POST(req: NextRequest) {
         }
       ).end(buffer);
     });
-
-    await connectDB();
 
     let trackingCode = generateCode();
     let attempts = 0;
@@ -56,6 +73,7 @@ export async function POST(req: NextRequest) {
       url: uploadResult.secure_url,
       uploaderIp: ip,
       trackingCode,
+      fileHash,
     });
 
     return NextResponse.json({ photo, trackingCode }, { status: 201 });
