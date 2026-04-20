@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
+import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -40,6 +41,10 @@ export async function POST(req: NextRequest) {
     const fileHash = createHash('sha256').update(buffer).digest('hex');
 
     await connectDB();
+
+    const banned = await BannedIP.exists({ ip });
+    if (banned)
+      return NextResponse.json({ error: 'Yükleme erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
     const duplicate = await Photo.exists({ fileHash });
     if (duplicate)
