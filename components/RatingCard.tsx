@@ -5,7 +5,7 @@ import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
 
-interface Photo { _id: string; url: string; }
+interface Photo { _id: string; url: string; contactInfo: string; }
 
 const SEEN_STORAGE_PREFIX = 'zirve_seen_';
 
@@ -124,6 +124,13 @@ function Inner() {
       </div>
 
       <ProtectedImage src={photo.url} alt="Puan ver" maxHeight={680} />
+
+      {photo.contactInfo && (
+        <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-900/80">
+          <p className="text-zinc-500 text-xs mb-0.5">İletişim</p>
+          <p className="text-zinc-300 text-sm break-all">{photo.contactInfo}</p>
+        </div>
+      )}
 
       <div className="p-4 space-y-3">
         {!voted ? (

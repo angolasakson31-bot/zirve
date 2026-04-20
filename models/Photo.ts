@@ -4,6 +4,7 @@ export interface IPhoto extends Document {
   cloudinaryId: string;
   url: string;
   uploaderIp: string;
+  contactInfo: string;
   totalScore: number;
   voteCount: number;
   average: number;
@@ -23,6 +24,7 @@ const PhotoSchema = new Schema<IPhoto>(
     cloudinaryId:  { type: String, required: true },
     url:           { type: String, required: true },
     uploaderIp:    { type: String, required: true },
+    contactInfo:   { type: String, required: true },
     totalScore:    { type: Number, default: 0 },
     voteCount:     { type: Number, default: 0 },
     average:       { type: Number, default: 0 },

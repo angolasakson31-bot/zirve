@@ -6,6 +6,7 @@ import { markUploaded } from '@/hooks/useUploadGate';
 export default function UploadForm() {
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [contactInfo, setContactInfo] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
@@ -61,6 +62,7 @@ export default function UploadForm() {
   const reset = () => {
     setPreview(null);
     setFile(null);
+    setContactInfo('');
     setTrackingCode('');
     setError('');
   };
@@ -79,8 +81,15 @@ export default function UploadForm() {
       }
     }
 
+    if (!contactInfo.trim()) {
+      setError('İletişim bilgisi zorunludur.');
+      setUploading(false);
+      return;
+    }
+
     const form = new FormData();
     form.append('file', file);
+    form.append('contactInfo', contactInfo.trim());
     try {
       const res = await fetch('/api/photos/upload', { method: 'POST', body: form });
       const data = await res.json();
@@ -154,13 +163,28 @@ export default function UploadForm() {
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
           onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); e.target.value = ''; }} />
 
+        <div className="space-y-1">
+          <label className="text-zinc-400 text-xs font-medium flex items-center gap-1">
+            İletişim Bilgisi
+            <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={contactInfo}
+            onChange={e => setContactInfo(e.target.value)}
+            maxLength={200}
+            placeholder="Instagram, telefon, e-posta vb."
+            className="w-full bg-zinc-800 border border-zinc-700 focus:border-amber-500/70 outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 transition"
+          />
+        </div>
+
         {error && (
           <div className="flex items-center gap-2 text-red-400 text-sm bg-red-950/40 rounded-lg px-3 py-2">
             <AlertCircle className="w-4 h-4 shrink-0" /> {error}
           </div>
         )}
 
-        <button onClick={submit} disabled={!file || uploading}
+        <button onClick={submit} disabled={!file || !contactInfo.trim() || uploading}
           className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
           {uploading
             ? <><span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full inline-block" /> Yükleniyor...</>

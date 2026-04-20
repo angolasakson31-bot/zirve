@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
+    const contactInfo = (formData.get('contactInfo') as string | null)?.trim() ?? '';
     if (!file) return NextResponse.json({ error: 'Dosya bulunamadı.' }, { status: 400 });
+    if (!contactInfo) return NextResponse.json({ error: 'İletişim bilgisi zorunludur.' }, { status: 400 });
+    if (contactInfo.length > 200) return NextResponse.json({ error: 'İletişim bilgisi en fazla 200 karakter olabilir.' }, { status: 400 });
 
     if (file.size > 10 * 1024 * 1024)
       return NextResponse.json({ error: 'Maksimum 10MB yükleyebilirsiniz.' }, { status: 400 });
@@ -77,6 +80,7 @@ export async function POST(req: NextRequest) {
       cloudinaryId: uploadResult.public_id,
       url: uploadResult.secure_url,
       uploaderIp: ip,
+      contactInfo,
       trackingCode,
       fileHash,
     });
