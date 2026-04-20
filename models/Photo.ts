@@ -7,29 +7,35 @@ export interface IPhoto extends Document {
   totalScore: number;
   voteCount: number;
   average: number;
-  voters: string[];          // IP listesi — tekrar oylama engeli
-  isChampion: boolean;       // dünün şampiyonu mu?
-  championDate: string | null; // 'YYYY-MM-DD'
+  likeCount: number;
+  dislikeCount: number;
+  voters: string[];
+  isChampion: boolean;
+  championDate: string | null;
+  trackingCode: string;
   createdAt: Date;
 }
 
 const PhotoSchema = new Schema<IPhoto>(
   {
-    cloudinaryId: { type: String, required: true },
-    url:          { type: String, required: true },
-    uploaderIp:   { type: String, required: true },
-    totalScore:   { type: Number, default: 0 },
-    voteCount:    { type: Number, default: 0 },
-    average:      { type: Number, default: 0 },
-    voters:       { type: [String], default: [] },
-    isChampion:   { type: Boolean, default: false },
-    championDate: { type: String, default: null },
+    cloudinaryId:  { type: String, required: true },
+    url:           { type: String, required: true },
+    uploaderIp:    { type: String, required: true },
+    totalScore:    { type: Number, default: 0 },
+    voteCount:     { type: Number, default: 0 },
+    average:       { type: Number, default: 0 },
+    likeCount:     { type: Number, default: 0 },
+    dislikeCount:  { type: Number, default: 0 },
+    voters:        { type: [String], default: [] },
+    isChampion:    { type: Boolean, default: false },
+    championDate:  { type: String, default: null },
+    trackingCode:  { type: String, required: true, unique: true },
   },
   { timestamps: true }
 );
 
-// Kolay lider sorgusu için index
 PhotoSchema.index({ average: -1, voteCount: -1 });
+PhotoSchema.index({ trackingCode: 1 });
 
 const Photo: Model<IPhoto> =
   mongoose.models.Photo || mongoose.model<IPhoto>('Photo', PhotoSchema);

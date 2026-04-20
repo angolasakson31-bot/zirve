@@ -30,20 +30,16 @@ export async function POST(req: NextRequest) {
     photo.voteCount += 1;
     photo.average = photo.totalScore / photo.voteCount;
     photo.voters.push(ip);
+    if (score >= 6) photo.likeCount += 1;
+    else photo.dislikeCount += 1;
     await photo.save();
 
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD) {
       const currentLeader = await Photo.findOne({ isChampion: true });
-      const isNewLeader =
-        !currentLeader ||
-        photo.average > (currentLeader as any).average;
-
+      const isNewLeader = !currentLeader || photo.average > (currentLeader as any).average;
       if (isNewLeader && currentLeader?._id.toString() !== photo._id.toString()) {
-        if (currentLeader) {
-          currentLeader.isChampion = false;
-          await currentLeader.save();
-        }
+        if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
         photo.isChampion = true;
         await photo.save();
         leaderChanged = true;
@@ -51,11 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      photo: {
-        _id: photo._id,
-        average: photo.average,
-        voteCount: photo.voteCount,
-      },
+      photo: { _id: photo._id, average: photo.average, voteCount: photo.voteCount },
       leaderChanged,
     });
   } catch {

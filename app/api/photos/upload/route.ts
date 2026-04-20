@@ -6,7 +6,14 @@ import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
-const checkLimit = rateLimit(5); // 5 upload/dakika per IP
+const checkLimit = rateLimit(5);
+
+function generateCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'ZRV-';
+  for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
@@ -18,9 +25,8 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null;
     if (!file) return NextResponse.json({ error: 'Dosya bulunamadı.' }, { status: 400 });
 
-    const maxMB = 10;
-    if (file.size > maxMB * 1024 * 1024)
-      return NextResponse.json({ error: `Maksimum ${maxMB}MB yükleyebilirsiniz.` }, { status: 400 });
+    if (file.size > 10 * 1024 * 1024)
+      return NextResponse.json({ error: 'Maksimum 10MB yükleyebilirsiniz.' }, { status: 400 });
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
     if (!allowedTypes.includes(file.type))
@@ -38,13 +44,21 @@ export async function POST(req: NextRequest) {
     });
 
     await connectDB();
+
+    let trackingCode = generateCode();
+    let attempts = 0;
+    while (await Photo.exists({ trackingCode }) && attempts++ < 5) {
+      trackingCode = generateCode();
+    }
+
     const photo = await Photo.create({
       cloudinaryId: uploadResult.public_id,
       url: uploadResult.secure_url,
       uploaderIp: ip,
+      trackingCode,
     });
 
-    return NextResponse.json({ photo }, { status: 201 });
+    return NextResponse.json({ photo, trackingCode }, { status: 201 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: 'Yükleme başarısız.' }, { status: 500 });
