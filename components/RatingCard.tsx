@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import UploadGate from '@/components/UploadGate';
 import { Shuffle, ChevronRight } from 'lucide-react';
@@ -14,16 +14,25 @@ export default function RatingCard() {
   const [result, setResult] = useState<RatedResult | null>(null);
   const [hover, setHover] = useState(0);
   const [noMore, setNoMore] = useState(false);
+  const seenIds = useRef<Set<string>>(new Set());
 
   const fetchRandom = useCallback(async () => {
     setLoading(true);
     setVoted(false);
     setResult(null);
     setHover(0);
-    const res = await fetch('/api/photos/random');
+
+    const exclude = Array.from(seenIds.current).join(',');
+    const res = await fetch(`/api/photos/random${exclude ? `?exclude=${exclude}` : ''}`);
     const { photo } = await res.json();
-    if (!photo) setNoMore(true);
-    else { setPhoto(photo); setNoMore(false); }
+
+    if (!photo) {
+      setNoMore(true);
+    } else {
+      seenIds.current.add(photo._id);
+      setPhoto(photo);
+      setNoMore(false);
+    }
     setLoading(false);
   }, []);
 
@@ -35,7 +44,8 @@ export default function RatingCard() {
       body: JSON.stringify({ photoId: photo._id, score }),
     });
     if (!res.ok) return;
-    const { photo: updated } = await res.json();
+    const data = await res.json();
+    const updated = data.photo;
     setResult({ average: updated.average, voteCount: updated.voteCount, myScore: score });
     setVoted(true);
   };
@@ -65,7 +75,8 @@ export default function RatingCard() {
       <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-3">
         <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
         <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
-        <button onClick={fetchRandom} className="mt-2 text-amber-400 underline text-sm">Tekrar dene</button>
+        <button onClick={() => { seenIds.current.clear(); fetchRandom(); }}
+          className="mt-2 text-amber-400 underline text-sm">Tekrar dene</button>
       </div>
     );
   }

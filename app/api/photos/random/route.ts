@@ -18,14 +18,21 @@ export async function GET(req: NextRequest) {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
+    const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
+    const excludeIds = excludeParam ? excludeParam.split(',').filter(Boolean) : [];
+
+    const match: Record<string, unknown> = {
+      voters: { $nin: [ip] },
+      isChampion: false,
+      createdAt: { $gte: startOfDay },
+    };
+
+    if (excludeIds.length > 0) {
+      match._id = { $nin: excludeIds };
+    }
+
     const [photo] = await Photo.aggregate([
-      {
-        $match: {
-          voters: { $nin: [ip] },
-          isChampion: false,
-          createdAt: { $gte: startOfDay },
-        },
-      },
+      { $match: match },
       { $sample: { size: 1 } },
     ]);
 
