@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
@@ -19,7 +20,10 @@ export async function GET(req: NextRequest) {
     startOfDay.setHours(0, 0, 0, 0);
 
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
-    const excludeIds = excludeParam ? excludeParam.split(',').filter(Boolean) : [];
+    const excludeObjectIds = excludeParam
+      .split(',')
+      .filter(id => mongoose.Types.ObjectId.isValid(id))
+      .map(id => new mongoose.Types.ObjectId(id));
 
     const match: Record<string, unknown> = {
       voters: { $nin: [ip] },
@@ -27,8 +31,8 @@ export async function GET(req: NextRequest) {
       createdAt: { $gte: startOfDay },
     };
 
-    if (excludeIds.length > 0) {
-      match._id = { $nin: excludeIds };
+    if (excludeObjectIds.length > 0) {
+      match._id = { $nin: excludeObjectIds };
     }
 
     const [photo] = await Photo.aggregate([
@@ -38,7 +42,8 @@ export async function GET(req: NextRequest) {
 
     if (!photo) return NextResponse.json({ photo: null });
     return NextResponse.json({ photo });
-  } catch {
+  } catch (err) {
+    console.error('random route error:', err);
     return NextResponse.json({ error: 'Fotoğraf alınamadı.' }, { status: 500 });
   }
 }
