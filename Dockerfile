@@ -4,7 +4,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Install dependencies
 COPY package.json ./
-RUN npm install --legacy-peer-deps --no-optional --no-audit --no-fund
+RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 # Build (memory limit only for next build, not npm install)
 COPY . .
