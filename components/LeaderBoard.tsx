@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Star } from 'lucide-react';
-import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 
 interface LeaderPhoto {
   _id: string;
@@ -47,7 +47,7 @@ export default function LeaderBoard() {
         {leader ? (
           <div className="relative">
             <div className="relative w-full aspect-square max-h-[480px] overflow-hidden">
-              <Image src={leader.url} alt="Günün lideri" fill className="object-cover" />
+              <ProtectedImage src={leader.url} alt="Günün lideri" className="absolute inset-0 w-full h-full" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 flex items-center gap-3">
                 <div className="bg-black/60 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
@@ -78,7 +78,7 @@ export default function LeaderBoard() {
             <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Şampiyonu</h2>
           </div>
           <div className="relative w-full aspect-video overflow-hidden">
-            <Image src={yesterday.url} alt="Dünün şampiyonu" fill className="object-cover opacity-80 grayscale-[20%]" />
+            <ProtectedImage src={yesterday.url} alt="Dünün şampiyonu" className="absolute inset-0 w-full h-full opacity-80 grayscale-[20%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-3 flex items-center gap-2">
               <div className="bg-black/60 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">

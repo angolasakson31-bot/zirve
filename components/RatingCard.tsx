@@ -1,6 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
-import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 import { Shuffle, Star, ChevronRight } from 'lucide-react';
 
 interface Photo {
@@ -89,7 +89,7 @@ export default function RatingCard() {
       ) : photo ? (
         <>
           <div className="relative w-full aspect-square overflow-hidden bg-zinc-800">
-            <Image src={photo.url} alt="Puan ver" fill className="object-cover" />
+            <ProtectedImage src={photo.url} alt="Puan ver" className="absolute inset-0 w-full h-full" />
             {voted && result && (
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
                 <div className="text-center">

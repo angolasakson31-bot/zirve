@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Search, ThumbsUp, ThumbsDown, Star, Trophy, BarChart2 } from 'lucide-react';
-import Image from 'next/image';
+import ProtectedImage from '@/components/ProtectedImage';
 
 interface TrackResult {
   url: string;
@@ -69,7 +69,7 @@ export default function TrackCode() {
         {result && (
           <div className="space-y-3 pt-1">
             <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800">
-              <Image src={result.url} alt="Fotoğrafın" fill className="object-cover" />
+              <ProtectedImage src={result.url} alt="Fotoğrafın" className="absolute inset-0 w-full h-full" />
               {result.isChampion && (
                 <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-400 text-black text-xs font-bold px-2 py-1 rounded-lg">
                   <Trophy className="w-3 h-3" /> Şampiyon
