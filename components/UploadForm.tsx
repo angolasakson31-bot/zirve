@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
 import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles } from 'lucide-react';
-import Image from 'next/image';
 
 export default function UploadForm() {
   const [preview, setPreview] = useState<string | null>(null);
@@ -103,8 +102,9 @@ export default function UploadForm() {
           className="border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-amber-500/50 transition-colors overflow-hidden"
         >
           {preview ? (
-            <div className="relative aspect-square w-full">
-              <Image src={preview} alt="Önizleme" fill className="object-cover" />
+            <div className="flex items-center justify-center bg-zinc-900 max-h-80 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt="Önizleme" className="max-w-full max-h-80 object-contain" />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 gap-2 text-zinc-500">

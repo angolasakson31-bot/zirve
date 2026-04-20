@@ -4,19 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 interface Props {
   src: string;
   alt: string;
-  className?: string;
-  watermark?: string;
+  maxHeight?: number;
+  dimmed?: boolean;
 }
 
-export default function ProtectedImage({ src, alt, className = '', watermark = 'ZİRVE' }: Props) {
+export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = 'anonymous';
     img.src = src;
     img.onload = () => {
+      setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -27,43 +28,53 @@ export default function ProtectedImage({ src, alt, className = '', watermark = '
       ctx.drawImage(img, 0, 0);
 
       // Diagonal watermark grid
-      const step = Math.max(100, canvas.width / 4);
-      const fontSize = Math.max(12, canvas.width / 18);
+      const step = Math.max(120, img.naturalWidth / 4);
+      const fontSize = Math.max(13, img.naturalWidth / 20);
       ctx.save();
-      ctx.globalAlpha = 0.15;
+      ctx.globalAlpha = 0.13;
       ctx.fillStyle = '#ffffff';
       ctx.font = `bold ${fontSize}px sans-serif`;
       ctx.rotate(-Math.PI / 6);
-      for (let y = -canvas.height * 2; y < canvas.height * 2; y += step) {
-        for (let x = -canvas.width * 2; x < canvas.width * 2; x += step) {
-          ctx.fillText(watermark, x, y);
-        }
-      }
+      for (let y = -img.naturalHeight * 2; y < img.naturalHeight * 2; y += step)
+        for (let x = -img.naturalWidth * 2; x < img.naturalWidth * 2; x += step)
+          ctx.fillText('ZİRVE', x, y);
       ctx.restore();
-      setLoaded(true);
     };
-    img.onerror = () => {
-      // Fallback: show image directly if canvas fails
-      const canvas = canvasRef.current;
-      if (canvas) canvas.style.backgroundImage = `url(${src})`;
-      setLoaded(true);
-    };
-  }, [src, watermark]);
+  }, [src]);
 
   return (
     <div
-      className={`relative select-none ${className}`}
+      className="relative w-full overflow-hidden rounded-inherit select-none"
+      style={{ maxHeight }}
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
     >
-      <canvas
-        ref={canvasRef}
-        aria-label={alt}
-        className="w-full h-full object-cover"
-        style={{ display: loaded ? 'block' : 'none' }}
+      {/* Bulanık arka plan */}
+      <div
+        aria-hidden
+        className="absolute inset-0 scale-110"
+        style={{
+          backgroundImage: `url(${src})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(18px) brightness(0.4)',
+        }}
       />
-      {!loaded && <div className="w-full h-full bg-zinc-800 animate-pulse" />}
-      {/* Transparent overlay — blocks right-click on the image itself */}
+
+      {/* Tam resim — canvas ile filigranlanmış */}
+      <div className="relative flex items-center justify-center" style={{ maxHeight }}>
+        {!naturalSize && (
+          <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
+        )}
+        <canvas
+          ref={canvasRef}
+          aria-label={alt}
+          className={`relative max-w-full object-contain ${dimmed ? 'opacity-80' : ''}`}
+          style={{ maxHeight, display: naturalSize ? 'block' : 'none' }}
+        />
+      </div>
+
+      {/* Tıklama/sürükleme engeli */}
       <div className="absolute inset-0" onContextMenu={e => e.preventDefault()} />
     </div>
   );

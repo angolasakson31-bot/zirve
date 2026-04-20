@@ -68,10 +68,10 @@ export default function TrackCode() {
 
         {result && (
           <div className="space-y-3 pt-1">
-            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-800">
-              <ProtectedImage src={result.url} alt="Fotoğrafın" className="absolute inset-0 w-full h-full" />
+            <div className="relative rounded-xl overflow-hidden">
+              <ProtectedImage src={result.url} alt="Fotoğrafın" maxHeight={320} />
               {result.isChampion && (
-                <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-400 text-black text-xs font-bold px-2 py-1 rounded-lg">
+                <div className="absolute top-2 right-2 flex items-center gap-1 bg-amber-400 text-black text-xs font-bold px-2 py-1 rounded-lg z-10">
                   <Trophy className="w-3 h-3" /> Şampiyon
                 </div>
               )}

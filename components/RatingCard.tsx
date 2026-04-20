@@ -1,18 +1,10 @@
 'use client';
 import { useState, useCallback } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
-import { Shuffle, Star, ChevronRight } from 'lucide-react';
+import { Shuffle, ChevronRight } from 'lucide-react';
 
-interface Photo {
-  _id: string;
-  url: string;
-}
-
-interface RatedResult {
-  average: number;
-  voteCount: number;
-  myScore: number;
-}
+interface Photo { _id: string; url: string; }
+interface RatedResult { average: number; voteCount: number; myScore: number; }
 
 export default function RatingCard() {
   const [photo, setPhoto] = useState<Photo | null>(null);
@@ -49,13 +41,16 @@ export default function RatingCard() {
 
   if (!photo && !loading && !noMore) {
     return (
-      <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-4">
-        <Shuffle className="w-10 h-10 text-zinc-500" />
-        <p className="text-zinc-400 text-center text-sm">Rastgele bir fotoğraf keşfet ve puan ver.</p>
-        <button
-          onClick={fetchRandom}
-          className="flex items-center gap-2 bg-white text-black font-semibold px-6 py-3 rounded-xl hover:bg-zinc-100 transition"
-        >
+      <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-10 flex flex-col items-center gap-5">
+        <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center">
+          <Shuffle className="w-7 h-7 text-zinc-500" />
+        </div>
+        <div className="text-center">
+          <p className="text-white font-semibold mb-1">Bugünün Fotoğrafları</p>
+          <p className="text-zinc-400 text-sm">Rastgele bir fotoğraf getir ve puan ver.</p>
+        </div>
+        <button onClick={fetchRandom}
+          className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-black font-bold px-6 py-3 rounded-xl transition">
           <Shuffle className="w-4 h-4" /> Rastgele Getir
         </button>
       </div>
@@ -65,8 +60,9 @@ export default function RatingCard() {
   if (noMore) {
     return (
       <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-3">
-        <p className="text-zinc-400 text-sm text-center">Tüm fotoğrafları oyladınız!</p>
-        <button onClick={fetchRandom} className="text-white underline text-sm">Tekrar dene</button>
+        <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
+        <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
+        <button onClick={fetchRandom} className="mt-2 text-amber-400 underline text-sm">Tekrar dene</button>
       </div>
     );
   }
@@ -75,32 +71,29 @@ export default function RatingCard() {
     <div className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800">
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
-        <button
-          onClick={fetchRandom}
-          disabled={loading}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition"
-        >
+        <button onClick={fetchRandom} disabled={loading}
+          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition disabled:opacity-40">
           <Shuffle className="w-3.5 h-3.5" /> Diğeri
         </button>
       </div>
 
       {loading ? (
-        <div className="animate-pulse bg-zinc-800 aspect-square" />
+        <div className="animate-pulse bg-zinc-800 h-72" />
       ) : photo ? (
         <>
-          <div className="relative w-full aspect-square overflow-hidden bg-zinc-800">
-            <ProtectedImage src={photo.url} alt="Puan ver" className="absolute inset-0 w-full h-full" />
+          <div className="relative">
+            <ProtectedImage src={photo.url} alt="Puan ver" maxHeight={680} />
             {voted && result && (
-              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
                 <div className="text-center">
                   <p className="text-zinc-300 text-sm mb-1">Senin puanın</p>
-                  <p className="text-white font-black text-5xl">{result.myScore}</p>
+                  <p className="text-white font-black text-6xl">{result.myScore}</p>
                 </div>
                 <div className="h-px w-16 bg-zinc-600" />
                 <div className="text-center">
                   <p className="text-zinc-300 text-sm mb-1">Topluluk ortalaması</p>
-                  <p className="text-amber-400 font-bold text-3xl">{result.average.toFixed(2)}</p>
-                  <p className="text-zinc-500 text-xs mt-0.5">{result.voteCount} oy</p>
+                  <p className="text-amber-400 font-bold text-4xl">{result.average.toFixed(2)}</p>
+                  <p className="text-zinc-500 text-sm mt-1">{result.voteCount} oy</p>
                 </div>
               </div>
             )}
@@ -109,30 +102,24 @@ export default function RatingCard() {
           <div className="p-4 space-y-4">
             {!voted ? (
               <>
-                <p className="text-zinc-400 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
-                <div className="flex justify-center gap-1.5">
+                <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
+                <div className="flex justify-center gap-1.5 flex-wrap">
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                    <button
-                      key={n}
+                    <button key={n}
                       onMouseEnter={() => setHover(n)}
                       onMouseLeave={() => setHover(0)}
                       onClick={() => vote(n)}
-                      className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${
-                        hover >= n
-                          ? 'bg-amber-400 text-black scale-110'
-                          : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                      }`}
-                    >
+                      className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                        hover >= n ? 'bg-amber-400 text-black scale-110' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
+                      }`}>
                       {n}
                     </button>
                   ))}
                 </div>
               </>
             ) : (
-              <button
-                onClick={fetchRandom}
-                className="w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-100 transition"
-              >
+              <button onClick={fetchRandom}
+                className="w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-100 transition">
                 Sonraki <ChevronRight className="w-4 h-4" />
               </button>
             )}
