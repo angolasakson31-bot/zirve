@@ -4,12 +4,14 @@ import UploadForm from '@/components/UploadForm';
 import TrackCode from '@/components/TrackCode';
 import { Mountain, Zap } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
+import HeaderFlash from '@/components/HeaderFlash';
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}
-      <header className="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur sticky top-0 z-50">
+      <header className="relative border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur sticky top-0 z-50">
+        <HeaderFlash />
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="p-1.5 bg-amber-400/10 rounded-lg">
             <Mountain className="w-5 h-5 text-amber-400" />

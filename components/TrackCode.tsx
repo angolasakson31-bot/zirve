@@ -16,6 +16,8 @@ interface TrackResult {
 export default function TrackCode() {
   const [code, setCode] = useState('');
   const [result, setResult] = useState<TrackResult | null>(null);
+  const [rank, setRank] = useState<number | null>(null);
+  const [totalToday, setTotalToday] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,7 +31,11 @@ export default function TrackCode() {
       const res = await fetch(`/api/photos/track/${encodeURIComponent(clean)}`);
       const data = await res.json();
       if (!res.ok) setError(data.error || 'Kod bulunamadı.');
-      else setResult(data.photo);
+      else {
+        setResult(data.photo);
+        setRank(data.rank ?? null);
+        setTotalToday(data.totalToday ?? null);
+      }
     } catch {
       setError('Bağlantı hatası.');
     }
@@ -68,6 +74,23 @@ export default function TrackCode() {
 
         {result && (
           <div className="space-y-3 pt-1">
+            {rank !== null && totalToday !== null && (
+              <div className={`rounded-xl px-4 py-3 text-center ${result.isChampion ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-zinc-800'}`}>
+                {result.isChampion ? (
+                  <p className="text-amber-400 font-black text-base flex items-center justify-center gap-2">
+                    <Trophy className="w-4 h-4" /> Günün Liderisin!
+                  </p>
+                ) : (
+                  <p className="text-zinc-300 text-sm">
+                    Bugün yüklenen <span className="text-white font-bold">{totalToday}</span> fotoğraf arasında{' '}
+                    <span className="text-amber-400 font-black text-base">{rank}. sıradasın</span>
+                  </p>
+                )}
+                {result.voteCount === 0 && (
+                  <p className="text-zinc-500 text-xs mt-1">Henüz oy almadın, siteyi paylaş!</p>
+                )}
+              </div>
+            )}
             <div className="relative rounded-xl overflow-hidden">
               <ProtectedImage src={result.url} alt="Fotoğrafın" maxHeight={320} />
               {result.isChampion && (

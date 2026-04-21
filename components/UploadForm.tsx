@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
-import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles, Share2 } from 'lucide-react';
 import { markUploaded } from '@/hooks/useUploadGate';
 
 export default function UploadForm() {
@@ -127,6 +127,18 @@ export default function UploadForm() {
               {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5 text-zinc-300" />}
             </button>
           </div>
+          <button
+            onClick={async () => {
+              const url = window.location.origin;
+              if (navigator.share) {
+                try { await navigator.share({ title: 'ZİRVE', text: 'Fotoğrafıma oy ver, zirveye çıkmama yardım et!', url }); return; } catch {}
+              }
+              await navigator.clipboard.writeText(url);
+            }}
+            className="w-full py-2.5 rounded-xl bg-amber-400/10 border border-amber-500/40 text-amber-400 hover:bg-amber-400/20 text-sm font-medium transition flex items-center justify-center gap-2"
+          >
+            <Share2 className="w-4 h-4" /> Arkadaşlarına paylaş, daha fazla oy al!
+          </button>
           <button onClick={reset} className="w-full py-2.5 rounded-xl border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-sm transition">
             Başka fotoğraf yükle
           </button>
