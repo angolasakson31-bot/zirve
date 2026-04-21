@@ -10,6 +10,7 @@ interface LeaderPhoto {
   average: number;
   voteCount: number;
   championDate?: string;
+  contactInfo?: string;
 }
 
 function VoteGate({ children, label }: { children: React.ReactNode; label?: string }) {
@@ -88,6 +89,12 @@ export default function LeaderBoard() {
                 </div>
               </div>
             </div>
+            {leader.contactInfo && (
+              <div className="px-4 py-3 border-t border-amber-500/20 bg-amber-500/5">
+                <p className="text-amber-400/70 text-xs mb-0.5">İletişim — Zirvede kal, fotoğraf için sana ulaşsınlar</p>
+                <p className="text-zinc-300 text-sm break-all">{leader.contactInfo}</p>
+              </div>
+            )}
           </VoteGate>
         ) : (
           <div className="flex flex-col items-center justify-center py-14 text-zinc-500">
