@@ -165,9 +165,10 @@ export default function UploadForm() {
           onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); e.target.value = ''; }} />
 
         <div className="space-y-1">
-          <label className="text-zinc-400 text-xs font-medium flex items-center gap-1">
+          <label className="text-zinc-400 text-xs font-medium flex items-center gap-1 flex-wrap">
             İletişim Bilgisi
             <span className="text-red-400">*</span>
+            <span className="text-zinc-600 font-normal">— Zirvede kal ve fotoğraf için sana ulaşsınlar</span>
           </label>
           <input
             type="text"
