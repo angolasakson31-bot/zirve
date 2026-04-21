@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface Props {
   src: string;
@@ -12,11 +12,6 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loaded, setLoaded] = useState(false);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-
-  useEffect(() => {
-    setLoaded(false);
-    setSize(null);
-  }, [src]);
 
   const drawWatermark = (w: number, h: number) => {
     const canvas = canvasRef.current;
@@ -45,52 +40,35 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
     >
-      {/* Bulanık arka plan */}
-      <div
-        aria-hidden
-        className="absolute inset-0 scale-110"
-        style={{
-          backgroundImage: `url(${src})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(18px) brightness(0.4)',
+      {!loaded && (
+        <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
+      )}
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full object-contain ${dimmed ? 'opacity-70' : ''}`}
+        style={{ maxHeight, display: loaded ? 'block' : 'none' }}
+        onLoad={e => {
+          const el = e.currentTarget;
+          setLoaded(true);
+          setSize({ w: el.naturalWidth, h: el.naturalHeight });
+          drawWatermark(el.naturalWidth, el.naturalHeight);
         }}
+        onError={() => setLoaded(true)}
+        draggable={false}
       />
 
-      <div className="relative flex items-center justify-center" style={{ maxHeight }}>
-        {!loaded && (
-          <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
-        )}
-
-        {/* Gerçek fotoğraf — img tag, CORS sorunu yok */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={alt}
-          className={`relative max-w-full object-contain ${dimmed ? 'opacity-80' : ''}`}
-          style={{ maxHeight, display: loaded ? 'block' : 'none' }}
-          onLoad={e => {
-            const el = e.currentTarget;
-            setLoaded(true);
-            setSize({ w: el.naturalWidth, h: el.naturalHeight });
-            drawWatermark(el.naturalWidth, el.naturalHeight);
-          }}
-          onError={() => setLoaded(true)}
-          draggable={false}
+      {size && (
+        <canvas
+          ref={canvasRef}
+          aria-hidden
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ maxHeight }}
         />
+      )}
 
-        {/* Filigran canvas — fotoğrafın üstünde, sadece metin çizer */}
-        {size && (
-          <canvas
-            ref={canvasRef}
-            aria-hidden
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ maxHeight }}
-          />
-        )}
-      </div>
-
-      {/* Tıklama/sürükleme engeli */}
       <div className="absolute inset-0" onContextMenu={e => e.preventDefault()} />
     </div>
   );
