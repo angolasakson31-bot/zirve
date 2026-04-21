@@ -205,11 +205,47 @@ function Inner() {
   );
 }
 
+function Preview() {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/photos/random')
+      .then(r => r.json())
+      .then(d => d.photo?.url && setPhotoUrl(d.photo.url))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <div className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
+      <div className="px-5 py-3 border-b border-zinc-800">
+        <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
+      </div>
+      {photoUrl
+        ? <ProtectedImage src={photoUrl} alt="Önizleme" maxHeight={680} />
+        : <div className="bg-zinc-800 h-72" />
+      }
+      <div className="p-4 space-y-3">
+        <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
+        <div className="flex justify-center gap-1.5 flex-wrap">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+            <div key={n} className="w-9 h-9 rounded-xl bg-zinc-700 text-zinc-300 text-sm font-bold flex items-center justify-center">
+              {n}
+            </div>
+          ))}
+        </div>
+        <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-zinc-800 text-zinc-600 cursor-not-allowed">
+          Sonraki <ChevronRight className="w-4 h-4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RatingCard() {
   const uploaded = useUploadGate();
   if (!uploaded) return (
     <UploadGate label="Oy vermek için önce bir fotoğraf yükle">
-      <div className="rounded-2xl border border-zinc-700 bg-zinc-900 h-96" />
+      <Preview />
     </UploadGate>
   );
   return <Inner />;
