@@ -56,7 +56,11 @@ export default function LeaderBoard() {
   useEffect(() => {
     fetchLeader();
     const interval = setInterval(fetchLeader, 15_000);
-    return () => clearInterval(interval);
+    window.addEventListener('zirve:leaderChanged', fetchLeader);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('zirve:leaderChanged', fetchLeader);
+    };
   }, [fetchLeader]);
 
   if (loading) return <div className="animate-pulse bg-zinc-800 rounded-2xl h-64 w-full" />;

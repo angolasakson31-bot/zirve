@@ -96,6 +96,7 @@ export default function UploadForm() {
       if (!res.ok) setError(data.error || 'Hata oluştu.');
       else {
         markUploaded();
+        window.dispatchEvent(new CustomEvent('zirve:photoUploaded'));
         setTrackingCode(data.trackingCode);
         setPreview(null);
         setFile(null);

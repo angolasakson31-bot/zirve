@@ -68,6 +68,17 @@ function Inner() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (!noMore) return;
+    const handler = () => load();
+    window.addEventListener('zirve:photoUploaded', handler);
+    const interval = setInterval(load, 30_000);
+    return () => {
+      window.removeEventListener('zirve:photoUploaded', handler);
+      clearInterval(interval);
+    };
+  }, [noMore, load]);
+
   const vote = async (score: number) => {
     if (!photo || selected) return;
     setSelected(score);
@@ -83,6 +94,9 @@ function Inner() {
         setAverage(data.photo.average);
         setVoteCount(data.photo.voteCount);
         markVoted();
+        if (data.leaderChanged) {
+          window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
+        }
       }
     } catch {
       // sessizce devam et
