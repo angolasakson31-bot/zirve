@@ -41,19 +41,13 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Nasıl Çalışır */}
+      {/* Slogan */}
       <div className="border-b border-zinc-800/50">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-x-6 gap-y-1">
-          {[
-            'Fotoğrafını yükle → takip kodunu al',
-            'Rastgele fotolara puan ver',
-            'En yüksek skor günün lideri',
-            'Kodunla kendi puanını gör',
-          ].map((text, i) => (
-            <span key={i} className="text-zinc-500 text-xs">
-              <span className="text-amber-400 font-bold mr-1">{i + 1}.</span>{text}
-            </span>
-          ))}
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <p className="text-zinc-500 text-xs">
+            Fotoğrafını yükle, puanladırlar, zirvede kal ve sana ulaşsınlar —{' '}
+            <span className="text-amber-400">kimi puanlatmak istiyorsan tek yükle, insanlara sun.</span>
+          </p>
         </div>
       </div>
 
