@@ -25,8 +25,14 @@ interface PhotoGroup {
 
 const SESSION_KEY = 'zirve_admin_pw';
 
+const TR_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+function toTrDateStr(date: Date): string {
+  return new Date(date.getTime() + TR_OFFSET_MS).toISOString().slice(0, 10);
+}
+
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return toTrDateStr(new Date());
 }
 
 function groupPhotosByDate(photos: AdminPhoto[]): PhotoGroup[] {
@@ -34,7 +40,7 @@ function groupPhotosByDate(photos: AdminPhoto[]): PhotoGroup[] {
   const map = new Map<string, AdminPhoto[]>();
 
   for (const p of photos) {
-    const key = new Date(p.createdAt).toISOString().slice(0, 10);
+    const key = toTrDateStr(new Date(p.createdAt));
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(p);
   }
