@@ -45,8 +45,8 @@ export default function Home() {
       <div className="border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <p className="text-zinc-500 text-xs">
-            Fotoğrafını yükle, puanladırlar, zirvede kal ve sana ulaşsınlar —{' '}
-            <span className="text-amber-400">kimi puanlatmak istiyorsan tek yükle, insanlara sun.</span>
+            Fotoğrafını yükle, puanlasınlar, zirvede kal ve sana fotoğrafın için ulaşsınlar —{' '}
+            <span className="text-amber-400">kimi puanlatmak istiyorsan yükle ve insanlara sun...</span>
           </p>
         </div>
       </div>
