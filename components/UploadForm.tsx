@@ -187,7 +187,7 @@ export default function UploadForm() {
             value={contactInfo}
             onChange={e => setContactInfo(e.target.value)}
             maxLength={200}
-            placeholder="Instagram, telefon, e-posta vb."
+            placeholder="Telegram, Instagram, telefon, e-posta vb."
             className="w-full bg-zinc-800 border border-zinc-700 focus:border-amber-500/70 outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 transition"
           />
         </div>
