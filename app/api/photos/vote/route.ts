@@ -25,18 +25,32 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const photo = await Photo.findById(photoId);
-    if (!photo) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
-    if (photo.isArchived) return NextResponse.json({ error: 'Arşivlenmiş fotoğrafa oy verilemez.' }, { status: 403 });
-    if (photo.isChampion) return NextResponse.json({ error: 'Şampiyona oy verilemez.' }, { status: 403 });
-    if (photo.voters.includes(ip)) return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
+    // Atomik güncelleme: voters $ne kontrolü race condition'ı önler
+    const incFields: Record<string, number> = {
+      totalScore: score,
+      voteCount: 1,
+    };
+    if (score >= 6) incFields.likeCount = 1;
+    else incFields.dislikeCount = 1;
 
-    photo.totalScore += score;
-    photo.voteCount += 1;
+    const photo = await Photo.findOneAndUpdate(
+      { _id: photoId, voters: { $ne: ip }, isArchived: false, isChampion: false },
+      { $inc: incFields, $push: { voters: ip } },
+      { new: true }
+    );
+
+    if (!photo) {
+      // Neden başarısız? Daha açıklayıcı hata dön
+      const existing = await Photo.findById(photoId);
+      if (!existing) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
+      if (existing.isArchived) return NextResponse.json({ error: 'Arşivlenmiş fotoğrafa oy verilemez.' }, { status: 403 });
+      if (existing.isChampion) return NextResponse.json({ error: 'Şampiyona oy verilemez.' }, { status: 403 });
+      if (existing.voters.includes(ip)) return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
+      return NextResponse.json({ error: 'Oy verilemedi.' }, { status: 400 });
+    }
+
+    // Average'ı güncelle (atomik yazıdan sonra)
     photo.average = photo.totalScore / photo.voteCount;
-    photo.voters.push(ip);
-    if (score >= 6) photo.likeCount += 1;
-    else photo.dislikeCount += 1;
     await photo.save();
 
     let leaderChanged = false;
@@ -44,10 +58,10 @@ export async function POST(req: NextRequest) {
       const currentLeader = await Photo.findOne({ isChampion: true });
       const photoScore = weightedScore(photo.average, photo.voteCount);
       const leaderScore = currentLeader
-        ? weightedScore((currentLeader as any).average, (currentLeader as any).voteCount)
+        ? weightedScore(currentLeader.average, currentLeader.voteCount)
         : -1;
-      const isNewLeader = photoScore > leaderScore;
-      if (isNewLeader && currentLeader?._id.toString() !== photo._id.toString()) {
+
+      if (photoScore > leaderScore && currentLeader?._id.toString() !== photo._id.toString()) {
         if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
         photo.isChampion = true;
         await photo.save();

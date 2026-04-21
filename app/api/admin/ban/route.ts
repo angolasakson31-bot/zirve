@@ -11,9 +11,11 @@ function auth(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
   const { ip } = await req.json();
-  if (!ip) return NextResponse.json({ error: 'IP gerekli.' }, { status: 400 });
+  if (!ip || typeof ip !== 'string') return NextResponse.json({ error: 'IP gerekli.' }, { status: 400 });
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-f:]+$/i;
+  if (!ipRegex.test(ip.trim())) return NextResponse.json({ error: 'Geçersiz IP formatı.' }, { status: 400 });
   await connectDB();
-  await BannedIP.updateOne({ ip }, { ip }, { upsert: true });
+  await BannedIP.updateOne({ ip: ip.trim() }, { ip: ip.trim() }, { upsert: true });
   return NextResponse.json({ ok: true });
 }
 

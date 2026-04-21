@@ -24,8 +24,12 @@ export async function POST(req: NextRequest) {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
+  const LEADER_THRESHOLD = 3;
+
   const candidates = await Photo.find({
     championDate: null,
+    isArchived: false,
+    voteCount: { $gte: LEADER_THRESHOLD },
     createdAt: { $gte: startOfDay },
   }).select('average voteCount');
 

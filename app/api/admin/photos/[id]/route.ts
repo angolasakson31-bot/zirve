@@ -25,8 +25,15 @@ export async function DELETE(
   await photo.deleteOne();
 
   if (wasChampion) {
-    const next = await Photo.findOne({ isChampion: false, championDate: null })
-      .sort({ average: -1, voteCount: -1 });
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const next = await Photo.findOne({
+      isChampion: false,
+      isArchived: false,
+      championDate: null,
+      voteCount: { $gte: 3 },
+      createdAt: { $gte: startOfDay },
+    }).sort({ average: -1, voteCount: -1 });
     if (next) {
       next.isChampion = true;
       await next.save();

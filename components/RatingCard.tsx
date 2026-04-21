@@ -35,8 +35,16 @@ function Inner() {
   const [hover, setHover]     = useState(0);
   const seenIds = useRef<Set<string>>(new Set());
   const initialized = useRef(false);
+  const lastDate = useRef(todayKey());
 
   const load = useCallback(async () => {
+    // Gün değiştiyse seen listesini sıfırla
+    const currentDate = todayKey();
+    if (lastDate.current !== currentDate) {
+      seenIds.current = new Set();
+      initialized.current = false;
+      lastDate.current = currentDate;
+    }
     if (!initialized.current) {
       seenIds.current = loadSeenFromStorage();
       initialized.current = true;

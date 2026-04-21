@@ -11,6 +11,8 @@ function auth(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
+  if (req.headers.get('x-confirm') !== 'DELETE_ALL')
+    return NextResponse.json({ error: 'Onay başlığı eksik.' }, { status: 400 });
 
   await connectDB();
   const all = await Photo.find({}).select('cloudinaryId');
