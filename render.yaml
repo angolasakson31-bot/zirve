@@ -29,7 +29,7 @@ services:
     name: zirve-daily-reset
     runtime: node
     nodeVersion: 20.19.0
-    schedule: "0 0 * * *"
+    schedule: "0 21 * * *"
     buildCommand: echo "ok"
     startCommand: node -e "fetch('https://zirve-app-node.onrender.com/api/cron/daily-reset',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET}}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d))).catch(console.error)"
     envVars:

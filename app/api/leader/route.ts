@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
 }
 
 function getYesterdayStr() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  const TZ_OFFSET_MS = 3 * 60 * 60 * 1000;
+  const todayTr = new Date(Date.now() + TZ_OFFSET_MS).toISOString().split('T')[0];
+  const [y, m, d] = todayTr.split('-').map(Number);
+  const yesterday = new Date(Date.UTC(y, m - 1, d - 1));
+  return yesterday.toISOString().split('T')[0];
 }
