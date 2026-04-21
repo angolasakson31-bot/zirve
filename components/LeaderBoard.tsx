@@ -56,7 +56,7 @@ export default function LeaderBoard() {
 
   useEffect(() => {
     fetchLeader();
-    const interval = setInterval(fetchLeader, 15_000);
+    const interval = setInterval(fetchLeader, 5_000);
     window.addEventListener('zirve:leaderChanged', fetchLeader);
     return () => {
       clearInterval(interval);
