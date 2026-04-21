@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Trophy, Star } from 'lucide-react';
+import { Trophy, Star, Clock } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
+import UploadGate from '@/components/UploadGate';
 
 interface LeaderPhoto {
   _id: string;
@@ -83,18 +84,28 @@ export default function LeaderBoard() {
             <Trophy className="w-4 h-4 text-zinc-400" />
             <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Şampiyonu</h2>
           </div>
-          <div className="relative">
-            <ProtectedImage src={yesterday.url} alt="Dünün şampiyonu" maxHeight={360} dimmed />
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
-              <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
-                <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>
+          <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
+            <div className="relative">
+              <ProtectedImage src={yesterday.url} alt="Dünün şampiyonu" maxHeight={360} dimmed />
+              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
+                <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                  <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
+                  <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>
+                </div>
+                <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1.5">{yesterday.voteCount} oy</span>
               </div>
-              <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1.5">{yesterday.voteCount} oy</span>
             </div>
-          </div>
+          </UploadGate>
         </div>
       )}
+
+      {/* Reset saati */}
+      <div className="flex items-center gap-1.5 px-1">
+        <Clock className="w-3 h-3 text-zinc-600 flex-shrink-0" />
+        <p className="text-zinc-600 text-xs">
+          Liderlik tablosu her gün saat <span className="text-zinc-500">03:00</span>'da sıfırlanır ve yeni yarış başlar.
+        </p>
+      </div>
     </div>
   );
 }
