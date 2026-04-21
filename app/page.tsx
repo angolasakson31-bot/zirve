@@ -3,6 +3,7 @@ import RatingCard from '@/components/RatingCard';
 import UploadForm from '@/components/UploadForm';
 import TrackCode from '@/components/TrackCode';
 import { Mountain, Zap } from 'lucide-react';
+import ShareButton from '@/components/ShareButton';
 
 export default function Home() {
   return (
@@ -19,6 +20,9 @@ export default function Home() {
           <div className="hidden sm:flex items-center gap-1.5 bg-zinc-800/60 rounded-full px-3 py-1 ml-1">
             <Zap className="w-3 h-3 text-amber-400" />
             <span className="text-zinc-400 text-xs">Körlemesine puan ver, zirveyi belirle</span>
+          </div>
+          <div className="ml-auto">
+            <ShareButton />
           </div>
         </div>
       </header>
