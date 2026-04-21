@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import { toTurkishDateStr } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const leader = await Photo.findOne({ isChampion: true });
     if (leader) {
-      leader.championDate = (leader.createdAt as Date).toISOString().split('T')[0];
+      leader.championDate = toTurkishDateStr(leader.createdAt as Date);
       leader.isChampion = false;
       await leader.save();
     }

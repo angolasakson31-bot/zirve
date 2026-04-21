@@ -103,7 +103,7 @@ export default function LeaderBoard() {
       <div className="flex items-center gap-1.5 px-1">
         <Clock className="w-3 h-3 text-zinc-600 flex-shrink-0" />
         <p className="text-zinc-600 text-xs">
-          Liderlik tablosu her gün saat <span className="text-zinc-500">03:00</span>'da sıfırlanır ve yeni yarış başlar.
+          Liderlik tablosu her gün gece <span className="text-zinc-500">00:00</span>'da sıfırlanır ve yeni yarış başlar.
         </p>
       </div>
     </div>
