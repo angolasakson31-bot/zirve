@@ -127,7 +127,7 @@ function Inner() {
 
       {photo.contactInfo && (
         <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-900/80">
-          <p className="text-zinc-500 text-xs mb-0.5">İletişim</p>
+          <p className="text-zinc-500 text-xs mb-0.5">İletişim — Zirvede kal ve herkes fotoğraf için sana ulaşsın</p>
           <p className="text-zinc-300 text-sm break-all">{photo.contactInfo}</p>
         </div>
       )}
