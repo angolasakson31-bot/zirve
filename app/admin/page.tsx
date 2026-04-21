@@ -123,15 +123,14 @@ export default function AdminPage() {
     setRecalcing(false);
   };
 
-  const downloadPhoto = async (url: string, code: string) => {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const ext = blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg';
+  const downloadPhoto = (url: string, code: string) => {
+    // Insert fl_attachment into Cloudinary URL to force browser download
+    const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `zirve-${code}.${ext}`;
+    a.href = downloadUrl;
+    a.download = `zirve-${code}`;
+    a.target = '_blank';
     a.click();
-    URL.revokeObjectURL(a.href);
   };
 
   const banIp = async (ip: string) => {
