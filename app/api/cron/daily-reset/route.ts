@@ -13,13 +13,9 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
     const leader = await Photo.findOne({ isChampion: true });
     if (leader) {
-      leader.championDate = yesterdayStr;
+      leader.championDate = (leader.createdAt as Date).toISOString().split('T')[0];
       leader.isChampion = false;
       await leader.save();
     }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
+import { maybeRunDailyReset } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
 
   try {
     await connectDB();
+    await maybeRunDailyReset();
 
     const leader = await Photo.findOne({ isChampion: true }).select('url average voteCount createdAt contactInfo');
     const yesterday = await Photo.findOne({ championDate: getYesterdayStr() }).select('url average voteCount championDate');
