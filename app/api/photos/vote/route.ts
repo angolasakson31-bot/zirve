@@ -34,17 +34,15 @@ export async function POST(req: NextRequest) {
     else incFields.dislikeCount = 1;
 
     const photo = await Photo.findOneAndUpdate(
-      { _id: photoId, voters: { $ne: ip }, isArchived: false, isChampion: false },
+      { _id: photoId, voters: { $ne: ip }, isArchived: false },
       { $inc: incFields, $push: { voters: ip } },
       { new: true }
     );
 
     if (!photo) {
-      // Neden başarısız? Daha açıklayıcı hata dön
       const existing = await Photo.findById(photoId);
       if (!existing) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
       if (existing.isArchived) return NextResponse.json({ error: 'Arşivlenmiş fotoğrafa oy verilemez.' }, { status: 403 });
-      if (existing.isChampion) return NextResponse.json({ error: 'Şampiyona oy verilemez.' }, { status: 403 });
       if (existing.voters.includes(ip)) return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
       return NextResponse.json({ error: 'Oy verilemedi.' }, { status: 400 });
     }
@@ -57,15 +55,21 @@ export async function POST(req: NextRequest) {
     if (photo.voteCount >= LEADER_THRESHOLD) {
       const currentLeader = await Photo.findOne({ isChampion: true });
       const photoScore = weightedScore(photo.average, photo.voteCount);
-      const leaderScore = currentLeader
-        ? weightedScore(currentLeader.average, currentLeader.voteCount)
-        : -1;
 
-      if (photoScore > leaderScore && currentLeader?._id.toString() !== photo._id.toString()) {
-        if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
-        photo.isChampion = true;
-        await photo.save();
-        leaderChanged = true;
+      // Zaten lider ise güncellemeye gerek yok
+      if (currentLeader?._id.toString() === photo._id.toString()) {
+        // Skor güncellendi, lider aynı kaldı
+      } else {
+        const leaderScore = currentLeader
+          ? weightedScore(currentLeader.average, currentLeader.voteCount)
+          : -1;
+
+        if (photoScore > leaderScore) {
+          if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
+          photo.isChampion = true;
+          await photo.save();
+          leaderChanged = true;
+        }
       }
     }
 
