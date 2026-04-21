@@ -69,14 +69,20 @@ function Inner() {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (!noMore) return;
-    const handler = () => load();
-    window.addEventListener('zirve:photoUploaded', handler);
-    const interval = setInterval(load, 30_000);
-    return () => {
-      window.removeEventListener('zirve:photoUploaded', handler);
-      clearInterval(interval);
+    const handler = () => {
+      // Kendi yüklediğimiz fotoğraf hariç, seen listesini temizle ve yeniden dene
+      seenIds.current = new Set();
+      saveSeenToStorage(seenIds.current);
+      load();
     };
+    window.addEventListener('zirve:photoUploaded', handler);
+    return () => window.removeEventListener('zirve:photoUploaded', handler);
+  }, [load]);
+
+  useEffect(() => {
+    if (!noMore) return;
+    const interval = setInterval(load, 30_000);
+    return () => clearInterval(interval);
   }, [noMore, load]);
 
   const vote = async (score: number) => {

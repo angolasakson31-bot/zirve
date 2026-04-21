@@ -10,41 +10,37 @@ interface Props {
 
 export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
-    const img = new window.Image();
-    img.crossOrigin = 'anonymous';
-    img.src = src;
-    img.onload = () => {
-      setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      ctx.drawImage(img, 0, 0);
-
-      // Diagonal watermark grid
-      const step = Math.max(120, img.naturalWidth / 4);
-      const fontSize = Math.max(13, img.naturalWidth / 20);
-      ctx.save();
-      ctx.globalAlpha = 0.13;
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${fontSize}px sans-serif`;
-      ctx.rotate(-Math.PI / 6);
-      for (let y = -img.naturalHeight * 2; y < img.naturalHeight * 2; y += step)
-        for (let x = -img.naturalWidth * 2; x < img.naturalWidth * 2; x += step)
-          ctx.fillText('ZİRVE', x, y);
-      ctx.restore();
-    };
+    setLoaded(false);
+    setSize(null);
   }, [src]);
+
+  const drawWatermark = (w: number, h: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = w;
+    canvas.height = h;
+    const step = Math.max(120, w / 4);
+    const fontSize = Math.max(13, w / 20);
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.rotate(-Math.PI / 6);
+    for (let y = -h * 2; y < h * 2; y += step)
+      for (let x = -w * 2; x < w * 2; x += step)
+        ctx.fillText('ZİRVE', x, y);
+    ctx.restore();
+  };
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-inherit select-none"
+      className="relative w-full overflow-hidden select-none"
       style={{ maxHeight }}
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
@@ -61,17 +57,37 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         }}
       />
 
-      {/* Tam resim — canvas ile filigranlanmış */}
       <div className="relative flex items-center justify-center" style={{ maxHeight }}>
-        {!naturalSize && (
+        {!loaded && (
           <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
         )}
-        <canvas
-          ref={canvasRef}
-          aria-label={alt}
+
+        {/* Gerçek fotoğraf — img tag, CORS sorunu yok */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
           className={`relative max-w-full object-contain ${dimmed ? 'opacity-80' : ''}`}
-          style={{ maxHeight, display: naturalSize ? 'block' : 'none' }}
+          style={{ maxHeight, display: loaded ? 'block' : 'none' }}
+          onLoad={e => {
+            const el = e.currentTarget;
+            setLoaded(true);
+            setSize({ w: el.naturalWidth, h: el.naturalHeight });
+            drawWatermark(el.naturalWidth, el.naturalHeight);
+          }}
+          onError={() => setLoaded(true)}
+          draggable={false}
         />
+
+        {/* Filigran canvas — fotoğrafın üstünde, sadece metin çizer */}
+        {size && (
+          <canvas
+            ref={canvasRef}
+            aria-hidden
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ maxHeight }}
+          />
+        )}
       </div>
 
       {/* Tıklama/sürükleme engeli */}
