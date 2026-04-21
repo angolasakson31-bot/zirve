@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive } from 'lucide-react';
+import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download } from 'lucide-react';
 import Image from 'next/image';
 
 interface AdminPhoto {
@@ -13,6 +13,7 @@ interface AdminPhoto {
   isArchived: boolean;
   createdAt: string;
   trackingCode: string;
+  contactInfo?: string;
 }
 
 interface PhotoGroup {
@@ -122,6 +123,17 @@ export default function AdminPage() {
     setRecalcing(false);
   };
 
+  const downloadPhoto = async (url: string, code: string) => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const ext = blob.type.includes('png') ? 'png' : blob.type.includes('webp') ? 'webp' : 'jpg';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `zirve-${code}.${ext}`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   const banIp = async (ip: string) => {
     if (!confirm(`${ip} adresini engellemek istiyor musun?`)) return;
     setBanningIps(s => new Set(s).add(ip));
@@ -229,7 +241,18 @@ export default function AdminPage() {
                       <span>{photo.voteCount} oy</span>
                     </div>
                     <div className="text-xs text-zinc-600 font-mono truncate">{photo.uploaderIp}</div>
+                    {photo.contactInfo && (
+                      <div className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-2 py-1.5 break-all">
+                        {photo.contactInfo}
+                      </div>
+                    )}
                     <div className="flex gap-1.5 pt-1">
+                      <button
+                        onClick={() => downloadPhoto(photo.url, photo.trackingCode)}
+                        className="flex items-center justify-center gap-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg py-1.5 px-2 text-zinc-300 text-xs transition"
+                      >
+                        <Download className="w-3 h-3" />
+                      </button>
                       <button
                         onClick={() => deletePhoto(photo)}
                         disabled={deletingIds.has(photo._id)}
