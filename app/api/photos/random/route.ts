@@ -42,10 +42,10 @@ export async function GET(req: NextRequest) {
     const [photo] = await Photo.aggregate([
       { $match: match },
       { $sample: { size: 1 } },
+      { $project: { _id: 1, url: 1, albumUrls: 1, average: 1, voteCount: 1, createdAt: 1 } },
     ]);
 
     if (!photo) return NextResponse.json({ photo: null });
-    // albumUrls aggregate döndürmeyebilir, güvenli al
     return NextResponse.json({ photo: { ...photo, albumUrls: photo.albumUrls ?? [] } });
   } catch (err) {
     console.error('random route error:', err);

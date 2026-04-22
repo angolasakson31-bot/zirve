@@ -221,6 +221,11 @@ export default function AdminPage() {
 
   const groups = groupPhotosByDate(photos);
 
+  const todayPhotos = groups.find(g => g.isToday)?.photos ?? [];
+  const top5 = [...todayPhotos]
+    .sort((a, b) => (b.average * Math.log(b.voteCount + 1)) - (a.average * Math.log(a.voteCount + 1)))
+    .slice(0, 5);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-8">
       {toast && (
@@ -247,6 +252,36 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Bugünün Top 5 */}
+        {top5.length > 0 && (
+          <div className="mb-8 bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 bg-amber-500/5 border-b border-amber-500/20">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span className="text-sm font-bold text-amber-400 uppercase tracking-wide">Bugünün Sıralaması</span>
+            </div>
+            <div className="divide-y divide-zinc-800">
+              {top5.map((photo, i) => (
+                <div key={photo._id} className={`flex items-center gap-3 px-4 py-3 ${photo.isChampion ? 'bg-amber-500/5' : ''}`}>
+                  <span className={`text-lg font-black w-7 text-center flex-shrink-0 ${i === 0 ? 'text-amber-400' : 'text-zinc-500'}`}>{i + 1}.</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photo.url} alt={photo.trackingCode} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 cursor-zoom-in" onClick={() => setLightbox(photo.url)} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-bold">{photo.average.toFixed(2)}</span>
+                      <span className="text-zinc-500 text-xs">{photo.voteCount} oy</span>
+                      {photo.isChampion && <span className="text-xs bg-amber-400 text-black font-bold px-1.5 py-0.5 rounded-full">Lider</span>}
+                    </div>
+                    <div className="text-zinc-600 text-xs font-mono truncate">{photo.trackingCode}</div>
+                  </div>
+                  {photo.contactInfo && (
+                    <span className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-2 py-1 max-w-[120px] truncate flex-shrink-0">{photo.contactInfo}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Admin Fotoğraf Ekle */}
         <div className="mb-8 bg-zinc-900 border border-zinc-700 rounded-2xl p-5">
