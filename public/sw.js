@@ -1,5 +1,4 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
-self.addEventListener('fetch', (e) => {
-  e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));
-});
+// Tüm istekleri tarayıcıya bırak — CSP engelini önlemek için fetch yapmıyoruz
+self.addEventListener('fetch', () => {});
