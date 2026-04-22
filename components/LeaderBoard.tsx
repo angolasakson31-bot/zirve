@@ -94,22 +94,24 @@ export default function LeaderBoard() {
         </div>
         {leader ? (
           <div>
-            <AlbumViewer
-              urls={[leader.url, ...(leader.albumUrls ?? [])]}
-              maxHeight={520}
-              bottomOverlay={
-                <div className="flex items-center gap-2">
-                  <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
-                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
-                    <span className="text-zinc-400 text-sm">/ 10</span>
+            <UploadGate label="Günün lider namusunu görmek için fotoğraf yükle">
+              <AlbumViewer
+                urls={[leader.url, ...(leader.albumUrls ?? [])]}
+                maxHeight={520}
+                bottomOverlay={
+                  <div className="flex items-center gap-2">
+                    <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
+                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
+                      <span className="text-zinc-400 text-sm">/ 10</span>
+                    </div>
+                    <div className="bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-zinc-300 text-sm">
+                      {leader.voteCount} oy
+                    </div>
                   </div>
-                  <div className="bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-zinc-300 text-sm">
-                    {leader.voteCount} oy
-                  </div>
-                </div>
-              }
-            />
+                }
+              />
+            </UploadGate>
             {leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
           </div>
         ) : (
@@ -126,29 +128,31 @@ export default function LeaderBoard() {
           <div className="px-4 py-2 border-b border-zinc-800">
             <span className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Sıralama</span>
           </div>
-          <div className="flex gap-2 p-3">
-            {runnerUps.map((photo, i) => (
-              <div
-                key={photo._id}
-                className={`relative flex-1 rounded-xl overflow-hidden transition-all duration-500 ${
-                  activeRunner === i
-                    ? 'ring-2 ring-amber-400 opacity-100 scale-105'
-                    : 'opacity-40 scale-100'
-                }`}
-                style={{ aspectRatio: '1' }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.url}
-                  alt={`${i + 2}. sıra`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none">
-                  {i + 2}.
+          <UploadGate label="Sıralamayı görmek için fotoğraf yükle">
+            <div className="flex gap-2 p-3">
+              {runnerUps.map((photo, i) => (
+                <div
+                  key={photo._id}
+                  className={`relative flex-1 rounded-xl overflow-hidden transition-all duration-500 ${
+                    activeRunner === i
+                      ? 'ring-2 ring-amber-400 opacity-100 scale-105'
+                      : 'opacity-40 scale-100'
+                  }`}
+                  style={{ aspectRatio: '1' }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.url}
+                    alt={`${i + 2}. sıra`}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none">
+                    {i + 2}.
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </UploadGate>
         </div>
       )}
 
