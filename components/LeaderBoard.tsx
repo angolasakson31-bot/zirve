@@ -13,6 +13,8 @@ interface LeaderPhoto {
   contactInfo?: string;
 }
 
+const CONTACT_LABEL = 'Namusumu konuşmak için yazın';
+
 export default function LeaderBoard() {
   const [leader, setLeader] = useState<LeaderPhoto | null>(null);
   const [yesterday, setYesterday] = useState<LeaderPhoto | null>(null);
@@ -64,7 +66,7 @@ export default function LeaderBoard() {
             </div>
             {leader.contactInfo && (
               <div className="px-4 py-3 border-t border-amber-500/20 bg-amber-500/5">
-                <p className="text-amber-400/70 text-xs mb-0.5">İletişim — Namusunuzu zirveye taşıtın, size ulaşsınlar</p>
+                <p className="text-amber-400/70 text-xs mb-0.5">{CONTACT_LABEL}</p>
                 <p className="text-zinc-300 text-sm break-all">{leader.contactInfo}</p>
               </div>
             )}
@@ -96,6 +98,12 @@ export default function LeaderBoard() {
               </div>
             </div>
           </UploadGate>
+          {yesterday.contactInfo && (
+            <div className="px-4 py-3 border-t border-zinc-700 bg-zinc-800/50">
+              <p className="text-zinc-500 text-xs mb-0.5">{CONTACT_LABEL}</p>
+              <p className="text-zinc-300 text-sm break-all">{yesterday.contactInfo}</p>
+            </div>
+          )}
         </div>
       )}
 
