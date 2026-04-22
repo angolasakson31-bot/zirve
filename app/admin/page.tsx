@@ -15,6 +15,7 @@ interface AdminPhoto {
   createdAt: string;
   trackingCode: string;
   contactInfo?: string;
+  championDate?: string;
 }
 
 interface PhotoGroup {
@@ -347,12 +348,16 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {group.photos.map(photo => (
-                <div key={photo._id} className={`bg-zinc-900 rounded-xl border overflow-hidden ${photo.isArchived ? 'border-zinc-800/50 opacity-75' : 'border-zinc-800'}`}>
+              {group.photos.map(photo => {
+                const isDayChampion = group.isToday ? photo.isChampion : photo.championDate === group.dateKey;
+                return (
+                <div key={photo._id} className={`bg-zinc-900 rounded-xl border overflow-hidden ${isDayChampion ? 'border-amber-500/60' : photo.isArchived ? 'border-zinc-800/50 opacity-75' : 'border-zinc-800'}`}>
                   <div className="relative aspect-square bg-zinc-800 cursor-zoom-in" onClick={() => setLightbox(photo.url)}>
                     <Image src={photo.url} alt={photo.trackingCode} fill className="object-cover" unoptimized />
-                    {photo.isChampion && (
-                      <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg">Şampiyon</div>
+                    {isDayChampion && (
+                      <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+                        <Trophy className="w-3 h-3" /> Günün Şampiyonu
+                      </div>
                     )}
                     {photo.isArchived && (
                       <div className="absolute top-1.5 right-1.5 bg-zinc-700/90 text-zinc-300 text-xs px-2 py-0.5 rounded-lg flex items-center gap-1">
@@ -427,7 +432,8 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         ))}
