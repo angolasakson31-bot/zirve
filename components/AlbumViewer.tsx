@@ -4,6 +4,9 @@ import type { ReactNode } from 'react';
 import { Images } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 
+const WATERMARK_TEXT = 'zirve-app-node.onrender.com';
+const WATERMARK_ROW = `${WATERMARK_TEXT}   ${WATERMARK_TEXT}   ${WATERMARK_TEXT}`;
+
 interface Props {
   urls: string[];      // [mainUrl, ...albumUrls]
   maxHeight?: number;
@@ -52,10 +55,10 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.18 }}>
-                {Array.from({ length: 6 }, (_, r) => (
-                  <div key={r} style={{ position: 'absolute', top: `${r * 18 - 10}%`, left: '-20%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '7px', letterSpacing: '1px' }}>
-                    ZİRVE NAMUS &nbsp; ZİRVE NAMUS &nbsp; ZİRVE NAMUS
+              <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.22 }}>
+                {Array.from({ length: 8 }, (_, r) => (
+                  <div key={r} style={{ position: 'absolute', top: `${r * 14 - 10}%`, left: '-30%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '6px', letterSpacing: '0.5px' }}>
+                    {WATERMARK_TEXT}
                   </div>
                 ))}
               </div>
@@ -78,9 +81,9 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
               draggable={false}
             />
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-xl" style={{ opacity: 0.13 }}>
-              {Array.from({ length: 12 }, (_, i) => (
-                <div key={i} style={{ position: 'absolute', top: `${i * 9 - 5}%`, left: '-10%', transform: 'rotate(-25deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '18px', letterSpacing: '4px' }}>
-                  {'ZİRVE NAMUS   ZİRVE NAMUS   ZİRVE NAMUS   ZİRVE NAMUS   ZİRVE NAMUS'}
+              {Array.from({ length: 14 }, (_, i) => (
+                <div key={i} style={{ position: 'absolute', top: `${i * 8 - 5}%`, left: '-10%', transform: 'rotate(-25deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '16px', letterSpacing: '2px' }}>
+                  {WATERMARK_ROW}
                 </div>
               ))}
             </div>

@@ -95,7 +95,7 @@ export default function LeaderBoard() {
         <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
           <div className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 border-b border-amber-500/20">
             <Trophy className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-            <h2 className="font-bold text-amber-400 text-xs uppercase whitespace-nowrap overflow-hidden text-ellipsis">Günün Lideri</h2>
+            <h2 className="font-bold text-amber-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Günün Lider Namusu</h2>
           </div>
           {leader ? (
             <div>
@@ -131,7 +131,7 @@ export default function LeaderBoard() {
           <div className="rounded-2xl overflow-hidden border border-zinc-700 bg-zinc-900">
             <div className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border-b border-zinc-700">
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-              <h2 className="font-semibold text-zinc-400 text-xs uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Lideri</h2>
+              <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Lider Namusu</h2>
             </div>
             <UploadGate mini>
               <AlbumViewer
@@ -187,10 +187,10 @@ export default function LeaderBoard() {
                 <div className="w-full h-full" style={!uploaded ? { filter: 'blur(4px)' } : undefined}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.18 }}>
-                    {Array.from({ length: 6 }, (_, r) => (
-                      <div key={r} style={{ position: 'absolute', top: `${r * 18 - 10}%`, left: '-20%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '7px', letterSpacing: '1px' }}>
-                        ZİRVE NAMUS &nbsp; ZİRVE NAMUS &nbsp; ZİRVE NAMUS
+                  <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.22 }}>
+                    {Array.from({ length: 8 }, (_, r) => (
+                      <div key={r} style={{ position: 'absolute', top: `${r * 14 - 10}%`, left: '-30%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '6px', letterSpacing: '0.5px' }}>
+                        zirve-app-node.onrender.com
                       </div>
                     ))}
                   </div>
