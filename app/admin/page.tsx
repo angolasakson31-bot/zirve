@@ -69,6 +69,7 @@ export default function AdminPage() {
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [banningIps, setBanningIps] = useState<Set<string>>(new Set());
   const [recalcing, setRecalcing] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -226,7 +227,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {group.photos.map(photo => (
                 <div key={photo._id} className={`bg-zinc-900 rounded-xl border overflow-hidden ${photo.isArchived ? 'border-zinc-800/50 opacity-75' : 'border-zinc-800'}`}>
-                  <div className="relative aspect-square bg-zinc-800">
+                  <div className="relative aspect-square bg-zinc-800 cursor-zoom-in" onClick={() => setLightbox(photo.url)}>
                     <Image src={photo.url} alt={photo.trackingCode} fill className="object-cover" unoptimized />
                     {photo.isChampion && (
                       <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg">
@@ -284,6 +285,16 @@ export default function AdminPage() {
           <p className="text-center text-zinc-600 py-20">Henüz fotoğraf yok.</p>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightbox(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="Tam boyut" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl" />
+        </div>
+      )}
     </div>
   );
 }
