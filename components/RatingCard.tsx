@@ -245,7 +245,7 @@ function Preview() {
 export default function RatingCard() {
   const uploaded = useUploadGate();
   if (!uploaded) return (
-    <UploadGate label="Oy vermek için önce bir fotoğraf yükle">
+    <UploadGate label="Oy vermek için önce bir fotoğraf yükle" strong>
       <Preview />
     </UploadGate>
   );

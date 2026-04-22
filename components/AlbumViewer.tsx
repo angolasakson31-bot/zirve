@@ -52,6 +52,13 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.18 }}>
+                {Array.from({ length: 6 }, (_, r) => (
+                  <div key={r} style={{ position: 'absolute', top: `${r * 18 - 10}%`, left: '-20%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '7px', letterSpacing: '1px' }}>
+                    ZİRVE NAMUS &nbsp; ZİRVE NAMUS &nbsp; ZİRVE NAMUS
+                  </div>
+                ))}
+              </div>
             </button>
           ))}
         </div>

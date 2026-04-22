@@ -5,16 +5,28 @@ import { Lock } from 'lucide-react';
 interface Props {
   children: React.ReactNode;
   label?: string;
+  blurOnly?: boolean;
+  strong?: boolean;
 }
 
-export default function UploadGate({ children, label }: Props) {
+export default function UploadGate({ children, label, blurOnly, strong }: Props) {
   const uploaded = useUploadGate();
 
   if (uploaded) return <>{children}</>;
 
+  if (blurOnly) {
+    return (
+      <div className="rounded-2xl overflow-hidden pointer-events-none select-none" style={{ filter: 'blur(8px)', opacity: 0.6 }}>
+        {children}
+      </div>
+    );
+  }
+
+  const blurAmount = strong ? '14px' : '6px';
+
   return (
     <div className="relative rounded-2xl overflow-hidden">
-      <div className="pointer-events-none select-none brightness-75 saturate-50" style={{filter:'blur(5px)'}}>
+      <div className="pointer-events-none select-none brightness-75 saturate-50" style={{ filter: `blur(${blurAmount})` }}>
         {children}
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 bg-black/50">
@@ -24,9 +36,6 @@ export default function UploadGate({ children, label }: Props) {
         <div className="text-center px-6">
           <p className="text-white font-bold text-base">
             {label ?? 'Görmek için fotoğraf yükle'}
-          </p>
-          <p className="text-amber-400 text-sm font-medium mt-1">
-            ↑ Sol taraftan fotoğrafını yükle
           </p>
           <p className="text-zinc-400 text-xs mt-1">
             Fotoğraf yükleyenler birbirini puanlayabilir.
