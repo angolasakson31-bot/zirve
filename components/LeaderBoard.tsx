@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
+import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface LeaderPhoto {
   _id: string;
@@ -55,6 +56,7 @@ export default function LeaderBoard() {
   const [runnerUps, setRunnerUps] = useState<RunnerUp[]>([]);
   const [activeRunner, setActiveRunner] = useState(0);
   const [loading, setLoading] = useState(true);
+  const uploaded = useUploadGate();
 
   const fetchLeader = useCallback(async () => {
     const res = await fetch('/api/leader', { cache: 'no-store' });
@@ -87,7 +89,7 @@ export default function LeaderBoard() {
   return (
     <div className="space-y-5">
       {/* Günün + Dünün yanyana */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-3">
 
         {/* Günün Lider Namusu */}
         <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
@@ -100,7 +102,7 @@ export default function LeaderBoard() {
               <UploadGate label="Günün lider namusunu görmek için fotoğraf yükle">
                 <AlbumViewer
                   urls={[leader.url, ...(leader.albumUrls ?? [])]}
-                  maxHeight={420}
+                  maxHeight={320}
                   bottomOverlay={
                     <div className="flex items-center gap-2">
                       <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
@@ -135,7 +137,7 @@ export default function LeaderBoard() {
             <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
               <AlbumViewer
                 urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
-                maxHeight={420}
+                maxHeight={320}
                 dimmed
                 bottomOverlay={
                   <div className="flex items-center gap-2">
@@ -164,18 +166,18 @@ export default function LeaderBoard() {
           <div className="px-4 py-2 border-b border-zinc-800">
             <span className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Sıralama</span>
           </div>
-          <UploadGate blurOnly>
-            <div className="flex gap-2 p-3">
-              {runnerUps.map((photo, i) => (
-                <div
-                  key={photo._id}
-                  className={`relative flex-1 rounded-xl overflow-hidden transition-all duration-500 ${
-                    activeRunner === i
-                      ? 'ring-2 ring-amber-400 opacity-100 scale-105'
-                      : 'opacity-40 scale-100'
-                  }`}
-                  style={{ aspectRatio: '1' }}
-                >
+          <div className="flex gap-2 p-3">
+            {runnerUps.map((photo, i) => (
+              <div
+                key={photo._id}
+                className={`relative flex-1 rounded-xl overflow-hidden transition-all duration-500 ${
+                  activeRunner === i
+                    ? 'ring-2 ring-amber-400 opacity-100 scale-105'
+                    : 'opacity-40 scale-100'
+                }`}
+                style={{ aspectRatio: '1' }}
+              >
+                <div className="w-full h-full" style={!uploaded ? { filter: 'blur(4px)' } : undefined}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.18 }}>
@@ -185,13 +187,13 @@ export default function LeaderBoard() {
                       </div>
                     ))}
                   </div>
-                  <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none">
-                    {i + 2}.
-                  </div>
                 </div>
-              ))}
-            </div>
-          </UploadGate>
+                <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none z-10">
+                  {i + 2}.
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

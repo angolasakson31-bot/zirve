@@ -16,13 +16,13 @@ export default function UploadGate({ children, label, blurOnly, strong }: Props)
 
   if (blurOnly) {
     return (
-      <div className="rounded-2xl overflow-hidden pointer-events-none select-none" style={{ filter: 'blur(8px)', opacity: 0.6 }}>
+      <div className="rounded-2xl overflow-hidden pointer-events-none select-none" style={{ filter: 'blur(4px)', opacity: 0.7 }}>
         {children}
       </div>
     );
   }
 
-  const blurAmount = strong ? '14px' : '6px';
+  const blurAmount = strong ? '10px' : '4px';
 
   return (
     <div className="relative rounded-2xl overflow-hidden">
@@ -33,14 +33,9 @@ export default function UploadGate({ children, label, blurOnly, strong }: Props)
         <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-amber-500/40 flex items-center justify-center">
           <Lock className="w-5 h-5 text-amber-400" />
         </div>
-        <div className="text-center px-6">
-          <p className="text-white font-bold text-base">
-            {label ?? 'Görmek için fotoğraf yükle'}
-          </p>
-          <p className="text-zinc-400 text-xs mt-1">
-            Fotoğraf yükleyenler birbirini puanlayabilir.
-          </p>
-        </div>
+        <p className="text-white font-bold text-base text-center px-6">
+          {label ?? 'Görmek için fotoğraf yükle'}
+        </p>
       </div>
     </div>
   );
