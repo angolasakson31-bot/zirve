@@ -70,6 +70,7 @@ export default function AdminPage() {
   const [banningIps, setBanningIps] = useState<Set<string>>(new Set());
   const [recalcing, setRecalcing] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [votingId, setVotingId] = useState<string | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [uploadContact, setUploadContact] = useState('');
@@ -142,6 +143,25 @@ export default function AdminPage() {
       showToast(data.error || 'Yükleme başarısız.');
     }
     setUploading(false);
+  };
+
+  const adminVote = async (photoId: string, score: number) => {
+    setVotingId(photoId);
+    const res = await fetch('/api/admin/vote', {
+      method: 'POST', headers: headers(password), body: JSON.stringify({ photoId, score }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setPhotos(prev => prev.map(p =>
+        p._id === photoId
+          ? { ...p, average: data.photo.average, voteCount: data.photo.voteCount }
+          : p
+      ));
+      if (data.leaderChanged) showToast('Yeni lider belirlendi!');
+    } else {
+      showToast(data.error || 'Oy verilemedi.');
+    }
+    setVotingId(null);
   };
 
   const recalcLeader = async () => {
@@ -318,7 +338,22 @@ export default function AdminPage() {
                         {photo.contactInfo}
                       </div>
                     )}
-                    <div className="flex gap-1.5 pt-1">
+                    {/* Admin puan butonları */}
+                    <div className="pt-1">
+                      <p className="text-zinc-600 text-xs mb-1">Puan ver</p>
+                      <div className="grid grid-cols-5 gap-1">
+                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                          <button key={n}
+                            onClick={() => adminVote(photo._id, n)}
+                            disabled={votingId === photo._id}
+                            className={`py-1 rounded-lg text-xs font-bold transition disabled:opacity-40 ${
+                              n >= 6 ? 'bg-amber-500/20 hover:bg-amber-500/40 text-amber-400' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400'
+                            }`}
+                          >{n}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
                       <button
                         onClick={() => downloadPhoto(photo.url, photo.trackingCode)}
                         className="flex items-center justify-center gap-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg py-1.5 px-2 text-zinc-300 text-xs transition"
