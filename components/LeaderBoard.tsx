@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Star, Clock } from 'lucide-react';
-import ProtectedImage from '@/components/ProtectedImage';
+import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 
 interface LeaderPhoto {
   _id: string;
   url: string;
+  albumUrls?: string[];
   average: number;
   voteCount: number;
   championDate?: string;
@@ -52,8 +53,8 @@ export default function LeaderBoard() {
         {leader ? (
           <div>
             <div className="relative">
-              <ProtectedImage src={leader.url} alt="Günün lideri" maxHeight={520} />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
+              <AlbumViewer urls={[leader.url, ...(leader.albumUrls ?? [])]} maxHeight={520} />
+              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10 pointer-events-none">
                 <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
                   <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
@@ -88,8 +89,8 @@ export default function LeaderBoard() {
           </div>
           <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
             <div className="relative">
-              <ProtectedImage src={yesterday.url} alt="Dünün şampiyonu" maxHeight={360} dimmed />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10">
+              <AlbumViewer urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]} maxHeight={360} dimmed />
+              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10 pointer-events-none">
                 <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
                   <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
                   <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>

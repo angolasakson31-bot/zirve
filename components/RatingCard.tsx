@@ -1,11 +1,12 @@
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
+import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
 
-interface Photo { _id: string; url: string; }
+interface Photo { _id: string; url: string; albumUrls?: string[]; }
 
 const SEEN_STORAGE_PREFIX = 'zirve_seen_';
 
@@ -151,7 +152,7 @@ function Inner() {
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
       </div>
 
-      <ProtectedImage src={photo.url} alt="Puan ver" maxHeight={680} />
+      <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} />
 
       <div className="p-4 space-y-3">
         {!voted ? (
@@ -221,7 +222,7 @@ function Preview() {
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
       </div>
       {photoUrl
-        ? <ProtectedImage src={photoUrl} alt="Önizleme" maxHeight={680} />
+        ? <AlbumViewer urls={[photoUrl]} maxHeight={680} />
         : <div className="bg-zinc-800 h-72" />
       }
       <div className="p-4 space-y-3">

@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IPhoto extends Document {
   cloudinaryId: string;
   url: string;
+  albumUrls: string[];
   uploaderIp: string;
   contactInfo?: string;
   totalScore: number;
@@ -23,6 +24,7 @@ const PhotoSchema = new Schema<IPhoto>(
   {
     cloudinaryId:  { type: String, required: true },
     url:           { type: String, required: true },
+    albumUrls:     { type: [String], default: [] },
     uploaderIp:    { type: String, required: true },
     contactInfo:   { type: String, default: '' },
     totalScore:    { type: Number, default: 0 },
