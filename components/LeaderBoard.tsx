@@ -90,7 +90,7 @@ export default function LeaderBoard() {
       <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
         <div className="flex items-center gap-2 px-5 py-3 bg-amber-500/10 border-b border-amber-500/20">
           <Trophy className="w-5 h-5 text-amber-400" />
-          <h2 className="font-bold text-amber-400 tracking-wide text-sm uppercase">Günün Lideri</h2>
+          <h2 className="font-bold text-amber-400 tracking-wide text-sm uppercase">Günün Lider Namusu</h2>
         </div>
         {leader ? (
           <div>
@@ -154,7 +154,7 @@ export default function LeaderBoard() {
         <div className="rounded-2xl overflow-hidden border border-zinc-700 bg-zinc-900">
           <div className="flex items-center gap-2 px-5 py-3 bg-zinc-800 border-b border-zinc-700">
             <Trophy className="w-4 h-4 text-zinc-400" />
-            <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Şampiyonu</h2>
+            <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Lider Namusu</h2>
           </div>
           <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
             <div className="relative">
