@@ -20,15 +20,17 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     if (!ctx) return;
     canvas.width = w;
     canvas.height = h;
-    const step = Math.max(120, w / 4);
-    const fontSize = Math.max(13, w / 20);
+    const fontSize = Math.max(14, w / 22);
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    const textW = ctx.measureText('ZİRVE NAMUS').width;
+    const colStep = textW + Math.max(50, w / 6);
+    const rowStep = fontSize * 4;
     ctx.save();
     ctx.globalAlpha = 0.15;
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${fontSize}px sans-serif`;
     ctx.rotate(-Math.PI / 6);
-    for (let y = -h * 2; y < h * 2; y += step)
-      for (let x = -w * 2; x < w * 2; x += step)
+    for (let y = -h * 2; y < h * 2; y += rowStep)
+      for (let x = -w * 2; x < w * 2; x += colStep)
         ctx.fillText('ZİRVE NAMUS', x, y);
     ctx.restore();
   };
