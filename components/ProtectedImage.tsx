@@ -29,7 +29,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     ctx.rotate(-Math.PI / 6);
     for (let y = -h * 2; y < h * 2; y += step)
       for (let x = -w * 2; x < w * 2; x += step)
-        ctx.fillText('ZİRVE', x, y);
+        ctx.fillText('ZİRVE NAMUS', x, y);
     ctx.restore();
   };
 

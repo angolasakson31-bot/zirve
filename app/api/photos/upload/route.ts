@@ -5,6 +5,7 @@ import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
 import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
+import { turkishStartOfDay } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 
@@ -60,9 +61,7 @@ export async function POST(req: NextRequest) {
     const banned = await BannedIP.exists({ ip });
     if (banned) return NextResponse.json({ error: 'Yükleme erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const todayCount = await Photo.countDocuments({ uploaderIp: ip, createdAt: { $gte: startOfDay } });
+    const todayCount = await Photo.countDocuments({ uploaderIp: ip, createdAt: { $gte: turkishStartOfDay() } });
     if (todayCount >= DAILY_UPLOAD_LIMIT)
       return NextResponse.json({ error: `Bugün en fazla ${DAILY_UPLOAD_LIMIT} yükleme yapabilirsiniz.` }, { status: 429 });
 
