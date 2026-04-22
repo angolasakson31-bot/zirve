@@ -224,6 +224,12 @@ export default function UploadForm() {
           </div>
         )}
 
+        {isAlbum && (
+          <p className="text-xs text-amber-400/70 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
+            Albümdeki tüm fotoğraflar aynı kişiye ait olmalıdır — farklı kişileri ayrı ayrı yükleyin.
+          </p>
+        )}
+
         <input
           ref={inputRef}
           type="file"
