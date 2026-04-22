@@ -94,19 +94,22 @@ export default function LeaderBoard() {
         </div>
         {leader ? (
           <div>
-            <div className="relative">
-              <AlbumViewer urls={[leader.url, ...(leader.albumUrls ?? [])]} maxHeight={520} />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10 pointer-events-none">
-                <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
-                  <span className="text-zinc-400 text-sm">/ 10</span>
+            <AlbumViewer
+              urls={[leader.url, ...(leader.albumUrls ?? [])]}
+              maxHeight={520}
+              bottomOverlay={
+                <div className="flex items-center gap-2">
+                  <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
+                    <span className="text-zinc-400 text-sm">/ 10</span>
+                  </div>
+                  <div className="bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-zinc-300 text-sm">
+                    {leader.voteCount} oy
+                  </div>
                 </div>
-                <div className="bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-zinc-300 text-sm">
-                  {leader.voteCount} oy
-                </div>
-              </div>
-            </div>
+              }
+            />
             {leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
           </div>
         ) : (
@@ -157,16 +160,20 @@ export default function LeaderBoard() {
             <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Lider Namusu</h2>
           </div>
           <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
-            <div className="relative">
-              <AlbumViewer urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]} maxHeight={360} dimmed />
-              <div className="absolute bottom-3 left-3 flex items-center gap-2 z-10 pointer-events-none">
-                <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
-                  <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>
+            <AlbumViewer
+              urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
+              maxHeight={360}
+              dimmed
+              bottomOverlay={
+                <div className="flex items-center gap-2">
+                  <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
+                    <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>
+                  </div>
+                  <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1.5">{yesterday.voteCount} oy</span>
                 </div>
-                <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1.5">{yesterday.voteCount} oy</span>
-              </div>
-            </div>
+              }
+            />
           </UploadGate>
           {yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
         </div>

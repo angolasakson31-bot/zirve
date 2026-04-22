@@ -7,7 +7,8 @@ const VOTE_KEY = 'zirve_voted_date';
 const VOTE_EVENT = 'zirve_voted_change';
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  const TZ_OFFSET_MS = 3 * 60 * 60 * 1000;
+  return new Date(Date.now() + TZ_OFFSET_MS).toISOString().slice(0, 10);
 }
 
 export function markUploaded() {
