@@ -6,6 +6,7 @@ import Image from 'next/image';
 interface AdminPhoto {
   _id: string;
   url: string;
+  albumUrls?: string[];
   uploaderIp: string;
   average: number;
   voteCount: number;
@@ -316,16 +317,30 @@ export default function AdminPage() {
                   <div className="relative aspect-square bg-zinc-800 cursor-zoom-in" onClick={() => setLightbox(photo.url)}>
                     <Image src={photo.url} alt={photo.trackingCode} fill className="object-cover" unoptimized />
                     {photo.isChampion && (
-                      <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg">
-                        Şampiyon
-                      </div>
+                      <div className="absolute top-1.5 left-1.5 bg-amber-400 text-black text-xs font-bold px-2 py-0.5 rounded-lg">Şampiyon</div>
                     )}
                     {photo.isArchived && (
                       <div className="absolute top-1.5 right-1.5 bg-zinc-700/90 text-zinc-300 text-xs px-2 py-0.5 rounded-lg flex items-center gap-1">
                         <Archive className="w-3 h-3" /> Arşiv
                       </div>
                     )}
+                    {photo.albumUrls && photo.albumUrls.length > 0 && (
+                      <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <span>+{photo.albumUrls.length}</span>
+                      </div>
+                    )}
                   </div>
+                  {photo.albumUrls && photo.albumUrls.length > 0 && (
+                    <div className="flex gap-1 px-2 py-1.5 bg-zinc-950/60 overflow-x-auto">
+                      {photo.albumUrls.map((url, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={url} alt={`Albüm ${i + 1}`}
+                          onClick={() => setLightbox(url)}
+                          className="w-12 h-12 object-cover rounded cursor-zoom-in flex-shrink-0 opacity-70 hover:opacity-100 transition"
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div className="p-3 space-y-2">
                     <div className="text-xs text-zinc-500 font-mono">{photo.trackingCode}</div>
                     <div className="flex items-center justify-between text-xs text-zinc-400">

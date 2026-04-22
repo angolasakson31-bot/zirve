@@ -45,7 +45,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     if (!photo) return NextResponse.json({ photo: null });
-    return NextResponse.json({ photo });
+    // albumUrls aggregate döndürmeyebilir, güvenli al
+    return NextResponse.json({ photo: { ...photo, albumUrls: photo.albumUrls ?? [] } });
   } catch (err) {
     console.error('random route error:', err);
     return NextResponse.json({ error: 'Fotoğraf alınamadı.' }, { status: 500 });
