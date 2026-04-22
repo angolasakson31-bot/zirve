@@ -178,6 +178,13 @@ export default function LeaderBoard() {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.18 }}>
+                    {Array.from({ length: 6 }, (_, r) => (
+                      <div key={r} style={{ position: 'absolute', top: `${r * 18 - 10}%`, left: '-20%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '7px', letterSpacing: '1px' }}>
+                        ZİRVE NAMUS &nbsp; ZİRVE NAMUS &nbsp; ZİRVE NAMUS
+                      </div>
+                    ))}
+                  </div>
                   <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none">
                     {i + 2}.
                   </div>
