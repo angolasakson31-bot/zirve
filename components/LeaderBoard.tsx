@@ -86,38 +86,74 @@ export default function LeaderBoard() {
 
   return (
     <div className="space-y-5">
-      {/* Günün Lideri */}
-      <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
-        <div className="flex items-center gap-2 px-5 py-3 bg-amber-500/10 border-b border-amber-500/20">
-          <Trophy className="w-5 h-5 text-amber-400" />
-          <h2 className="font-bold text-amber-400 tracking-wide text-sm uppercase">Günün Lider Namusu</h2>
+      {/* Günün + Dünün yanyana */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+        {/* Günün Lider Namusu */}
+        <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
+          <div className="flex items-center gap-2 px-5 py-3 bg-amber-500/10 border-b border-amber-500/20">
+            <Trophy className="w-5 h-5 text-amber-400" />
+            <h2 className="font-bold text-amber-400 tracking-wide text-sm uppercase">Günün Lider Namusu</h2>
+          </div>
+          {leader ? (
+            <div>
+              <UploadGate label="Günün lider namusunu görmek için fotoğraf yükle">
+                <AlbumViewer
+                  urls={[leader.url, ...(leader.albumUrls ?? [])]}
+                  maxHeight={420}
+                  bottomOverlay={
+                    <div className="flex items-center gap-2">
+                      <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
+                        <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                        <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
+                        <span className="text-zinc-400 text-sm">/ 10</span>
+                      </div>
+                      <div className="bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-zinc-300 text-sm">
+                        {leader.voteCount} oy
+                      </div>
+                    </div>
+                  }
+                />
+              </UploadGate>
+              {leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-14 text-zinc-500">
+              <Trophy className="w-12 h-12 mb-3 opacity-30" />
+              <p className="text-sm text-center px-4">Henüz lider yok — oy ver, zirveyi belirle!</p>
+            </div>
+          )}
         </div>
-        {leader ? (
-          <div>
-            <UploadGate label="Günün lider namusunu görmek için fotoğraf yükle">
+
+        {/* Dünün Lider Namusu */}
+        {yesterday ? (
+          <div className="rounded-2xl overflow-hidden border border-zinc-700 bg-zinc-900">
+            <div className="flex items-center gap-2 px-5 py-3 bg-zinc-800 border-b border-zinc-700">
+              <Trophy className="w-4 h-4 text-zinc-400" />
+              <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Lider Namusu</h2>
+            </div>
+            <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
               <AlbumViewer
-                urls={[leader.url, ...(leader.albumUrls ?? [])]}
-                maxHeight={520}
+                urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
+                maxHeight={420}
+                dimmed
                 bottomOverlay={
                   <div className="flex items-center gap-2">
-                    <div className="bg-black/70 backdrop-blur rounded-xl px-4 py-2 flex items-center gap-2">
-                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      <span className="text-white font-bold text-lg">{leader.average.toFixed(2)}</span>
-                      <span className="text-zinc-400 text-sm">/ 10</span>
+                    <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
+                      <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>
                     </div>
-                    <div className="bg-black/70 backdrop-blur rounded-xl px-3 py-2 text-zinc-300 text-sm">
-                      {leader.voteCount} oy
-                    </div>
+                    <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1.5">{yesterday.voteCount} oy</span>
                   </div>
                 }
               />
             </UploadGate>
-            {leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+            {yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-14 text-zinc-500">
-            <Trophy className="w-12 h-12 mb-3 opacity-30" />
-            <p className="text-sm">Henüz lider yok — oy ver, zirveyi belirle!</p>
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 flex flex-col items-center justify-center py-14 text-zinc-600">
+            <Trophy className="w-10 h-10 mb-2 opacity-20" />
+            <p className="text-xs text-center px-4">Dünün şampiyonu henüz belirlenmedi</p>
           </div>
         )}
       </div>
@@ -128,7 +164,7 @@ export default function LeaderBoard() {
           <div className="px-4 py-2 border-b border-zinc-800">
             <span className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Sıralama</span>
           </div>
-          <UploadGate label="Sıralamayı görmek için fotoğraf yükle">
+          <UploadGate blurOnly>
             <div className="flex gap-2 p-3">
               {runnerUps.map((photo, i) => (
                 <div
@@ -141,11 +177,7 @@ export default function LeaderBoard() {
                   style={{ aspectRatio: '1' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo.url}
-                    alt={`${i + 2}. sıra`}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
                   <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none">
                     {i + 2}.
                   </div>
@@ -153,33 +185,6 @@ export default function LeaderBoard() {
               ))}
             </div>
           </UploadGate>
-        </div>
-      )}
-
-      {/* Dünün Şampiyonu */}
-      {yesterday && (
-        <div className="rounded-2xl overflow-hidden border border-zinc-700 bg-zinc-900">
-          <div className="flex items-center gap-2 px-5 py-3 bg-zinc-800 border-b border-zinc-700">
-            <Trophy className="w-4 h-4 text-zinc-400" />
-            <h2 className="font-semibold text-zinc-400 tracking-wide text-sm uppercase">Dünün Lider Namusu</h2>
-          </div>
-          <UploadGate label="Dünün şampiyonunu görmek için fotoğraf yükle">
-            <AlbumViewer
-              urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
-              maxHeight={360}
-              dimmed
-              bottomOverlay={
-                <div className="flex items-center gap-2">
-                  <div className="bg-black/70 backdrop-blur rounded-lg px-3 py-1.5 flex items-center gap-1.5">
-                    <Star className="w-3.5 h-3.5 text-zinc-300 fill-zinc-300" />
-                    <span className="text-white font-bold">{yesterday.average.toFixed(2)}</span>
-                  </div>
-                  <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1.5">{yesterday.voteCount} oy</span>
-                </div>
-              }
-            />
-          </UploadGate>
-          {yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
         </div>
       )}
 

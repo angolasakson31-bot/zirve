@@ -60,14 +60,31 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-5">
-          <LeaderBoard />
-          <UploadForm />
-          <TrackCode />
-        </div>
-        <div className="lg:col-span-2">
-          <RatingCard />
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        <LeaderBoard />
+        <RatingCard />
+        <TrackCode />
+        <UploadForm />
+
+        {/* Yasal bilgiler */}
+        <div className="border-t border-zinc-800 pt-6 space-y-2 text-zinc-600 text-xs leading-relaxed">
+          <p className="font-semibold text-zinc-500">Yasal Uyarı</p>
+          <p>
+            Bu platform yalnızca <strong className="text-zinc-400">18 yaş ve üzeri</strong> kullanıcılara yöneliktir.
+            Siteye erişim sağlayarak yasal yaşı doldurduğunuzu kabul etmiş olursunuz.
+          </p>
+          <p>
+            Platformda yayınlanan tüm içerikler kullanıcılar tarafından gönüllü olarak yüklenmiştir.
+            Site yönetimi içeriklerin doğruluğundan veya üçüncü taraflara etkisinden sorumlu tutulamaz.
+            İzniniz olmadan yüklenen bir içeriğin kaldırılmasını talep etmek için bizimle iletişime geçiniz.
+          </p>
+          <p>
+            Kişisel verileriniz 6698 sayılı <strong className="text-zinc-400">KVKK</strong> kapsamında korunmaktadır.
+            Yüklenen fotoğraflar yalnızca platform içi puanlama amacıyla kullanılır; üçüncü taraflarla paylaşılmaz.
+          </p>
+          <p className="pt-1 text-zinc-700">
+            © {new Date().getFullYear()} ZİRVE NAMUS — Tüm hakları saklıdır.
+          </p>
         </div>
       </div>
     </main>
