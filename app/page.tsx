@@ -36,14 +36,15 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">
-              En iyi fotoğraf{' '}
+              En iyi namus kimde{' '}
               <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
                 sen karar ver
               </span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-              Namusunuzu zirveye taşıtın. Kim olduğunu bilmeden fotoğrafları puanla, halk kimi seçer?
-              Fotoğrafını yükle, takip kodunu al, zirvede kal ve sana ulaşsınlar.
+              Fotoğraf yükleyin ve namusunuzu zirveye taşıyın. Kim olduğunu bilmeden
+              fotoğrafları puanla, halk kimi seçer?
+              Takip kodunu al, zirvede kal ve sana ulaşsınlar.
             </p>
           </div>
         </div>
@@ -53,7 +54,7 @@ export default function Home() {
       <div className="border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <p className="text-zinc-500 text-xs">
-            Namusunuzu zirveye taşıtın — fotoğrafını yükle, puanlansın, size ulaşsınlar —{' '}
+            Namusunuzu zirveye taşıyın — fotoğrafını yükle, puanlansın, size ulaşsınlar —{' '}
             <span className="text-amber-400">kimi zirveye çıkarmak istiyorsan yükle ve insanlara sun...</span>
           </p>
         </div>

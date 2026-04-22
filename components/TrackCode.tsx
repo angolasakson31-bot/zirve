@@ -53,6 +53,10 @@ export default function TrackCode() {
         <span className="text-zinc-400 text-sm font-medium">Fotoğrafımı Takip Et</span>
       </div>
       <div className="p-5 space-y-3">
+        <p className="text-zinc-500 text-xs leading-relaxed">
+          Fotoğraf yüklerken aldığınız <span className="text-zinc-400 font-mono font-semibold">ZRV-XXXXX</span> kodunu girerek
+          fotoğrafınızın sırasını, oy sayısını ve istatistiklerini takip edebilirsiniz.
+        </p>
         <div className="flex gap-2">
           <input
             value={code}
