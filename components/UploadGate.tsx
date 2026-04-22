@@ -26,7 +26,7 @@ export default function UploadGate({ children, label, blurOnly, strong, mini }: 
   if (mini) {
     return (
       <div className="relative rounded-2xl overflow-hidden">
-        <div className="pointer-events-none select-none brightness-75 saturate-50" style={{ filter: 'blur(4px)' }}>
+        <div className="pointer-events-none select-none brightness-75 saturate-50 blur-[2px] sm:blur-[4px]">
           {children}
         </div>
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/30">
