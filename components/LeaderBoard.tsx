@@ -64,7 +64,7 @@ export default function LeaderBoard() {
             </div>
             {leader.contactInfo && (
               <div className="px-4 py-3 border-t border-amber-500/20 bg-amber-500/5">
-                <p className="text-amber-400/70 text-xs mb-0.5">İletişim — Zirvede kal, fotoğraf için sana ulaşsınlar</p>
+                <p className="text-amber-400/70 text-xs mb-0.5">İletişim — Namusunuzu zirveye taşıtın, size ulaşsınlar</p>
                 <p className="text-zinc-300 text-sm break-all">{leader.contactInfo}</p>
               </div>
             )}
