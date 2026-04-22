@@ -1,6 +1,8 @@
 'use client';
 import { useRef, useState } from 'react';
 
+const WATERMARK_TEXT = 'zirve-app-node.onrender.com';
+
 interface Props {
   src: string;
   alt: string;
@@ -20,10 +22,10 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     if (!ctx) return;
     canvas.width = w;
     canvas.height = h;
-    const fontSize = Math.max(14, w / 22);
+    const fontSize = Math.max(10, w / 32);
     ctx.font = `bold ${fontSize}px sans-serif`;
-    const textW = ctx.measureText('ZİRVE NAMUS').width;
-    const colStep = textW + Math.max(50, w / 6);
+    const textW = ctx.measureText(WATERMARK_TEXT).width;
+    const colStep = textW + Math.max(40, w / 8);
     const rowStep = fontSize * 4;
     ctx.save();
     ctx.globalAlpha = 0.15;
@@ -31,7 +33,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     ctx.rotate(-Math.PI / 6);
     for (let y = -h * 2; y < h * 2; y += rowStep)
       for (let x = -w * 2; x < w * 2; x += colStep)
-        ctx.fillText('ZİRVE NAMUS', x, y);
+        ctx.fillText(WATERMARK_TEXT, x, y);
     ctx.restore();
   };
 
