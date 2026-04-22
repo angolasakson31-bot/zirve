@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     await maybeRunDailyReset();
 
     const leader = await Photo.findOne({ isChampion: true }).select('url average voteCount createdAt contactInfo');
-    const yesterday = await Photo.findOne({ championDate: getYesterdayStr() }).select('url average voteCount championDate');
+    const yesterday = await Photo.findOne({ championDate: getYesterdayStr() }).select('url average voteCount championDate contactInfo');
 
     return NextResponse.json({ leader, yesterday });
   } catch {
