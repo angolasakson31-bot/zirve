@@ -7,9 +7,10 @@ interface Props {
   label?: string;
   blurOnly?: boolean;
   strong?: boolean;
+  mini?: boolean;
 }
 
-export default function UploadGate({ children, label, blurOnly, strong }: Props) {
+export default function UploadGate({ children, label, blurOnly, strong, mini }: Props) {
   const uploaded = useUploadGate();
 
   if (uploaded) return <>{children}</>;
@@ -18,6 +19,21 @@ export default function UploadGate({ children, label, blurOnly, strong }: Props)
     return (
       <div className="rounded-2xl overflow-hidden pointer-events-none select-none" style={{ filter: 'blur(4px)', opacity: 0.7 }}>
         {children}
+      </div>
+    );
+  }
+
+  if (mini) {
+    return (
+      <div className="relative rounded-2xl overflow-hidden">
+        <div className="pointer-events-none select-none brightness-75 saturate-50" style={{ filter: 'blur(4px)' }}>
+          {children}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/30">
+          <div className="w-9 h-9 rounded-xl bg-zinc-800/90 border border-amber-500/50 flex items-center justify-center shadow-lg">
+            <Lock className="w-4 h-4 text-amber-400" />
+          </div>
+        </div>
       </div>
     );
   }

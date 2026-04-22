@@ -19,8 +19,8 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
   return (
     <>
       <div
-        className={isAlbum ? 'cursor-zoom-in' : undefined}
-        onClick={isAlbum ? () => setLightbox(urls[active]) : undefined}
+        className="cursor-zoom-in"
+        onClick={() => setLightbox(urls[active])}
       >
         <div className="relative">
           <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
