@@ -23,6 +23,32 @@ interface RunnerUp {
 
 const CONTACT_LABEL = 'Namusumu konuşmak için yazın';
 
+function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
+  const colonIdx = info.indexOf(': ');
+  const platform = colonIdx !== -1 ? info.slice(0, colonIdx) : null;
+  const value = colonIdx !== -1 ? info.slice(colonIdx + 2) : info;
+
+  const platformColors: Record<string, string> = {
+    Telegram: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+    Instagram: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    Telefon: 'bg-green-500/20 text-green-300 border-green-500/30',
+    'E-posta': 'bg-violet-500/20 text-violet-300 border-violet-500/30',
+  };
+  const platformStyle = platform ? (platformColors[platform] ?? 'bg-zinc-700/50 text-zinc-300 border-zinc-600/50') : null;
+
+  return (
+    <div className={`px-4 py-3 border-t ${gold ? 'border-amber-500/20 bg-amber-500/5' : 'border-zinc-700 bg-zinc-800/50'}`}>
+      <p className={`text-xs mb-2 font-medium ${gold ? 'text-amber-400/70' : 'text-zinc-500'}`}>{CONTACT_LABEL}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        {platform && platformStyle && (
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${platformStyle}`}>{platform}</span>
+        )}
+        <span className={`text-sm font-semibold break-all ${gold ? 'text-white' : 'text-zinc-200'}`}>{value}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function LeaderBoard() {
   const [leader, setLeader] = useState<LeaderPhoto | null>(null);
   const [yesterday, setYesterday] = useState<LeaderPhoto | null>(null);
@@ -81,12 +107,7 @@ export default function LeaderBoard() {
                 </div>
               </div>
             </div>
-            {leader.contactInfo && (
-              <div className="px-4 py-3 border-t border-amber-500/20 bg-amber-500/5">
-                <p className="text-amber-400/70 text-xs mb-0.5">{CONTACT_LABEL}</p>
-                <p className="text-zinc-300 text-sm break-all">{leader.contactInfo}</p>
-              </div>
-            )}
+            {leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-14 text-zinc-500">
@@ -147,12 +168,7 @@ export default function LeaderBoard() {
               </div>
             </div>
           </UploadGate>
-          {yesterday.contactInfo && (
-            <div className="px-4 py-3 border-t border-zinc-700 bg-zinc-800/50">
-              <p className="text-zinc-500 text-xs mb-0.5">{CONTACT_LABEL}</p>
-              <p className="text-zinc-300 text-sm break-all">{yesterday.contactInfo}</p>
-            </div>
-          )}
+          {yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
         </div>
       )}
 
