@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
-import { maybeRunDailyReset } from '@/lib/daily-reset';
+import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 
@@ -18,8 +18,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
     await maybeRunDailyReset();
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    const startOfDay = turkishStartOfDay();
 
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
