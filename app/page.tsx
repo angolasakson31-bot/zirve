@@ -76,7 +76,8 @@ export default function Home() {
           <p>
             Platformda yayınlanan tüm içerikler kullanıcılar tarafından gönüllü olarak yüklenmiştir.
             Site yönetimi içeriklerin doğruluğundan veya üçüncü taraflara etkisinden sorumlu tutulamaz.
-            İzniniz olmadan yüklenen bir içeriğin kaldırılmasını talep etmek için bizimle iletişime geçiniz.
+            İzniniz olmadan yüklenen bir içeriğin kaldırılmasını talep etmek için Telegram üzerinden{' '}
+            <strong className="text-zinc-400">@KasapTRTR</strong> hesabına ulaşabilirsiniz.
           </p>
           <p>
             Kişisel verileriniz 6698 sayılı <strong className="text-zinc-400">KVKK</strong> kapsamında korunmaktadır.
