@@ -1,14 +1,20 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import MediaGuard from '@/components/MediaGuard';
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const viewport: Viewport = {
+  themeColor: '#09090b',
+};
+
 export const metadata: Metadata = {
   title: 'Zirve Namus — Namusunuzu Zirveye Taşıyın',
   description: 'Namusunuzu zirveye taşıtın. Fotoğrafını yükle, puanlandır, size ulaşsınlar.',
   robots: { index: false, follow: false, nocache: true },
+  manifest: '/manifest.json',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Zirve Namus' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

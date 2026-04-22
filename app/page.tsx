@@ -4,6 +4,7 @@ import UploadForm from '@/components/UploadForm';
 import TrackCode from '@/components/TrackCode';
 import { Mountain, Zap } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
+import AddToHomeScreen from '@/components/AddToHomeScreen';
 import HeaderFlash from '@/components/HeaderFlash';
 
 export default function Home() {
@@ -23,7 +24,8 @@ export default function Home() {
             <Zap className="w-3 h-3 text-amber-400" />
             <span className="text-zinc-400 text-xs">Namusunuzu zirveye taşıyın</span>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <AddToHomeScreen />
             <ShareButton />
           </div>
         </div>
