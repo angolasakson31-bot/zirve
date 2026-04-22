@@ -2,7 +2,7 @@ import Photo from '@/models/Photo';
 
 const TZ_OFFSET_MS = 3 * 60 * 60 * 1000; // UTC+3 (Türkiye)
 
-function turkishStartOfDay(): Date {
+export function turkishStartOfDay(): Date {
   const nowTr = new Date(Date.now() + TZ_OFFSET_MS);
   nowTr.setUTCHours(0, 0, 0, 0);
   return new Date(nowTr.getTime() - TZ_OFFSET_MS);

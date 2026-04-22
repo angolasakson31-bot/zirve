@@ -14,19 +14,29 @@ interface LeaderPhoto {
   contactInfo?: string;
 }
 
+interface RunnerUp {
+  _id: string;
+  url: string;
+  average: number;
+  voteCount: number;
+}
+
 const CONTACT_LABEL = 'Namusumu konuşmak için yazın';
 
 export default function LeaderBoard() {
   const [leader, setLeader] = useState<LeaderPhoto | null>(null);
   const [yesterday, setYesterday] = useState<LeaderPhoto | null>(null);
+  const [runnerUps, setRunnerUps] = useState<RunnerUp[]>([]);
+  const [activeRunner, setActiveRunner] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchLeader = useCallback(async () => {
     const res = await fetch('/api/leader', { cache: 'no-store' });
     if (!res.ok) return;
-    const { leader, yesterday } = await res.json();
-    setLeader(leader);
-    setYesterday(yesterday);
+    const data = await res.json();
+    setLeader(data.leader);
+    setYesterday(data.yesterday);
+    setRunnerUps(data.runnerUps ?? []);
     setLoading(false);
   }, []);
 
@@ -39,6 +49,12 @@ export default function LeaderBoard() {
       window.removeEventListener('zirve:leaderChanged', fetchLeader);
     };
   }, [fetchLeader]);
+
+  useEffect(() => {
+    if (runnerUps.length < 2) return;
+    const t = setInterval(() => setActiveRunner(i => (i + 1) % runnerUps.length), 3000);
+    return () => clearInterval(t);
+  }, [runnerUps.length]);
 
   if (loading) return <div className="animate-pulse bg-zinc-800 rounded-2xl h-64 w-full" />;
 
@@ -80,6 +96,38 @@ export default function LeaderBoard() {
         )}
       </div>
 
+      {/* 2.–5. sıra şeridi */}
+      {runnerUps.length > 0 && (
+        <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
+          <div className="px-4 py-2 border-b border-zinc-800">
+            <span className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Sıralama</span>
+          </div>
+          <div className="flex gap-2 p-3">
+            {runnerUps.map((photo, i) => (
+              <div
+                key={photo._id}
+                className={`relative flex-1 rounded-xl overflow-hidden transition-all duration-500 ${
+                  activeRunner === i
+                    ? 'ring-2 ring-amber-400 opacity-100 scale-105'
+                    : 'opacity-40 scale-100'
+                }`}
+                style={{ aspectRatio: '1' }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt={`${i + 2}. sıra`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none">
+                  {i + 2}.
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Dünün Şampiyonu */}
       {yesterday && (
         <div className="rounded-2xl overflow-hidden border border-zinc-700 bg-zinc-900">
@@ -112,7 +160,7 @@ export default function LeaderBoard() {
       <div className="flex items-center gap-1.5 px-1">
         <Clock className="w-3 h-3 text-zinc-600 flex-shrink-0" />
         <p className="text-zinc-600 text-xs">
-          Liderlik tablosu her gün gece <span className="text-zinc-500">00:00</span>'da sıfırlanır ve yeni yarış başlar.
+          Liderlik tablosu her gün gece <span className="text-zinc-500">00:00</span>&apos;da sıfırlanır ve yeni yarış başlar.
         </p>
       </div>
     </div>
