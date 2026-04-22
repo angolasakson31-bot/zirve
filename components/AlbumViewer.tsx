@@ -55,12 +55,22 @@ export default function AlbumViewer({ urls, maxHeight, dimmed }: Props) {
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightbox}
-            alt="Tam boyut"
-            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
-          />
+          <div className="relative max-w-full max-h-full" onContextMenu={e => e.preventDefault()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightbox}
+              alt="Tam boyut"
+              className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl select-none"
+              draggable={false}
+            />
+            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-xl" style={{ opacity: 0.13 }}>
+              {Array.from({ length: 12 }, (_, i) => (
+                <div key={i} style={{ position: 'absolute', top: `${i * 9 - 5}%`, left: '-10%', transform: 'rotate(-25deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '18px', letterSpacing: '4px' }}>
+                  {'ZİRVE NAMUS   ZİRVE NAMUS   ZİRVE NAMUS   ZİRVE NAMUS   ZİRVE NAMUS'}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
+import { toTurkishDateStr } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 
@@ -21,10 +22,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
 
     if (!photo) return NextResponse.json({ error: 'Kod bulunamadı.' }, { status: 404 });
 
-    const startOfDay = new Date(photo.createdAt);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setDate(endOfDay.getDate() + 1);
+    const TZ = 3 * 60 * 60 * 1000;
+    const trDate = toTurkishDateStr(photo.createdAt as Date);
+    const [y, m, d] = trDate.split('-').map(Number);
+    const startOfDay = new Date(Date.UTC(y, m - 1, d) - TZ);
+    const endOfDay   = new Date(Date.UTC(y, m - 1, d + 1) - TZ);
 
     const [totalToday, betterCount] = await Promise.all([
       Photo.countDocuments({ createdAt: { $gte: startOfDay, $lt: endOfDay } }),
