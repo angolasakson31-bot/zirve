@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Images } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 
@@ -7,9 +8,10 @@ interface Props {
   urls: string[];      // [mainUrl, ...albumUrls]
   maxHeight?: number;
   dimmed?: boolean;
+  bottomOverlay?: ReactNode;
 }
 
-export default function AlbumViewer({ urls, maxHeight, dimmed }: Props) {
+export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const isAlbum = urls.length > 1;
@@ -26,6 +28,11 @@ export default function AlbumViewer({ urls, maxHeight, dimmed }: Props) {
             <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur text-white text-xs px-2 py-1 rounded-lg pointer-events-none">
               <Images className="w-3 h-3" />
               <span>Albüm · {urls.length}</span>
+            </div>
+          )}
+          {bottomOverlay && (
+            <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
+              {bottomOverlay}
             </div>
           )}
         </div>
