@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download, ImagePlus, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface AdminPhoto {
@@ -70,6 +70,11 @@ export default function AdminPage() {
   const [banningIps, setBanningIps] = useState<Set<string>>(new Set());
   const [recalcing, setRecalcing] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [uploadContact, setUploadContact] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -117,6 +122,26 @@ export default function AdminPage() {
       showToast('Fotoğraf silindi.');
     } else showToast('Silme başarısız.');
     setDeletingIds(s => { const n = new Set(s); n.delete(photo._id); return n; });
+  };
+
+  const adminUpload = async () => {
+    if (!uploadFile) return;
+    setUploading(true);
+    const form = new FormData();
+    form.append('file', uploadFile);
+    form.append('contactInfo', uploadContact.trim() || 'Admin');
+    const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-password': password }, body: form });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`Yüklendi! Kod: ${data.trackingCode}`);
+      setUploadFile(null);
+      setUploadPreview(null);
+      setUploadContact('');
+      fetchPhotos(password);
+    } else {
+      showToast(data.error || 'Yükleme başarısız.');
+    }
+    setUploading(false);
   };
 
   const recalcLeader = async () => {
@@ -200,6 +225,47 @@ export default function AdminPage() {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Yenile
             </button>
           </div>
+        </div>
+
+        {/* Admin Fotoğraf Ekle */}
+        <div className="mb-8 bg-zinc-900 border border-zinc-700 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <ImagePlus className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-semibold text-amber-400">Bugüne Fotoğraf Ekle</span>
+          </div>
+          <input ref={uploadInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              setUploadFile(f);
+              setUploadPreview(URL.createObjectURL(f));
+              e.target.value = '';
+            }} />
+          {!uploadPreview ? (
+            <button onClick={() => uploadInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-zinc-700 hover:border-amber-500/50 rounded-xl py-8 flex flex-col items-center gap-2 text-zinc-500 hover:text-zinc-300 transition">
+              <ImagePlus className="w-8 h-8" />
+              <span className="text-sm">Fotoğraf seç</span>
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="relative w-full max-w-xs">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={uploadPreview} alt="Önizleme" className="rounded-xl object-cover w-full max-h-48" />
+                <button onClick={() => { setUploadFile(null); setUploadPreview(null); }}
+                  className="absolute top-2 right-2 bg-black/70 hover:bg-black rounded-full p-1">
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+              <input type="text" value={uploadContact} onChange={e => setUploadContact(e.target.value)}
+                placeholder="İletişim bilgisi (opsiyonel)"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-amber-500/50" />
+              <button onClick={adminUpload} disabled={uploading}
+                className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 disabled:opacity-40 text-black font-bold px-5 py-2 rounded-xl text-sm transition">
+                {uploading ? <><span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full inline-block" /> Yükleniyor...</> : <><ImagePlus className="w-4 h-4" /> Yükle</>}
+              </button>
+            </div>
+          )}
         </div>
 
         {loading && photos.length === 0 && (
