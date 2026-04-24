@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 
 const WATERMARK_TEXT = 'zirve-app-node.onrender.com';
+const WATERMARK_ROW = `${WATERMARK_TEXT}   ${WATERMARK_TEXT}   ${WATERMARK_TEXT}`;
 
 interface Props {
   src: string;
@@ -22,13 +23,13 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     if (!ctx) return;
     canvas.width = w;
     canvas.height = h;
-    const fontSize = Math.max(10, w / 32);
+    const fontSize = Math.max(12, w / 28);
     ctx.font = `bold ${fontSize}px sans-serif`;
     const textW = ctx.measureText(WATERMARK_TEXT).width;
-    const colStep = textW + Math.max(40, w / 8);
-    const rowStep = fontSize * 4;
+    const colStep = textW + Math.max(30, w / 8);
+    const rowStep = fontSize * 3.5;
     ctx.save();
-    ctx.globalAlpha = 0.15;
+    ctx.globalAlpha = 0.22;
     ctx.fillStyle = '#ffffff';
     ctx.rotate(-Math.PI / 6);
     for (let y = -h * 2; y < h * 2; y += rowStep)
@@ -64,6 +65,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         draggable={false}
       />
 
+      {/* Canvas filigran: doğal boyutta çizilir, yüksek çözünürlüklü koruma */}
       {size && (
         <canvas
           ref={canvasRef}
@@ -73,7 +75,18 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         />
       )}
 
-      <div className="absolute inset-0" onContextMenu={e => e.preventDefault()} />
+      {/* CSS filigran: her ekran boyutunda görünür */}
+      {loaded && (
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-10" style={{ maxHeight }}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i} style={{ position: 'absolute', top: `${i * 12 - 5}%`, left: '-15%', transform: 'rotate(-25deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 700, fontSize: '11px', letterSpacing: '1.5px', opacity: 0.22 }}>
+              {WATERMARK_ROW}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="absolute inset-0 z-20" onContextMenu={e => e.preventDefault()} />
     </div>
   );
 }
