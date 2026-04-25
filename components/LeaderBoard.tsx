@@ -177,7 +177,7 @@ export default function LeaderBoard() {
             {runnerUps.map((photo, i) => (
               <div
                 key={photo._id}
-                className={`flex-1 flex flex-col rounded-xl overflow-hidden transition-all duration-500 ${
+                className={`flex-none w-[calc(25%-6px)] flex flex-col rounded-xl overflow-hidden transition-all duration-500 ${
                   activeRunner === i
                     ? 'ring-2 ring-amber-400 opacity-100 scale-105'
                     : 'opacity-40 scale-100'
