@@ -5,8 +5,12 @@ const SHARE_TEXT = 'ZİRVE NAMUS — Namusunuzu zirveye taşıyın! 🏆';
 
 export default function AddToHomeScreen() {
   const handleClick = () => {
-    const url = `https://t.me/share/url?url=${encodeURIComponent(SITE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const appUrl = `tg://msg_url?url=${encodeURIComponent(SITE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`;
+    const webUrl = `https://t.me/share/url?url=${encodeURIComponent(SITE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`;
+    window.location.href = appUrl;
+    setTimeout(() => {
+      if (!document.hidden) window.open(webUrl, '_blank', 'noopener,noreferrer');
+    }, 1500);
   };
 
   return (
