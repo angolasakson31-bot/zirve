@@ -65,7 +65,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         draggable={false}
       />
 
-      {/* Canvas filigran: doğal boyutta çizilir, yüksek çözünürlüklü koruma */}
+      {/* Canvas: yüksek çözünürlüklü koruma (kaydetmeye karşı) */}
       {size && (
         <canvas
           ref={canvasRef}
@@ -75,18 +75,32 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         />
       )}
 
-      {/* CSS filigran: her ekran boyutunda görünür */}
-      {loaded && (
-        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-10" style={{ maxHeight }}>
-          {Array.from({ length: 10 }, (_, i) => (
-            <div key={i} style={{ position: 'absolute', top: `${i * 12 - 5}%`, left: '-15%', transform: 'rotate(-25deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 700, fontSize: '11px', letterSpacing: '1.5px', opacity: 0.22 }}>
-              {WATERMARK_ROW}
-            </div>
-          ))}
+      {/* CSS filigran — doğrudan container'a, her boyutta görünür */}
+      {loaded && Array.from({ length: 18 }, (_, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none select-none"
+          style={{
+            top: `${i * 7 - 5}%`,
+            left: '-25%',
+            right: '-25%',
+            whiteSpace: 'nowrap',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '12px',
+            letterSpacing: '2px',
+            opacity: 0.28,
+            transform: 'rotate(-25deg)',
+            textShadow: '0 0 4px rgba(0,0,0,0.6)',
+            zIndex: 10,
+            userSelect: 'none',
+          }}
+        >
+          {WATERMARK_ROW}
         </div>
-      )}
+      ))}
 
-      <div className="absolute inset-0 z-20" onContextMenu={e => e.preventDefault()} />
+      <div className="absolute inset-0" style={{ zIndex: 20 }} onContextMenu={e => e.preventDefault()} />
     </div>
   );
 }
