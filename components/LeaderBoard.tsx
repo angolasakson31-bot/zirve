@@ -4,6 +4,7 @@ import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { useUploadGate } from '@/hooks/useUploadGate';
+import { addWatermark } from '@/lib/cloudinaryWatermark';
 
 interface LeaderPhoto {
   _id: string;
@@ -186,14 +187,7 @@ export default function LeaderBoard() {
                 <div className="relative w-full" style={{ aspectRatio: '1' }}>
                   <div className="w-full h-full" style={!uploaded ? { filter: 'blur(4px)' } : undefined}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.30 }}>
-                      {Array.from({ length: 8 }, (_, r) => (
-                        <div key={r} style={{ position: 'absolute', top: `${r * 14 - 10}%`, left: '-30%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '6px', letterSpacing: '0.5px', textShadow: '0 0 2px rgba(0,0,0,0.8)' }}>
-                          zirve-app-node.onrender.com
-                        </div>
-                      ))}
-                    </div>
+                    <img src={addWatermark(photo.url)} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
                   </div>
                   <div className="absolute top-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none z-10">
                     {i + 2}.
