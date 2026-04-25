@@ -1,71 +1,23 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { Download, Check, Link } from 'lucide-react';
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+const SITE_URL = 'https://zirve-app-node.onrender.com';
+const SHARE_TEXT = 'ZİRVE NAMUS — Namusunuzu zirveye taşıyın! 🏆';
 
 export default function AddToHomeScreen() {
-  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => setPrompt(null));
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleClick = async () => {
-    if (prompt) {
-      prompt.prompt();
-      const { outcome } = await prompt.userChoice;
-      if (outcome === 'accepted') setPrompt(null);
-    } else {
-      const url = window.location.origin;
-      try { await navigator.clipboard.writeText(url); } catch {}
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+  const handleClick = () => {
+    const url = `https://t.me/share/url?url=${encodeURIComponent(SITE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
-
-  if (copied) {
-    return (
-      <button className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1">
-        <Check className="w-3.5 h-3.5 text-green-400" />
-        <span className="text-green-400 text-xs font-medium">Link kopyalandı</span>
-      </button>
-    );
-  }
-
-  if (prompt) {
-    return (
-      <button
-        onClick={handleClick}
-        className="flex items-center gap-1.5 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 rounded-full px-3 py-1 transition"
-      >
-        <Download className="w-3.5 h-3.5 text-amber-400" />
-        <span className="text-amber-400 text-xs font-medium">Ana Sayfaya Ekle</span>
-      </button>
-    );
-  }
 
   return (
     <button
       onClick={handleClick}
-      className="flex items-center gap-1.5 bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-full px-3 py-1 transition"
+      className="flex items-center gap-1.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 rounded-full px-3 py-1 transition"
     >
-      <Link className="w-3.5 h-3.5 text-zinc-400" />
-      <span className="text-zinc-400 text-xs">Site Linki</span>
+      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-sky-400" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+      </svg>
+      <span className="text-sky-400 text-xs font-medium">Telegram'da Paylaş</span>
     </button>
   );
 }
