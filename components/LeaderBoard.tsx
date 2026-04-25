@@ -177,26 +177,34 @@ export default function LeaderBoard() {
             {runnerUps.map((photo, i) => (
               <div
                 key={photo._id}
-                className={`relative flex-1 rounded-xl overflow-hidden transition-all duration-500 ${
+                className={`flex-1 flex flex-col rounded-xl overflow-hidden transition-all duration-500 ${
                   activeRunner === i
                     ? 'ring-2 ring-amber-400 opacity-100 scale-105'
                     : 'opacity-40 scale-100'
                 }`}
-                style={{ aspectRatio: '1' }}
               >
-                <div className="w-full h-full" style={!uploaded ? { filter: 'blur(4px)' } : undefined}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.30 }}>
-                    {Array.from({ length: 8 }, (_, r) => (
-                      <div key={r} style={{ position: 'absolute', top: `${r * 14 - 10}%`, left: '-30%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '6px', letterSpacing: '0.5px', textShadow: '0 0 2px rgba(0,0,0,0.8)' }}>
-                        zirve-app-node.onrender.com
-                      </div>
-                    ))}
+                <div className="relative w-full" style={{ aspectRatio: '1' }}>
+                  <div className="w-full h-full" style={!uploaded ? { filter: 'blur(4px)' } : undefined}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.url} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.30 }}>
+                      {Array.from({ length: 8 }, (_, r) => (
+                        <div key={r} style={{ position: 'absolute', top: `${r * 14 - 10}%`, left: '-30%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '6px', letterSpacing: '0.5px', textShadow: '0 0 2px rgba(0,0,0,0.8)' }}>
+                          zirve-app-node.onrender.com
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="absolute top-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none z-10">
+                    {i + 2}.
                   </div>
                 </div>
-                <div className="absolute bottom-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none z-10">
-                  {i + 2}.
+                <div className="bg-zinc-800/80 px-1.5 py-1 flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-0.5">
+                    <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                    <span className="text-white font-bold text-[10px] leading-none">{photo.average.toFixed(1)}</span>
+                  </div>
+                  <span className="text-zinc-400 text-[9px] leading-none">{photo.voteCount} oy</span>
                 </div>
               </div>
             ))}
