@@ -3,12 +3,10 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Images } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
-
-const WATERMARK_TEXT = 'zirve-app-node.onrender.com';
-const WATERMARK_ROW = `${WATERMARK_TEXT}   ${WATERMARK_TEXT}   ${WATERMARK_TEXT}`;
+import { addWatermark } from '@/lib/cloudinaryWatermark';
 
 interface Props {
-  urls: string[];      // [mainUrl, ...albumUrls]
+  urls: string[];
   maxHeight?: number;
   dimmed?: boolean;
   bottomOverlay?: ReactNode;
@@ -21,10 +19,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
 
   return (
     <>
-      <div
-        className="cursor-zoom-in"
-        onClick={() => setLightbox(urls[active])}
-      >
+      <div className="cursor-zoom-in" onClick={() => setLightbox(urls[active])}>
         <div className="relative">
           <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
           {isAlbum && (
@@ -47,21 +42,14 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                 active === i
                   ? 'border-amber-400 opacity-100'
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" style={{ opacity: 0.30 }}>
-                {Array.from({ length: 8 }, (_, r) => (
-                  <div key={r} style={{ position: 'absolute', top: `${r * 14 - 10}%`, left: '-30%', transform: 'rotate(-30deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '6px', letterSpacing: '0.5px', textShadow: '0 0 2px rgba(0,0,0,0.8)' }}>
-                    {WATERMARK_TEXT}
-                  </div>
-                ))}
-              </div>
+              <img src={addWatermark(url)} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -75,18 +63,11 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
           <div className="relative max-w-full max-h-full" onContextMenu={e => e.preventDefault()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={lightbox}
+              src={addWatermark(lightbox)}
               alt="Tam boyut"
               className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl select-none"
               draggable={false}
             />
-            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden rounded-xl" style={{ opacity: 0.13 }}>
-              {Array.from({ length: 14 }, (_, i) => (
-                <div key={i} style={{ position: 'absolute', top: `${i * 8 - 5}%`, left: '-10%', transform: 'rotate(-25deg)', whiteSpace: 'nowrap', color: '#fff', fontWeight: 900, fontSize: '16px', letterSpacing: '2px' }}>
-                  {WATERMARK_ROW}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       )}
