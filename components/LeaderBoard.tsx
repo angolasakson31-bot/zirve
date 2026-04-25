@@ -116,7 +116,7 @@ export default function LeaderBoard() {
                   }
                 />
               </UploadGate>
-              {leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+              {uploaded && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
@@ -149,7 +149,7 @@ export default function LeaderBoard() {
                 }
               />
             </UploadGate>
-            {yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
+            {uploaded && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
           </div>
         ) : (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 flex flex-col items-center justify-center py-10 text-zinc-600">
