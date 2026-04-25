@@ -22,7 +22,7 @@ interface RunnerUp {
   voteCount: number;
 }
 
-const CONTACT_LABEL = 'Namusumu konuşmak için yazın';
+const CONTACT_LABEL = 'Namusumu konuşmak için iletişim bilgisi';
 
 function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
   const colonIdx = info.indexOf(': ');
