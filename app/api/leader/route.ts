@@ -20,9 +20,9 @@ export async function GET(req: NextRequest) {
     await maybeRunDailyReset();
 
     const leader = await Photo.findOne({ isChampion: true })
-      .select('url albumUrls average voteCount createdAt contactInfo');
+      .select('url albumUrls average voteCount createdAt contactInfo comments');
     const yesterday = await Photo.findOne({ championDate: getYesterdayStr() })
-      .select('url albumUrls average voteCount championDate contactInfo');
+      .select('url albumUrls average voteCount championDate contactInfo comments');
 
     const startOfToday = turkishStartOfDay();
 
