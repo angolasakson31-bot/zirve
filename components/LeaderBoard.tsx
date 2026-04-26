@@ -6,6 +6,26 @@ import UploadGate from '@/components/UploadGate';
 import { useUploadGate } from '@/hooks/useUploadGate';
 import { addWatermark } from '@/lib/cloudinaryWatermark';
 
+function useMidnightCountdown() {
+  const calc = () => {
+    const TZ = 3 * 3600_000;
+    const now = Date.now();
+    const trNow = now + TZ;
+    const msToday = trNow % 86_400_000;
+    const diff = 86_400_000 - msToday;
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    const s = Math.floor((diff % 60_000) / 1_000);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  };
+  const [time, setTime] = useState(calc);
+  useEffect(() => {
+    const t = setInterval(() => setTime(calc()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return time;
+}
+
 interface LeaderPhoto {
   _id: string;
   url: string;
@@ -85,6 +105,8 @@ export default function LeaderBoard() {
     return () => clearInterval(t);
   }, [runnerUps.length]);
 
+  const countdown = useMidnightCountdown();
+
   if (loading) return <div className="animate-pulse bg-zinc-800 rounded-2xl h-64 w-full" />;
 
   return (
@@ -97,6 +119,10 @@ export default function LeaderBoard() {
           <div className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 border-b border-amber-500/20">
             <Trophy className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
             <h2 className="font-bold text-amber-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Günün Lider Namusu</h2>
+          </div>
+          <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800/60 border-b border-zinc-700/50">
+            <span className="text-zinc-500 text-[9px]">Yeni yarış başlayana</span>
+            <span className="text-amber-400 font-mono font-bold text-[10px] tabular-nums">{countdown}</span>
           </div>
           {leader ? (
             <div>
