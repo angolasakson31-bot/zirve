@@ -21,7 +21,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
     const cv  = cvRef.current;
     if (!img || !cv) return;
     // square center-crop at 1/10 resolution (object-cover behaviour)
-    const size = 20;
+    const size = 12;
     cv.width  = size;
     cv.height = size;
     const ctx = cv.getContext('2d');
