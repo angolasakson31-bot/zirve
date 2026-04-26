@@ -1,6 +1,5 @@
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
-import ProtectedImage from '@/components/ProtectedImage';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
