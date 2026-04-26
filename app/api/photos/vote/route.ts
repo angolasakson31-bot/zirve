@@ -2,21 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
-import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
-import { turkishStartOfDay } from '@/lib/daily-reset';
-
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(30);
 const LEADER_THRESHOLD = 3;
-
-async function getGlobalMean(): Promise<number> {
-  const photos = await Photo.find({ isArchived: false, createdAt: { $gte: turkishStartOfDay() } })
-    .select('totalScore voteCount').lean();
-  const totalVotes = photos.reduce((s, p) => s + (p.voteCount ?? 0), 0);
-  const totalScore = photos.reduce((s, p) => s + (p.totalScore ?? 0), 0);
-  return totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
-}
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
@@ -53,15 +42,13 @@ export async function POST(req: NextRequest) {
 
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD) {
-      const globalMean = await getGlobalMean();
-      const photoScore = bayesianScore(photo.totalScore, photo.voteCount, globalMean);
       const currentLeader = await Photo.findOne({ isChampion: true });
 
       if (currentLeader?._id.toString() !== photo._id.toString()) {
-        const leaderScore = currentLeader
-          ? bayesianScore(currentLeader.totalScore, currentLeader.voteCount, globalMean)
+        const leaderAvg = currentLeader
+          ? currentLeader.totalScore / currentLeader.voteCount
           : -1;
-        if (photoScore > leaderScore) {
+        if (photo.average > leaderAvg) {
           if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
           photo.isChampion = true;
           await photo.save();

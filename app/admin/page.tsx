@@ -27,16 +27,12 @@ interface AdminPhoto {
   comments?: AdminComment[];
 }
 
-const BAYESIAN_C = 5;
-const DEFAULT_MEAN = 5.0;
+const LEADER_THRESHOLD = 3;
 
 function computeRanks(photos: AdminPhoto[]): Map<string, number> {
-  const totalVotes = photos.reduce((s, p) => s + (p.voteCount ?? 0), 0);
-  const totalScore = photos.reduce((s, p) => s + (p.totalScore ?? 0), 0);
-  const globalMean = totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
   const sorted = [...photos].sort((a, b) => {
-    const sa = (BAYESIAN_C * globalMean + (a.totalScore ?? 0)) / (BAYESIAN_C + (a.voteCount || 1));
-    const sb = (BAYESIAN_C * globalMean + (b.totalScore ?? 0)) / (BAYESIAN_C + (b.voteCount || 1));
+    const sa = a.voteCount >= LEADER_THRESHOLD ? (a.totalScore / a.voteCount) : -1;
+    const sb = b.voteCount >= LEADER_THRESHOLD ? (b.totalScore / b.voteCount) : -1;
     return sb - sa;
   });
   const map = new Map<string, number>();
@@ -265,13 +261,10 @@ export default function AdminPage() {
   const groups = groupPhotosByDate(photos);
 
   const todayPhotos = groups.find(g => g.isToday)?.photos ?? [];
-  const totalVotes = todayPhotos.reduce((s, p) => s + (p.voteCount ?? 0), 0);
-  const totalScore = todayPhotos.reduce((s, p) => s + (p.totalScore ?? 0), 0);
-  const globalMean = totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
   const top5 = [...todayPhotos]
     .sort((a, b) => {
-      const sa = (BAYESIAN_C * globalMean + (a.totalScore ?? 0)) / (BAYESIAN_C + (a.voteCount || 1));
-      const sb = (BAYESIAN_C * globalMean + (b.totalScore ?? 0)) / (BAYESIAN_C + (b.voteCount || 1));
+      const sa = a.voteCount >= LEADER_THRESHOLD ? (a.totalScore / a.voteCount) : -1;
+      const sb = b.voteCount >= LEADER_THRESHOLD ? (b.totalScore / b.voteCount) : -1;
       return sb - sa;
     })
     .slice(0, 5);

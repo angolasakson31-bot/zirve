@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
-import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
 import { turkishStartOfDay } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
@@ -30,16 +29,8 @@ export async function POST(req: NextRequest) {
   if (candidates.length === 0)
     return NextResponse.json({ ok: true, champion: null });
 
-  // Global mean'i tüm bugünkü fotoğraflardan hesapla
-  const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfDay } })
-    .select('totalScore voteCount').lean();
-  const totalVotes = allToday.reduce((s, p) => s + (p.voteCount ?? 0), 0);
-  const totalScore = allToday.reduce((s, p) => s + (p.totalScore ?? 0), 0);
-  const globalMean = totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
-
   const best = candidates.reduce((a, b) =>
-    bayesianScore(a.totalScore, a.voteCount, globalMean) >=
-    bayesianScore(b.totalScore, b.voteCount, globalMean) ? a : b
+    (a.totalScore / a.voteCount) >= (b.totalScore / b.voteCount) ? a : b
   );
 
   await Photo.findByIdAndUpdate(best._id, { isChampion: true });
