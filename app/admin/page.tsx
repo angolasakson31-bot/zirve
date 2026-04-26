@@ -10,12 +10,30 @@ interface AdminPhoto {
   uploaderIp: string;
   average: number;
   voteCount: number;
+  totalScore: number;
   isChampion: boolean;
   isArchived: boolean;
   createdAt: string;
   trackingCode: string;
   contactInfo?: string;
   championDate?: string;
+}
+
+const BAYESIAN_C = 5;
+const DEFAULT_MEAN = 5.0;
+
+function computeRanks(photos: AdminPhoto[]): Map<string, number> {
+  const totalVotes = photos.reduce((s, p) => s + (p.voteCount ?? 0), 0);
+  const totalScore = photos.reduce((s, p) => s + (p.totalScore ?? 0), 0);
+  const globalMean = totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
+  const sorted = [...photos].sort((a, b) => {
+    const sa = (BAYESIAN_C * globalMean + (a.totalScore ?? 0)) / (BAYESIAN_C + (a.voteCount || 1));
+    const sb = (BAYESIAN_C * globalMean + (b.totalScore ?? 0)) / (BAYESIAN_C + (b.voteCount || 1));
+    return sb - sa;
+  });
+  const map = new Map<string, number>();
+  sorted.forEach((p, i) => map.set(p._id, i + 1));
+  return map;
 }
 
 interface PhotoGroup {
@@ -348,8 +366,12 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {group.photos.map(photo => {
+              {(() => {
+                const ranks = computeRanks(group.photos);
+                const total = group.photos.length;
+                return group.photos.map(photo => {
                 const isDayChampion = group.isToday ? photo.isChampion : photo.championDate === group.dateKey;
+                const rank = ranks.get(photo._id) ?? 0;
                 return (
                 <div key={photo._id} className={`bg-zinc-900 rounded-xl border overflow-hidden ${isDayChampion ? 'border-amber-500/60' : photo.isArchived ? 'border-zinc-800/50 opacity-75' : 'border-zinc-800'}`}>
                   <div className="relative aspect-square bg-zinc-800 cursor-zoom-in" onClick={() => setLightbox(photo.url)}>
@@ -386,6 +408,10 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between text-xs text-zinc-400">
                       <span>⭐ {photo.average.toFixed(1)}</span>
                       <span>{photo.voteCount} oy</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className={`font-bold ${rank === 1 ? 'text-amber-400' : 'text-zinc-300'}`}>{rank}. sıra</span>
+                      <span className="text-zinc-600">/ {total} fotoğraf</span>
                     </div>
                     <div className="text-xs text-zinc-600 font-mono truncate">{photo.uploaderIp}</div>
                     {photo.contactInfo && (
@@ -433,7 +459,8 @@ export default function AdminPage() {
                   </div>
                 </div>
               );
-              })}
+              });
+              })()}
             </div>
           </div>
         ))}

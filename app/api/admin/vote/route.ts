@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
+import { turkishStartOfDay } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 
@@ -8,11 +10,15 @@ function auth(req: NextRequest) {
   return req.headers.get('x-admin-password') === process.env.ADMIN_PASSWORD;
 }
 
-function weightedScore(average: number, voteCount: number) {
-  return average * Math.log(voteCount + 1);
-}
-
 const LEADER_THRESHOLD = 3;
+
+async function getGlobalMean(): Promise<number> {
+  const photos = await Photo.find({ isArchived: false, createdAt: { $gte: turkishStartOfDay() } })
+    .select('totalScore voteCount').lean();
+  const totalVotes = photos.reduce((s, p) => s + (p.voteCount ?? 0), 0);
+  const totalScore = photos.reduce((s, p) => s + (p.totalScore ?? 0), 0);
+  return totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
+}
 
 export async function POST(req: NextRequest) {
   if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
@@ -28,13 +34,7 @@ export async function POST(req: NextRequest) {
     if (score >= 6) incFields.likeCount = 1;
     else incFields.dislikeCount = 1;
 
-    // Admin votes: no voter restriction, no archived restriction
-    const photo = await Photo.findByIdAndUpdate(
-      photoId,
-      { $inc: incFields },
-      { new: true }
-    );
-
+    const photo = await Photo.findByIdAndUpdate(photoId, { $inc: incFields }, { new: true });
     if (!photo) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
 
     photo.average = photo.totalScore / photo.voteCount;
@@ -42,12 +42,13 @@ export async function POST(req: NextRequest) {
 
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD && !photo.isArchived) {
+      const globalMean = await getGlobalMean();
+      const photoScore = bayesianScore(photo.totalScore, photo.voteCount, globalMean);
       const currentLeader = await Photo.findOne({ isChampion: true });
-      const photoScore = weightedScore(photo.average, photo.voteCount);
 
       if (currentLeader?._id.toString() !== photo._id.toString()) {
         const leaderScore = currentLeader
-          ? weightedScore(currentLeader.average, currentLeader.voteCount)
+          ? bayesianScore(currentLeader.totalScore, currentLeader.voteCount, globalMean)
           : -1;
         if (photoScore > leaderScore) {
           if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
