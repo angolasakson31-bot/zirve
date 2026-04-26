@@ -120,8 +120,7 @@ export default function LeaderBoard() {
             <Trophy className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
             <h2 className="font-bold text-amber-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Günün Lider Namusu</h2>
           </div>
-          <div className="flex items-center justify-between px-3 py-1.5 bg-zinc-800/60 border-b border-zinc-700/50">
-            <span className="text-zinc-500 text-[9px]">Yeni yarış başlayana</span>
+          <div className="flex items-center justify-center px-3 py-1.5 bg-zinc-800/60 border-b border-zinc-700/50">
             <span className="text-amber-400 font-mono font-bold text-[10px] tabular-nums">{countdown}</span>
           </div>
           {leader ? (

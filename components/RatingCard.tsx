@@ -34,12 +34,12 @@ function Inner() {
   const [average, setAverage]   = useState<number | null>(null);
   const [voteCount, setVoteCount] = useState<number | null>(null);
   const [hover, setHover]     = useState(0);
+  const [sliderVal, setSliderVal] = useState(5);
   const seenIds = useRef<Set<string>>(new Set());
   const initialized = useRef(false);
   const lastDate = useRef(todayKey());
 
-  const load = useCallback(async () => {
-    // Gün değiştiyse seen listesini sıfırla
+  const load = useCallback(async (silent = false) => {
     const currentDate = todayKey();
     if (lastDate.current !== currentDate) {
       seenIds.current = new Set();
@@ -50,11 +50,12 @@ function Inner() {
       seenIds.current = loadSeenFromStorage();
       initialized.current = true;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     setSelected(0);
     setAverage(null);
     setVoteCount(null);
     setHover(0);
+    setSliderVal(5);
 
     const exc = Array.from(seenIds.current).join(',');
     try {
@@ -72,7 +73,7 @@ function Inner() {
     } catch {
       setNoMore(true);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -158,6 +159,19 @@ function Inner() {
         {!voted ? (
           <>
             <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
+            <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
+              <input
+                type="range" min={1} max={10} step={1}
+                value={sliderVal}
+                onChange={e => { setSliderVal(Number(e.target.value)); setHover(0); }}
+                className="flex-1 accent-amber-400 cursor-pointer h-2"
+              />
+              <button
+                onClick={() => vote(sliderVal)}
+                className="w-11 h-10 rounded-xl bg-amber-400 text-black font-black text-xl flex-shrink-0 hover:bg-amber-300 active:scale-95 transition-all">
+                {sliderVal}
+              </button>
+            </div>
             <div className="flex justify-center gap-1.5 flex-wrap">
               {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
                 <button key={n}
@@ -165,7 +179,7 @@ function Inner() {
                   onMouseLeave={() => setHover(0)}
                   onClick={() => vote(n)}
                   className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
-                    hover >= n
+                    (hover > 0 ? hover : sliderVal) >= n
                       ? 'bg-amber-400 text-black scale-110'
                       : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
                   }`}>
@@ -194,7 +208,7 @@ function Inner() {
         )}
 
         <button
-          onClick={load}
+          onClick={() => load(true)}
           disabled={!voted}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition
             bg-white text-black hover:bg-zinc-100
@@ -227,6 +241,10 @@ function Preview() {
       }
       <div className="p-4 space-y-3">
         <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
+        <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
+          <div className="flex-1 h-2 bg-zinc-700 rounded-full" />
+          <div className="w-11 h-10 rounded-xl bg-zinc-700 text-zinc-500 font-black text-xl flex-shrink-0 flex items-center justify-center">5</div>
+        </div>
         <div className="flex justify-center gap-1.5 flex-wrap">
           {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
             <div key={n} className="w-9 h-9 rounded-xl bg-zinc-700 text-zinc-300 text-sm font-bold flex items-center justify-center">
