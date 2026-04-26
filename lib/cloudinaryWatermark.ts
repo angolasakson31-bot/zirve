@@ -6,7 +6,7 @@
 const WATERMARK_TEXT = 'zirve-app-node%2Eonrender%2Ecom';
 
 // Katman 1: büyük, -25°, tiled, %60 opacity
-const LAYER_1 = `l_text:Arial_44_bold:${WATERMARK_TEXT},co_white,o_60,a_-25,fl_tiled`;
+const LAYER_1 = `l_text:Arial_44_bold:${WATERMARK_TEXT},co_white,o_45,a_-25,fl_tiled`;
 // Katman 2: orta boy, +20°, tiled, %35 opacity — farklı açıyla çapraz örüntü
 const LAYER_2 = `l_text:Arial_28_bold:${WATERMARK_TEXT},co_white,o_35,a_20,fl_tiled`;
 
