@@ -3,6 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download, ImagePlus, X } from 'lucide-react';
 import Image from 'next/image';
 
+interface AdminComment {
+  _id: string;
+  text: string;
+  userHash: string;
+  createdAt: string;
+}
+
 interface AdminPhoto {
   _id: string;
   url: string;
@@ -17,6 +24,7 @@ interface AdminPhoto {
   trackingCode: string;
   contactInfo?: string;
   championDate?: string;
+  comments?: AdminComment[];
 }
 
 const BAYESIAN_C = 5;
@@ -214,6 +222,22 @@ export default function AdminPage() {
     if (res.ok) showToast(`${ip} engellendi.`);
     else showToast('Engelleme başarısız.');
     setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
+  };
+
+  const deleteComment = async (photoId: string, commentId: string) => {
+    const res = await fetch(`/api/admin/photos/${photoId}/comment`, {
+      method: 'DELETE',
+      headers: headers(password),
+      body: JSON.stringify({ commentId }),
+    });
+    if (res.ok) {
+      setPhotos(prev => prev.map(p =>
+        p._id === photoId
+          ? { ...p, comments: (p.comments ?? []).filter(c => c._id !== commentId) }
+          : p
+      ));
+      showToast('Yorum silindi.');
+    } else showToast('Yorum silinemedi.');
   };
 
   if (!authed) {
@@ -417,6 +441,21 @@ export default function AdminPage() {
                     {photo.contactInfo && (
                       <div className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-2 py-1.5 break-all">
                         {photo.contactInfo}
+                      </div>
+                    )}
+                    {photo.comments && photo.comments.length > 0 && (
+                      <div className="border border-zinc-800 rounded-lg p-2 space-y-1">
+                        <p className="text-zinc-600 text-xs mb-1">Yorumlar ({photo.comments.length})</p>
+                        {photo.comments.map(c => (
+                          <div key={c._id} className="flex items-start gap-1.5">
+                            <span className="text-zinc-300 text-xs flex-1 break-all leading-snug">{c.text}</span>
+                            <button
+                              onClick={() => deleteComment(photo._id, c._id)}
+                              className="flex-shrink-0 text-red-500/50 hover:text-red-400 transition-colors mt-0.5">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                     {/* Admin puan butonları */}
