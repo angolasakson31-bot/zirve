@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
@@ -54,6 +54,25 @@ interface RunnerUp {
 const CONTACT_LABEL = 'Namusumu konuşmak için iletişim bilgisi';
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let pos = 0;
+    const tick = () => {
+      if (el.scrollHeight > el.clientHeight) {
+        pos += 0.4;
+        if (pos >= el.scrollHeight - el.clientHeight) pos = 0;
+        el.scrollTop = pos;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [comments]);
+
   if (!comments || comments.length === 0) return null;
 
   const COLORS = [
@@ -68,7 +87,7 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div className="max-h-[100px] overflow-y-auto space-y-0.5">
+      <div ref={scrollRef} className="max-h-[100px] overflow-hidden space-y-0.5">
         {comments.map((c, i) => (
           <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
         ))}

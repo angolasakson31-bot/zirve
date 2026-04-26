@@ -3,7 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
-import { ChevronRight, Send } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
 
 interface Photo { _id: string; url: string; albumUrls?: string[]; }
@@ -220,29 +220,20 @@ function Inner() {
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                maxLength={60}
-                placeholder={commented ? 'Yorum gönderildi!' : 'İsteğe bağlı yorum bırak...'}
-                value={comment}
-                onChange={e => setComment(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && submitComment()}
-                disabled={commented}
-                className="flex-1 bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600 disabled:opacity-50 min-w-0"
-              />
-              <button
-                onClick={submitComment}
-                disabled={!comment.trim() || commented}
-                className="flex-shrink-0 w-10 h-10 rounded-xl bg-zinc-700 flex items-center justify-center text-zinc-400 hover:bg-amber-500/20 hover:text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+            <input
+              type="text"
+              maxLength={60}
+              placeholder={commented ? 'Yorum gönderildi!' : 'İsteğe bağlı yorum bırak...'}
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              disabled={commented}
+              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600 disabled:opacity-50"
+            />
           </>
         )}
 
         <button
-          onClick={voted ? () => load(true) : handleVote}
+          onClick={voted ? () => { submitComment(); load(true); } : handleVote}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100">
           Sonraki <ChevronRight className="w-4 h-4" />
         </button>

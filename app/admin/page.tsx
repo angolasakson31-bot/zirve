@@ -265,8 +265,15 @@ export default function AdminPage() {
   const groups = groupPhotosByDate(photos);
 
   const todayPhotos = groups.find(g => g.isToday)?.photos ?? [];
+  const totalVotes = todayPhotos.reduce((s, p) => s + (p.voteCount ?? 0), 0);
+  const totalScore = todayPhotos.reduce((s, p) => s + (p.totalScore ?? 0), 0);
+  const globalMean = totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
   const top5 = [...todayPhotos]
-    .sort((a, b) => (b.average * Math.log(b.voteCount + 1)) - (a.average * Math.log(a.voteCount + 1)))
+    .sort((a, b) => {
+      const sa = (BAYESIAN_C * globalMean + (a.totalScore ?? 0)) / (BAYESIAN_C + (a.voteCount || 1));
+      const sb = (BAYESIAN_C * globalMean + (b.totalScore ?? 0)) / (BAYESIAN_C + (b.voteCount || 1));
+      return sb - sa;
+    })
     .slice(0, 5);
 
   return (
