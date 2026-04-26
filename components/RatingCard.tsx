@@ -94,7 +94,14 @@ function Inner() {
 
   useEffect(() => {
     if (!noMore) return;
-    const interval = setInterval(load, 30_000);
+    const exc = () => Array.from(seenIds.current).join(',');
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/photos/has-new?exclude=${exc()}`);
+        const data = await res.json();
+        if (data.available > 0) load();
+      } catch {}
+    }, 1_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
 
