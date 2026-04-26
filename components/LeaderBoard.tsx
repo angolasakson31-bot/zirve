@@ -193,13 +193,6 @@ export default function LeaderBoard() {
                     {i + 2}.
                   </div>
                 </div>
-                <div className="bg-zinc-800/80 px-1.5 py-1 flex items-center justify-between gap-1">
-                  <div className="flex items-center gap-0.5">
-                    <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400 flex-shrink-0" />
-                    <span className="text-white font-bold text-[10px] leading-none">{photo.average.toFixed(1)}</span>
-                  </div>
-                  <span className="text-zinc-400 text-[9px] leading-none">{photo.voteCount} oy</span>
-                </div>
               </div>
             ))}
           </div>
