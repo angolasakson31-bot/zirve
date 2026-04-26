@@ -27,14 +27,14 @@ function saveSeenToStorage(ids: Set<string>) {
 }
 
 function Inner() {
-  const [photo, setPhoto]     = useState<Photo | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [noMore, setNoMore]   = useState(false);
-  const [selected, setSelected] = useState(0);
+  const [photo, setPhoto]       = useState<Photo | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [noMore, setNoMore]     = useState(false);
+  const [score, setScore]       = useState(5);
+  const [voted, setVoted]       = useState(false);
   const [average, setAverage]   = useState<number | null>(null);
   const [voteCount, setVoteCount] = useState<number | null>(null);
-  const [hover, setHover]     = useState(0);
-  const [sliderVal, setSliderVal] = useState(5);
+  const [hover, setHover]       = useState(0);
   const [comment, setComment]   = useState('');
   const [commented, setCommented] = useState(false);
   const seenIds = useRef<Set<string>>(new Set());
@@ -53,11 +53,11 @@ function Inner() {
       initialized.current = true;
     }
     if (!silent) setLoading(true);
-    setSelected(0);
+    setScore(5);
+    setVoted(false);
     setAverage(null);
     setVoteCount(null);
     setHover(0);
-    setSliderVal(5);
     setComment('');
     setCommented(false);
 
@@ -84,7 +84,6 @@ function Inner() {
 
   useEffect(() => {
     const handler = () => {
-      // Kendi yüklediğimiz fotoğraf hariç, seen listesini temizle ve yeniden dene
       seenIds.current = new Set();
       saveSeenToStorage(seenIds.current);
       load();
@@ -99,24 +98,9 @@ function Inner() {
     return () => clearInterval(interval);
   }, [noMore, load]);
 
-  const submitComment = async () => {
-    if (!photo || !comment.trim() || commented) return;
-    setCommented(true);
-    try {
-      await fetch('/api/photos/comment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId: photo._id, text: comment.trim() }),
-      });
-    } catch {
-      setCommented(false);
-    }
-  };
-
-  const vote = async (score: number) => {
-    if (!photo || selected) return;
-    setSelected(score);
-
+  const handleVote = async () => {
+    if (!photo || voted) return;
+    setVoted(true);
     try {
       const res  = await fetch('/api/photos/vote', {
         method: 'POST',
@@ -128,12 +112,23 @@ function Inner() {
         setAverage(data.photo.average);
         setVoteCount(data.photo.voteCount);
         markVoted();
-        if (data.leaderChanged) {
-          window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
-        }
+        if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
       }
+    } catch {}
+  };
+
+  const submitComment = async () => {
+    if (!photo || !comment.trim() || commented) return;
+    setCommented(true);
+    try {
+      await fetch('/api/photos/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId: photo._id, text: comment.trim() }),
+      });
+      window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
     } catch {
-      // sessizce devam et
+      setCommented(false);
     }
   };
 
@@ -163,8 +158,6 @@ function Inner() {
 
   if (!photo) return null;
 
-  const voted = selected > 0;
-
   return (
     <div className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
       <div className="px-5 py-3 border-b border-zinc-800">
@@ -178,26 +171,22 @@ function Inner() {
           <>
             <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
             <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
+              <span className="text-amber-400 font-black text-lg w-5 text-center flex-shrink-0">{score}</span>
               <input
                 type="range" min={1} max={10} step={1}
-                value={sliderVal}
-                onChange={e => { setSliderVal(Number(e.target.value)); setHover(0); }}
+                value={score}
+                onChange={e => { setScore(Number(e.target.value)); setHover(0); }}
                 className="flex-1 accent-amber-400 cursor-pointer h-2"
               />
-              <button
-                onClick={() => vote(sliderVal)}
-                className="w-11 h-10 rounded-xl bg-amber-400 text-black font-black text-xl flex-shrink-0 hover:bg-amber-300 active:scale-95 transition-all">
-                {sliderVal}
-              </button>
             </div>
             <div className="flex justify-center gap-1.5 flex-wrap">
               {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
                 <button key={n}
                   onMouseEnter={() => setHover(n)}
                   onMouseLeave={() => setHover(0)}
-                  onClick={() => vote(n)}
+                  onClick={() => { setScore(n); setHover(0); }}
                   className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
-                    (hover > 0 ? hover : sliderVal) >= n
+                    (hover > 0 ? hover : score) >= n
                       ? 'bg-amber-400 text-black scale-110'
                       : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
                   }`}>
@@ -211,7 +200,7 @@ function Inner() {
             <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
               <div className="text-center">
                 <p className="text-zinc-500 text-xs">Senin puanın</p>
-                <p className="text-white font-black text-3xl">{selected}</p>
+                <p className="text-white font-black text-3xl">{score}</p>
               </div>
               <div className="w-px h-10 bg-zinc-700" />
               <div className="text-center">
@@ -228,7 +217,7 @@ function Inner() {
               <input
                 type="text"
                 maxLength={60}
-                placeholder={commented ? 'Yorum gönderildi!' : 'Kısa yorum yaz... (isteğe bağlı)'}
+                placeholder={commented ? 'Yorum gönderildi!' : 'İsteğe bağlı yorum bırak...'}
                 value={comment}
                 onChange={e => setComment(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submitComment()}
@@ -246,11 +235,8 @@ function Inner() {
         )}
 
         <button
-          onClick={() => load(true)}
-          disabled={!voted}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition
-            bg-white text-black hover:bg-zinc-100
-            disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed">
+          onClick={voted ? () => load(true) : handleVote}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100">
           Sonraki <ChevronRight className="w-4 h-4" />
         </button>
       </div>

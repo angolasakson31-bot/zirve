@@ -52,37 +52,23 @@ interface RunnerUp {
 
 const CONTACT_LABEL = 'Namusumu konuşmak için iletişim bilgisi';
 
-const COMMENT_COLORS = [
-  'text-amber-400', 'text-sky-400', 'text-green-400',
-  'text-pink-400', 'text-violet-400', 'text-orange-400',
-];
-
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   if (!comments || comments.length === 0) return null;
 
-  const userMap = new Map<string, { label: string; color: string }>();
-  let counter = 1;
-  for (const c of comments) {
-    if (!userMap.has(c.userHash)) {
-      const n = parseInt(c.userHash.slice(0, 2), 16);
-      userMap.set(c.userHash, {
-        label: `K${counter++}`,
-        color: COMMENT_COLORS[n % COMMENT_COLORS.length],
-      });
-    }
+  const COLORS = [
+    'text-amber-400', 'text-sky-400', 'text-green-400',
+    'text-pink-400', 'text-violet-400', 'text-orange-400',
+  ];
+
+  function color(hash: string) {
+    return COLORS[parseInt(hash.slice(0, 2), 16) % COLORS.length];
   }
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 py-1.5 max-h-[110px] overflow-y-auto space-y-0.5">
-      {comments.map((c, i) => {
-        const user = userMap.get(c.userHash)!;
-        return (
-          <div key={i} className="flex items-baseline gap-1.5 text-xs leading-snug">
-            <span className={`font-bold flex-shrink-0 ${user.color}`}>{user.label}</span>
-            <span className="text-zinc-300 break-words min-w-0">{c.text}</span>
-          </div>
-        );
-      })}
+      {comments.map((c, i) => (
+        <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
+      ))}
     </div>
   );
 }
