@@ -65,10 +65,13 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   }
 
   return (
-    <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 py-1.5 max-h-[110px] overflow-y-auto space-y-0.5">
-      {comments.map((c, i) => (
-        <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
-      ))}
+    <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
+      <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
+      <div className="max-h-[100px] overflow-y-auto space-y-0.5">
+        {comments.map((c, i) => (
+          <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
+        ))}
+      </div>
     </div>
   );
 }
