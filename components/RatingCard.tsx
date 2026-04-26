@@ -3,7 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Send } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
 
 interface Photo { _id: string; url: string; albumUrls?: string[]; }
@@ -35,6 +35,8 @@ function Inner() {
   const [voteCount, setVoteCount] = useState<number | null>(null);
   const [hover, setHover]     = useState(0);
   const [sliderVal, setSliderVal] = useState(5);
+  const [comment, setComment]   = useState('');
+  const [commented, setCommented] = useState(false);
   const seenIds = useRef<Set<string>>(new Set());
   const initialized = useRef(false);
   const lastDate = useRef(todayKey());
@@ -56,6 +58,8 @@ function Inner() {
     setVoteCount(null);
     setHover(0);
     setSliderVal(5);
+    setComment('');
+    setCommented(false);
 
     const exc = Array.from(seenIds.current).join(',');
     try {
@@ -94,6 +98,20 @@ function Inner() {
     const interval = setInterval(load, 30_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
+
+  const submitComment = async () => {
+    if (!photo || !comment.trim() || commented) return;
+    setCommented(true);
+    try {
+      await fetch('/api/photos/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId: photo._id, text: comment.trim() }),
+      });
+    } catch {
+      setCommented(false);
+    }
+  };
 
   const vote = async (score: number) => {
     if (!photo || selected) return;
@@ -189,22 +207,42 @@ function Inner() {
             </div>
           </>
         ) : (
-          <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
-            <div className="text-center">
-              <p className="text-zinc-500 text-xs">Senin puanın</p>
-              <p className="text-white font-black text-3xl">{selected}</p>
+          <>
+            <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
+              <div className="text-center">
+                <p className="text-zinc-500 text-xs">Senin puanın</p>
+                <p className="text-white font-black text-3xl">{selected}</p>
+              </div>
+              <div className="w-px h-10 bg-zinc-700" />
+              <div className="text-center">
+                <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
+                <p className="text-amber-400 font-black text-3xl">
+                  {average !== null ? average.toFixed(1) : '—'}
+                </p>
+                {voteCount !== null && (
+                  <p className="text-zinc-600 text-xs">{voteCount} oy</p>
+                )}
+              </div>
             </div>
-            <div className="w-px h-10 bg-zinc-700" />
-            <div className="text-center">
-              <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
-              <p className="text-amber-400 font-black text-3xl">
-                {average !== null ? average.toFixed(1) : '—'}
-              </p>
-              {voteCount !== null && (
-                <p className="text-zinc-600 text-xs">{voteCount} oy</p>
-              )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                maxLength={60}
+                placeholder={commented ? 'Yorum gönderildi!' : 'Kısa yorum yaz... (isteğe bağlı)'}
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitComment()}
+                disabled={commented}
+                className="flex-1 bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600 disabled:opacity-50 min-w-0"
+              />
+              <button
+                onClick={submitComment}
+                disabled={!comment.trim() || commented}
+                className="flex-shrink-0 w-10 h-10 rounded-xl bg-zinc-700 flex items-center justify-center text-zinc-400 hover:bg-amber-500/20 hover:text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                <Send className="w-4 h-4" />
+              </button>
             </div>
-          </div>
+          </>
         )}
 
         <button

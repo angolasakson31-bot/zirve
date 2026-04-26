@@ -26,6 +26,12 @@ function useMidnightCountdown() {
   return time;
 }
 
+interface PhotoComment {
+  text: string;
+  userHash: string;
+  createdAt: string;
+}
+
 interface LeaderPhoto {
   _id: string;
   url: string;
@@ -34,6 +40,7 @@ interface LeaderPhoto {
   voteCount: number;
   championDate?: string;
   contactInfo?: string;
+  comments?: PhotoComment[];
 }
 
 interface RunnerUp {
@@ -44,6 +51,41 @@ interface RunnerUp {
 }
 
 const CONTACT_LABEL = 'Namusumu konuşmak için iletişim bilgisi';
+
+const COMMENT_COLORS = [
+  'text-amber-400', 'text-sky-400', 'text-green-400',
+  'text-pink-400', 'text-violet-400', 'text-orange-400',
+];
+
+function CommentFeed({ comments }: { comments: PhotoComment[] }) {
+  if (!comments || comments.length === 0) return null;
+
+  const userMap = new Map<string, { label: string; color: string }>();
+  let counter = 1;
+  for (const c of comments) {
+    if (!userMap.has(c.userHash)) {
+      const n = parseInt(c.userHash.slice(0, 2), 16);
+      userMap.set(c.userHash, {
+        label: `K${counter++}`,
+        color: COMMENT_COLORS[n % COMMENT_COLORS.length],
+      });
+    }
+  }
+
+  return (
+    <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 py-1.5 max-h-[110px] overflow-y-auto space-y-0.5">
+      {comments.map((c, i) => {
+        const user = userMap.get(c.userHash)!;
+        return (
+          <div key={i} className="flex items-baseline gap-1.5 text-xs leading-snug">
+            <span className={`font-bold flex-shrink-0 ${user.color}`}>{user.label}</span>
+            <span className="text-zinc-300 break-words min-w-0">{c.text}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
   const colonIdx = info.indexOf(': ');
@@ -143,6 +185,9 @@ export default function LeaderBoard() {
                 />
               </UploadGate>
               {uploaded && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+              {uploaded && leader.comments && leader.comments.length > 0 && (
+                <CommentFeed comments={leader.comments} />
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
@@ -176,6 +221,9 @@ export default function LeaderBoard() {
               />
             </UploadGate>
             {uploaded && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
+            {uploaded && yesterday.comments && yesterday.comments.length > 0 && (
+              <CommentFeed comments={yesterday.comments} />
+            )}
           </div>
         ) : (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 flex flex-col items-center justify-center py-10 text-zinc-600">

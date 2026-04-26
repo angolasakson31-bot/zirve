@@ -1,5 +1,11 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export interface IComment {
+  text: string;
+  userHash: string;
+  createdAt: Date;
+}
+
 export interface IPhoto extends Document {
   cloudinaryId: string;
   url: string;
@@ -17,6 +23,7 @@ export interface IPhoto extends Document {
   isArchived: boolean;
   trackingCode: string;
   fileHash: string;
+  comments: IComment[];
   createdAt: Date;
 }
 
@@ -33,6 +40,14 @@ const PhotoSchema = new Schema<IPhoto>(
     likeCount:     { type: Number, default: 0 },
     dislikeCount:  { type: Number, default: 0 },
     voters:        { type: [String], default: [] },
+    comments:      {
+      type: [{
+        text:      { type: String, required: true, maxlength: 60 },
+        userHash:  { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
     isChampion:    { type: Boolean, default: false },
     championDate:  { type: String, default: null },
     isArchived:    { type: Boolean, default: false },
