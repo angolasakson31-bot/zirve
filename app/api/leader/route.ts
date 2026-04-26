@@ -3,7 +3,6 @@ import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
 import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
-import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,21 +25,17 @@ export async function GET(req: NextRequest) {
 
     const startOfToday = turkishStartOfDay();
 
-    // Tüm bugünkü fotoğraflardan global mean hesapla
     const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfToday } })
       .select('_id url albumUrls average totalScore voteCount isChampion').lean();
 
-    const totalVotes = allToday.reduce((s, p) => s + (p.voteCount ?? 0), 0);
-    const totalScore = allToday.reduce((s, p) => s + (p.totalScore ?? 0), 0);
-    const globalMean = totalVotes > 0 ? totalScore / totalVotes : DEFAULT_MEAN;
-
-    // Leader hariç Bayesian'a göre sırala, ilk 4'ü al
+    // Leader hariç saf ortalamaya göre sırala (min 3 oy), ilk 4'ü al
+    const LEADER_THRESHOLD = 3;
     const runnerUps = allToday
-      .filter(p => !p.isChampion)
-      .map(p => ({ ...p, _bscore: bayesianScore(p.totalScore ?? 0, p.voteCount ?? 0, globalMean) }))
-      .sort((a, b) => b._bscore - a._bscore)
+      .filter(p => !p.isChampion && (p.voteCount ?? 0) >= LEADER_THRESHOLD)
+      .map(p => ({ ...p, _avg: (p.totalScore ?? 0) / (p.voteCount || 1) }))
+      .sort((a, b) => b._avg - a._avg)
       .slice(0, 4)
-      .map(({ _bscore, totalScore: _ts, isChampion: _ic, ...rest }) => rest);
+      .map(({ _avg, totalScore: _ts, isChampion: _ic, ...rest }) => rest);
 
     return NextResponse.json({ leader, yesterday, runnerUps });
   } catch {
