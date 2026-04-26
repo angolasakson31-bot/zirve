@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
+import PixelImg from '@/components/PixelImg';
 import { useUploadGate } from '@/hooks/useUploadGate';
 import { addWatermark } from '@/lib/cloudinaryWatermark';
 
@@ -247,10 +248,7 @@ export default function LeaderBoard() {
                 }`}
               >
                 <div className="relative w-full" style={{ aspectRatio: '1' }}>
-                  <div className="w-full h-full" style={!uploaded ? { filter: 'blur(4px)' } : undefined}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={addWatermark(photo.url)} alt={`${i + 2}. sıra`} className="w-full h-full object-cover" />
-                  </div>
+                  <PixelImg src={addWatermark(photo.url)} alt={`${i + 2}. sıra`} />
                   <div className="absolute top-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none z-10">
                     {i + 2}.
                   </div>
