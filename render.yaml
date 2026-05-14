@@ -27,7 +27,7 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: SITE_ENABLED
-        value: "false"
+        value: "true"
 
   - type: cron
     name: zirve-daily-reset
