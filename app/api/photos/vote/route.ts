@@ -44,18 +44,20 @@ export async function POST(req: NextRequest) {
 
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD) {
-      const currentLeader = await Photo.findOne({ isChampion: true });
+      const dethroned = await Photo.findOneAndUpdate(
+        {
+          isChampion: true,
+          _id: { $ne: photo._id },
+          $expr: { $lt: [{ $divide: ['$totalScore', '$voteCount'] }, photo.average] },
+        },
+        { $set: { isChampion: false } }
+      );
 
-      if (currentLeader?._id.toString() !== photo._id.toString()) {
-        const leaderAvg = currentLeader
-          ? currentLeader.totalScore / currentLeader.voteCount
-          : -1;
-        if (photo.average > leaderAvg) {
-          if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
-          photo.isChampion = true;
-          await photo.save();
-          leaderChanged = true;
-        }
+      const noChampion = !(await Photo.exists({ isChampion: true }));
+      if (dethroned || noChampion) {
+        await Photo.findByIdAndUpdate(photo._id, { $set: { isChampion: true } });
+        photo.isChampion = true;
+        leaderChanged = true;
       }
     }
 

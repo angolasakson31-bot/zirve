@@ -59,6 +59,10 @@ const PhotoSchema = new Schema<IPhoto>(
 
 PhotoSchema.index({ average: -1, voteCount: -1 });
 PhotoSchema.index({ trackingCode: 1 });
+PhotoSchema.index({ uploaderIp: 1 });
+PhotoSchema.index({ fileHash: 1 });
+PhotoSchema.index({ isArchived: 1, createdAt: -1 });
+PhotoSchema.index({ isChampion: 1 });
 
 const Photo: Model<IPhoto> =
   mongoose.models.Photo || mongoose.model<IPhoto>('Photo', PhotoSchema);

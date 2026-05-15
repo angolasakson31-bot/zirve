@@ -125,15 +125,13 @@ export default function AdminPage() {
     e.preventDefault();
     const res = await fetch('/api/admin/photos', { headers: { 'x-admin-password': password } });
     if (res.status === 401) { setError('Şifre yanlış.'); return; }
-    sessionStorage.setItem(SESSION_KEY, password);
     setAuthed(true);
     const data = await res.json();
     setPhotos(data.photos ?? []);
   };
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if (saved) { setPassword(saved); setAuthed(true); fetchPhotos(saved); }
+    // Şifre artık sessionStorage'a kaydedilmiyor — XSS koruması
   }, [fetchPhotos]);
 
   const deletePhoto = async (photo: AdminPhoto) => {

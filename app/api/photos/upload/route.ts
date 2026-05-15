@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
@@ -14,11 +14,15 @@ const checkLimit = rateLimit(5);
 const DAILY_UPLOAD_LIMIT = 7;
 const MAX_ALBUM_SIZE = 3;
 
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
 function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'ZRV-';
-  for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+  const bytes = randomBytes(5);
+  return 'ZRV-' + Array.from(bytes).map(b => CHARS[b % CHARS.length]).join('');
+}
+
+function sanitizeContactInfo(info: string): string {
+  return info.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').trim().slice(0, 200);
 }
 
 async function uploadToCloudinary(buffer: Buffer): Promise<{ public_id: string; secure_url: string }> {
@@ -41,9 +45,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const formData = await req.formData();
-    const contactInfo = (formData.get('contactInfo') as string | null)?.trim() ?? '';
+    const rawContact = (formData.get('contactInfo') as string | null) ?? '';
+    const contactInfo = sanitizeContactInfo(rawContact);
     if (!contactInfo) return NextResponse.json({ error: 'İletişim bilgisi zorunludur.' }, { status: 400 });
-    if (contactInfo.length > 200) return NextResponse.json({ error: 'İletişim bilgisi en fazla 200 karakter.' }, { status: 400 });
 
     const rawFiles = formData.getAll('files') as File[];
     if (!rawFiles.length) return NextResponse.json({ error: 'Dosya bulunamadı.' }, { status: 400 });

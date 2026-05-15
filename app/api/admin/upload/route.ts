@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/admin-auth';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
 
 export const runtime = 'nodejs';
 
+const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
 function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'ZRV-';
-  for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+  const bytes = randomBytes(5);
+  return 'ZRV-' + Array.from(bytes).map(b => CHARS[b % CHARS.length]).join('');
 }
 
 export async function POST(req: NextRequest) {
