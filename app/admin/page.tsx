@@ -47,8 +47,6 @@ interface PhotoGroup {
   photos: AdminPhoto[];
 }
 
-const SESSION_KEY = 'zirve_admin_pw';
-
 const TR_OFFSET_MS = 3 * 60 * 60 * 1000;
 
 function toTrDateStr(date: Date): string {
