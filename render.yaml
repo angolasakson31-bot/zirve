@@ -23,13 +23,13 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CRON_SECRET
-        value: "1ee5ea83dba93e245aa559a739422440885417783a31b749a9572317a9bad3d2"
+        sync: false
       - key: ADMIN_PASSWORD
         sync: false
       - key: SITE_ENABLED
         value: "true"
       - key: IP_SALT
-        value: "90a56d398dc1ab19fb3cb98a0e5abeda5fe36badc31973610a2fa1e80047bb84"
+        sync: false
 
   - type: cron
     name: zirve-daily-reset
@@ -40,4 +40,4 @@ services:
     startCommand: node -e "fetch('https://zirve-app-node.onrender.com/api/cron/daily-reset',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET}}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d))).catch(console.error)"
     envVars:
       - key: CRON_SECRET
-        value: "1ee5ea83dba93e245aa559a739422440885417783a31b749a9572317a9bad3d2"
+        sync: false
