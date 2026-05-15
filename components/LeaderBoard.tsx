@@ -50,7 +50,6 @@ interface RankedPhoto {
   average: number;
   voteCount: number;
   rank: number;
-  isChampion?: boolean;
 }
 
 const CONTACT_LABEL = 'Sana ulaşmak için iletişim bilgisi';
@@ -92,7 +91,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
             <div className="relative" style={{ aspectRatio: '1' }}>
               <PixelImg src={addWatermark(photo.url)} alt={`${photo.rank}. sıra`} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
-                photo.isChampion ? 'bg-amber-500' : 'bg-black/80'
+                photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>
                 {photo.rank}.
               </div>

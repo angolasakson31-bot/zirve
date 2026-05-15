@@ -37,7 +37,6 @@ export async function GET(req: NextRequest) {
         average: parseFloat(p._avg.toFixed(1)),
         voteCount: p.voteCount,
         rank: i + 1,
-        isChampion: p.isChampion,
       }));
 
     return NextResponse.json({ leader, yesterday, allPhotos });
