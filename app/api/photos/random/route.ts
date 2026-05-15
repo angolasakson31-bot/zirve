@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
       .split(',')
-      .slice(0, 30)
+      .slice(0, 200)
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 

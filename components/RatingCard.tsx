@@ -63,6 +63,11 @@ function Inner() {
     const exc = Array.from(seenIds.current).join(',');
     try {
       const res  = await fetch(`/api/photos/random${exc ? `?exclude=${exc}` : ''}`);
+      if (!res.ok) {
+        // Rate limit veya sunucu hatası — noMore'a alma, sessizce dur
+        if (!silent) setLoading(false);
+        return;
+      }
       const data = await res.json();
       if (!data.photo) {
         setNoMore(true);
@@ -74,7 +79,9 @@ function Inner() {
         setNoMore(false);
       }
     } catch {
-      setNoMore(true);
+      // Ağ hatası — noMore'a alma
+      if (!silent) setLoading(false);
+      return;
     }
     if (!silent) setLoading(false);
   }, []);
