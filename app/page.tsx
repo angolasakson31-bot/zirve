@@ -86,23 +86,106 @@ export default function Home() {
         </div>
 
         {/* Yasal bilgiler */}
-        <div className="border-t border-zinc-800 pt-6 space-y-2 text-zinc-600 text-xs leading-relaxed">
-          <p className="font-semibold text-zinc-500">Yasal Uyarı</p>
-          <p>
-            Bu platform yalnızca <strong className="text-zinc-400">18 yaş ve üzeri</strong> kullanıcılara yöneliktir.
-            Siteye erişim sağlayarak yasal yaşı doldurduğunuzu kabul etmiş olursunuz.
-          </p>
-          <p>
-            Platformda yayınlanan tüm içerikler kullanıcılar tarafından gönüllü olarak yüklenmiştir.
-            Site yönetimi içeriklerin doğruluğundan veya üçüncü taraflara etkisinden sorumlu tutulamaz.
-            İzniniz olmadan yüklenen bir içeriğin kaldırılmasını talep etmek için Telegram üzerinden{' '}
-            <strong className="text-zinc-400">@KasapTRTR</strong> hesabına ulaşabilirsiniz.
-          </p>
-          <p>
-            Kişisel verileriniz 6698 sayılı <strong className="text-zinc-400">KVKK</strong> kapsamında korunmaktadır.
-            Yüklenen fotoğraflar yalnızca platform içi puanlama amacıyla kullanılır; üçüncü taraflarla paylaşılmaz.
-          </p>
-          <p className="pt-1 text-zinc-700">
+        <div className="border-t border-zinc-800 pt-6 space-y-4 text-zinc-600 text-xs leading-relaxed">
+
+          {/* 18+ */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500 text-sm">Yasal Uyarı</p>
+            <p>
+              Bu platform yalnızca <strong className="text-zinc-400">18 yaş ve üzeri</strong> kullanıcılara yöneliktir.
+              Siteye erişim sağlayarak 18 yaşını doldurduğunuzu ve bu koşulları okuduğunuzu kabul etmiş olursunuz.
+              Reşit olmayan kişilerin siteye erişimi kesinlikle yasaktır.
+            </p>
+          </div>
+
+          {/* Açık rıza */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Açık Rıza ve İçerik Sorumluluğu</p>
+            <p>
+              Platforma fotoğraf yükleyen kullanıcı; yüklediği içerikte yer alan tüm kişilerin
+              <strong className="text-zinc-400"> açık rızasını aldığını</strong> beyan ve taahhüt eder.
+              Başkasına ait fotoğrafları izinsiz yüklemek <strong className="text-zinc-400">TCK Madde 134</strong>{' '}
+              (özel hayatın gizliliğini ihlal) kapsamında suç teşkil eder; hukuki ve cezai sorumluluk
+              tamamen içeriği yükleyen kullanıcıya aittir. Platform yönetimi bu tür ihlallerden sorumlu tutulamaz.
+            </p>
+          </div>
+
+          {/* TCK / müstehcenlik */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Yasaklı İçerikler</p>
+            <p>
+              Küçüklere ait içerik, hakaret, iftira veya müstehcenlik içeren materyallerin yüklenmesi
+              <strong className="text-zinc-400"> TCK Madde 226</strong> ve ilgili mevzuat kapsamında kesinlikle yasaktır.
+              Tespit edilen ihlaller derhal kaldırılır; gerektiğinde yetkili mercilere bildirim yapılır.
+              Platform bu tür içerikler nedeniyle hiçbir hukuki sorumluluk kabul etmez.
+            </p>
+          </div>
+
+          {/* 5651 */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">5651 Sayılı Kanun Kapsamında İçerik Kaldırma</p>
+            <p>
+              İnternet Ortamında Yapılan Yayınların Düzenlenmesi Hakkındaki{' '}
+              <strong className="text-zinc-400">5651 Sayılı Kanun</strong> gereğince, hakkınızda izinsiz
+              yayınlanan içeriklerin kaldırılmasını aşağıdaki kanallar aracılığıyla talep edebilirsiniz:
+            </p>
+            <ul className="list-disc list-inside space-y-0.5 pl-1 mt-1">
+              <li>
+                E-posta:{' '}
+                <a href="mailto:angolasakson34@gmail.com" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">
+                  angolasakson34@gmail.com
+                </a>
+              </li>
+              <li>
+                Telegram:{' '}
+                <strong className="text-zinc-400">@KasapTRTR</strong>
+              </li>
+            </ul>
+            <p className="mt-1">
+              Talepler en geç <strong className="text-zinc-400">48 saat</strong> içinde değerlendirilir.
+            </p>
+          </div>
+
+          {/* FSEK */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Telif Hakları (FSEK)</p>
+            <p>
+              Platforma yüklenen içeriklerin telif hakları{' '}
+              <strong className="text-zinc-400">5846 Sayılı Fikir ve Sanat Eserleri Kanunu</strong> kapsamında
+              korunmaktadır. Başkasına ait telif hakkıyla korunan içeriklerin izinsiz yüklenmesinden
+              doğacak tüm hukuki sorumluluk yükleyen kullanıcıya aittir.
+            </p>
+          </div>
+
+          {/* KVKK */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Kişisel Verilerin Korunması (KVKK)</p>
+            <p>
+              Kişisel verileriniz <strong className="text-zinc-400">6698 Sayılı KVKK</strong> kapsamında işlenmektedir.
+              Veri sorumlusu platform yönetimidir. Yüklenen fotoğraflar yalnızca platform içi puanlama amacıyla
+              kullanılır; üçüncü taraflarla paylaşılmaz ve ticari amaçlarla kullanılmaz.
+              Veriler, içerik kaldırılana veya hesap silinene kadar saklanır.
+            </p>
+            <p className="mt-1">
+              KVKK kapsamındaki haklarınız (bilgi alma, düzeltme, silme, işlemeye itiraz) için{' '}
+              <a href="mailto:angolasakson34@gmail.com" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">
+                angolasakson34@gmail.com
+              </a>{' '}
+              adresine başvurabilirsiniz.
+            </p>
+          </div>
+
+          {/* Sorumluluk reddi */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Sorumluluk Reddi</p>
+            <p>
+              Platform yönetimi; kullanıcılar tarafından yüklenen içeriklerin doğruluğundan, hukuka
+              uygunluğundan veya üçüncü taraflara verdiği zarardan sorumlu tutulamaz. Tüm içerikler
+              kullanıcılar tarafından gönüllü olarak paylaşılmaktadır.
+            </p>
+          </div>
+
+          <p className="pt-2 text-zinc-700">
             © {new Date().getFullYear()} ZİRVE NAMUS — Tüm hakları saklıdır.
           </p>
         </div>
