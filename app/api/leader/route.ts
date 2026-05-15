@@ -18,12 +18,18 @@ export async function GET(req: NextRequest) {
     await connectDB();
     await maybeRunDailyReset();
 
-    const leader = await Photo.findOne({ isChampion: true })
+    const LEADER_THRESHOLD = 3;
+    const startOfToday = turkishStartOfDay();
+
+    const leader = await Photo.findOne({
+      isArchived: false,
+      voteCount: { $gte: LEADER_THRESHOLD },
+      createdAt: { $gte: startOfToday },
+    })
+      .sort({ average: -1, voteCount: -1 })
       .select('url albumUrls average voteCount createdAt contactInfo comments');
     const yesterday = await Photo.findOne({ championDate: getYesterdayStr() })
       .select('url albumUrls average voteCount championDate contactInfo comments');
-
-    const startOfToday = turkishStartOfDay();
 
     const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfToday } })
       .select('_id url average totalScore voteCount isChampion').lean();
