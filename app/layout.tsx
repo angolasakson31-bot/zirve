@@ -10,11 +10,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Zirve N4mus — N4musunuzu Zirveye Taşıyın',
-  description: 'N4musunuzu zirveye taşıtın. Fotoğrafını yükle, puanlandır, size ulaşsınlar.',
+  title: 'Zirve X — Zirveye Çık, X Ol',
+  description: 'Fotoğrafını yükle, puanlan, zirveye çık. Sana ulaşsınlar.',
   robots: { index: false, follow: false, nocache: true },
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Zirve N4mus' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Zirve X' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

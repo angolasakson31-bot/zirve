@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Mountain } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Yasal Uyarı ve Kullanım Koşulları — Zirve N4mus',
-  description: 'Zirve N4mus platformuna ait yasal uyarı, kullanım koşulları ve gizlilik politikası.',
+  title: 'Yasal Uyarı ve Kullanım Koşulları — Zirve X',
+  description: 'Zirve X platformuna ait yasal uyarı, kullanım koşulları ve gizlilik politikası.',
 };
 
 const CONTACT_EMAIL = 'angolasakson34@gmail.com';
@@ -31,7 +31,7 @@ export default function YasalPage() {
               <Mountain className="w-4 h-4 text-amber-400" />
             </div>
             <span className="font-black text-base tracking-tight bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-              ZİRVE N4MUS
+              ZİRVE X
             </span>
           </Link>
           <span className="text-zinc-600 text-xs ml-1">/ Yasal Uyarı</span>
@@ -298,7 +298,7 @@ export default function YasalPage() {
 
         <div className="border-t border-zinc-800 pt-4 flex items-center justify-between">
           <p className="text-zinc-700 text-xs">
-            Son güncelleme: {UPDATE_DATE} · © {new Date().getFullYear()} ZİRVE N4MUS
+            Son güncelleme: {UPDATE_DATE} · © {new Date().getFullYear()} ZİRVE X
           </p>
           <Link
             href="/"

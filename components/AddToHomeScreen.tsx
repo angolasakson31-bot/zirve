@@ -1,7 +1,7 @@
 'use client';
 
 const SITE_URL = 'https://zirve-app-node.onrender.com';
-const SHARE_TEXT = 'ZİRVE N4MUS — N4musunuzu zirveye taşıyın! 🏆';
+const SHARE_TEXT = 'ZİRVE X — Zirveye çık, X ol! 🏆';
 
 export default function AddToHomeScreen() {
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(SITE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`;

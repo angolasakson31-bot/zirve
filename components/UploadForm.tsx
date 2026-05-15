@@ -144,7 +144,7 @@ export default function UploadForm() {
             onClick={async () => {
               const url = window.location.origin;
               if (navigator.share) {
-                try { await navigator.share({ title: 'ZİRVE N4MUS', text: 'N4musumu zirveye taşı! Fotoğrafıma oy ver, size ulaşayım.', url }); return; } catch {}
+                try { await navigator.share({ title: 'ZİRVE X', text: 'Zirveye çıkıyorum! Fotoğrafıma oy ver, bana ulaş.', url }); return; } catch {}
               }
               await navigator.clipboard.writeText(url);
             }}
@@ -245,7 +245,7 @@ export default function UploadForm() {
           <label className="text-zinc-400 text-xs font-medium flex items-center gap-1">
             İletişim Bilgisi <span className="text-red-400">*</span>
           </label>
-          <p className="text-zinc-600 text-xs">N4musunuzu zirveye taşıtın — size ulaşsınlar</p>
+          <p className="text-zinc-600 text-xs">Zirveye çık — sana ulaşsınlar</p>
           <div className="flex gap-1.5 flex-wrap">
             {(['Telegram', 'Instagram', 'Telefon', 'E-posta'] as const).map(p => (
               <button key={p} type="button"
