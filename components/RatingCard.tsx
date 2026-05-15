@@ -26,64 +26,89 @@ function saveSeenToStorage(ids: Set<string>) {
 }
 
 function Inner() {
-  const [photo, setPhoto]       = useState<Photo | null>(null);
-  const [loading, setLoading]   = useState(false);
-  const [noMore, setNoMore]     = useState(false);
-  const [score, setScore]       = useState(5);
-  const [voted, setVoted]       = useState(false);
-  const [average, setAverage]   = useState<number | null>(null);
+  const [photo, setPhoto]         = useState<Photo | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [nextBusy, setNextBusy]   = useState(false);
+  const [noMore, setNoMore]       = useState(false);
+  const [score, setScore]         = useState(5);
+  const [voted, setVoted]         = useState(false);
+  const [average, setAverage]     = useState<number | null>(null);
   const [voteCount, setVoteCount] = useState<number | null>(null);
-  const [hover, setHover]       = useState(0);
-  const [comment, setComment]   = useState('');
+  const [hover, setHover]         = useState(0);
+  const [comment, setComment]     = useState('');
   const [commented, setCommented] = useState(false);
-  const seenIds = useRef<Set<string>>(new Set());
-  const initialized = useRef(false);
-  const lastDate = useRef(todayKey());
+  const seenIds       = useRef<Set<string>>(new Set());
+  const initialized   = useRef(false);
+  const lastDate      = useRef(todayKey());
+  const loadInProgress = useRef(false);
 
   const load = useCallback(async (silent = false) => {
-    const currentDate = todayKey();
-    if (lastDate.current !== currentDate) {
-      seenIds.current = new Set();
-      initialized.current = false;
-      lastDate.current = currentDate;
-    }
-    if (!initialized.current) {
-      seenIds.current = loadSeenFromStorage();
-      initialized.current = true;
-    }
-    if (!silent) setLoading(true);
-    setScore(5);
-    setVoted(false);
-    setAverage(null);
-    setVoteCount(null);
-    setHover(0);
-    setComment('');
-    setCommented(false);
+    if (loadInProgress.current) return;
+    loadInProgress.current = true;
 
-    const exc = Array.from(seenIds.current).join(',');
     try {
-      const res  = await fetch(`/api/photos/random${exc ? `?exclude=${exc}` : ''}`);
-      if (!res.ok) {
-        // Rate limit veya sunucu hatası — noMore'a alma, sessizce dur
-        if (!silent) setLoading(false);
-        return;
+      const currentDate = todayKey();
+      if (lastDate.current !== currentDate) {
+        seenIds.current = new Set();
+        initialized.current = false;
+        lastDate.current = currentDate;
       }
-      const data = await res.json();
-      if (!data.photo) {
-        setNoMore(true);
-        setPhoto(null);
+      if (!initialized.current) {
+        seenIds.current = loadSeenFromStorage();
+        initialized.current = true;
+      }
+
+      if (!silent) {
+        setLoading(true);
+        setScore(5);
+        setVoted(false);
+        setAverage(null);
+        setVoteCount(null);
+        setHover(0);
+        setComment('');
+        setCommented(false);
       } else {
-        seenIds.current.add(String(data.photo._id));
-        saveSeenToStorage(seenIds.current);
-        setPhoto(data.photo);
-        setNoMore(false);
+        setNextBusy(true);
       }
-    } catch {
-      // Ağ hatası — noMore'a alma
+
+      const exc = Array.from(seenIds.current).join(',');
+      let fetchOk = false;
+      let nextPhoto: Photo | null = null;
+      try {
+        const res = await fetch('/api/photos/random' + (exc ? `?exclude=${exc}` : ''));
+        if (res.ok) {
+          fetchOk = true;
+          const data = await res.json();
+          nextPhoto = data.photo ?? null;
+        }
+      } catch {}
+
+      if (fetchOk) {
+        if (nextPhoto) {
+          seenIds.current.add(String(nextPhoto._id));
+          saveSeenToStorage(seenIds.current);
+          if (silent) {
+            setScore(5);
+            setVoted(false);
+            setAverage(null);
+            setVoteCount(null);
+            setHover(0);
+            setComment('');
+            setCommented(false);
+          }
+          setPhoto(nextPhoto);
+          setNoMore(false);
+        } else {
+          setNoMore(true);
+          setPhoto(null);
+        }
+      }
+      // fetch failed (rate limit / network) — state unchanged, user stays on current photo
+    } finally {
       if (!silent) setLoading(false);
-      return;
+      setNextBusy(false);
+      loadInProgress.current = false;
     }
-    if (!silent) setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -100,10 +125,10 @@ function Inner() {
 
   useEffect(() => {
     if (!noMore) return;
-    const exc = () => Array.from(seenIds.current).join(',');
+    const getExc = () => Array.from(seenIds.current).join(',');
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/photos/has-new?exclude=${exc()}`);
+        const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
         const data = await res.json();
         if (data.available > 0) load();
       } catch {}
@@ -239,9 +264,13 @@ function Inner() {
         )}
 
         <button
+          disabled={nextBusy}
           onClick={voted ? () => { submitComment(); load(true); } : handleVote}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100">
-          Sonraki <ChevronRight className="w-4 h-4" />
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed">
+          {nextBusy
+            ? <span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full" />
+            : <>Sonraki <ChevronRight className="w-4 h-4" /></>
+          }
         </button>
       </div>
     </div>
