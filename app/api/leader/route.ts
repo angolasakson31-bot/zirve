@@ -26,18 +26,21 @@ export async function GET(req: NextRequest) {
     const startOfToday = turkishStartOfDay();
 
     const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfToday } })
-      .select('_id url albumUrls average totalScore voteCount isChampion').lean();
+      .select('_id url average totalScore voteCount isChampion').lean();
 
-    // Leader hariç saf ortalamaya göre sırala (min 3 oy), ilk 4'ü al
-    const LEADER_THRESHOLD = 3;
-    const runnerUps = allToday
-      .filter(p => !p.isChampion && (p.voteCount ?? 0) >= LEADER_THRESHOLD)
-      .map(p => ({ ...p, _avg: (p.totalScore ?? 0) / (p.voteCount || 1) }))
-      .sort((a, b) => b._avg - a._avg)
-      .slice(0, 4)
-      .map(({ _avg, totalScore: _ts, isChampion: _ic, ...rest }) => rest);
+    const allPhotos = allToday
+      .map(p => ({ ...p, _avg: p.voteCount > 0 ? p.totalScore / p.voteCount : 0 }))
+      .sort((a, b) => b._avg - a._avg || b.voteCount - a.voteCount)
+      .map((p, i) => ({
+        _id: p._id.toString(),
+        url: p.url,
+        average: parseFloat(p._avg.toFixed(1)),
+        voteCount: p.voteCount,
+        rank: i + 1,
+        isChampion: p.isChampion,
+      }));
 
-    return NextResponse.json({ leader, yesterday, runnerUps });
+    return NextResponse.json({ leader, yesterday, allPhotos });
   } catch {
     return NextResponse.json({ error: 'Lider alınamadı.' }, { status: 500 });
   }
