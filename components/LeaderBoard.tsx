@@ -44,14 +44,69 @@ interface LeaderPhoto {
   comments?: PhotoComment[];
 }
 
-interface RunnerUp {
+interface RankedPhoto {
   _id: string;
   url: string;
   average: number;
   voteCount: number;
+  rank: number;
+  isChampion?: boolean;
 }
 
 const CONTACT_LABEL = 'Sana ulaşmak için iletişim bilgisi';
+
+function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rafRef    = useRef<number>(0);
+  const doubled   = [...photos, ...photos];
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || photos.length < 2) return;
+    let pos = 0;
+    const tick = () => {
+      pos += 0.5;
+      if (pos >= el.scrollWidth / 2) pos = 0;
+      el.scrollLeft = pos;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [photos.length]);
+
+  if (photos.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
+      <div className="px-4 py-2 border-b border-zinc-800 flex items-center justify-between">
+        <span className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Sıralama</span>
+        <span className="text-zinc-600 text-xs">{photos.length} fotoğraf</span>
+      </div>
+      <div
+        ref={scrollRef}
+        className="flex gap-2 p-3 overflow-hidden"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {doubled.map((photo, i) => (
+          <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
+            <div className="relative" style={{ aspectRatio: '1' }}>
+              <PixelImg src={addWatermark(photo.url)} alt={`${photo.rank}. sıra`} />
+              <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
+                photo.isChampion ? 'bg-amber-500' : 'bg-black/80'
+              }`}>
+                {photo.rank}.
+              </div>
+            </div>
+            <div className="bg-zinc-800 text-center py-1 flex items-center justify-center gap-0.5">
+              <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+              <span className="text-[10px] text-white font-bold">{photo.average.toFixed(1)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -125,8 +180,7 @@ function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
 export default function LeaderBoard() {
   const [leader, setLeader] = useState<LeaderPhoto | null>(null);
   const [yesterday, setYesterday] = useState<LeaderPhoto | null>(null);
-  const [runnerUps, setRunnerUps] = useState<RunnerUp[]>([]);
-  const [activeRunner, setActiveRunner] = useState(0);
+  const [allPhotos, setAllPhotos] = useState<RankedPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const uploaded = useUploadGate();
 
@@ -136,7 +190,7 @@ export default function LeaderBoard() {
     const data = await res.json();
     setLeader(data.leader);
     setYesterday(data.yesterday);
-    setRunnerUps(data.runnerUps ?? []);
+    setAllPhotos(data.allPhotos ?? []);
     setLoading(false);
   }, []);
 
@@ -149,12 +203,6 @@ export default function LeaderBoard() {
       window.removeEventListener('zirve:leaderChanged', fetchLeader);
     };
   }, [fetchLeader]);
-
-  useEffect(() => {
-    if (runnerUps.length < 2) return;
-    const t = setInterval(() => setActiveRunner(i => (i + 1) % runnerUps.length), 3000);
-    return () => clearInterval(t);
-  }, [runnerUps.length]);
 
   const countdown = useMidnightCountdown();
 
@@ -250,33 +298,7 @@ export default function LeaderBoard() {
         </p>
       )}
 
-      {/* 2.–5. sıra şeridi */}
-      {runnerUps.length > 0 && (
-        <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
-          <div className="px-4 py-2 border-b border-zinc-800">
-            <span className="text-zinc-500 text-xs font-medium uppercase tracking-wide">Sıralama</span>
-          </div>
-          <div className="flex gap-2 p-3">
-            {runnerUps.map((photo, i) => (
-              <div
-                key={photo._id}
-                className={`flex-none w-[calc(25%-6px)] flex flex-col rounded-xl overflow-hidden transition-all duration-500 ${
-                  activeRunner === i
-                    ? 'ring-2 ring-amber-400 opacity-100 scale-105'
-                    : 'opacity-40 scale-100'
-                }`}
-              >
-                <div className="relative w-full" style={{ aspectRatio: '1' }}>
-                  <PixelImg src={addWatermark(photo.url)} alt={`${i + 2}. sıra`} />
-                  <div className="absolute top-1 left-1 bg-black/80 text-white text-xs font-black px-1.5 py-0.5 rounded leading-none z-10">
-                    {i + 2}.
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <RankingStrip photos={allPhotos} />
 
       {/* Reset saati */}
       <div className="flex items-center gap-1.5 px-1">
