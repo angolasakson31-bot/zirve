@@ -66,7 +66,7 @@ export default function Home() {
         <LeaderBoard />
         <RatingCard />
         <TrackCode />
-        <UploadForm />
+        <div id="upload-form"><UploadForm /></div>
 
         {/* Telegram notu */}
         <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 px-4 py-3.5 flex items-start gap-3">
