@@ -10,6 +10,7 @@ export default function UploadForm() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [contactPlatform, setContactPlatform] = useState('Telegram');
   const [contactValue, setContactValue] = useState('');
+  const [consent, setConsent] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
@@ -81,7 +82,7 @@ export default function UploadForm() {
   const reset = () => {
     setFiles([]); setPreviews([]);
     setContactPlatform('Telegram'); setContactValue('');
-    setTrackingCode(''); setError('');
+    setTrackingCode(''); setError(''); setConsent(false);
   };
 
   const submit = async () => {
@@ -143,7 +144,7 @@ export default function UploadForm() {
             onClick={async () => {
               const url = window.location.origin;
               if (navigator.share) {
-                try { await navigator.share({ title: 'ZİRVE NAMUS', text: 'Namusumu zirveye taşı! Fotoğrafıma oy ver, size ulaşayım.', url }); return; } catch {}
+                try { await navigator.share({ title: 'ZİRVE N4MUS', text: 'N4musumu zirveye taşı! Fotoğrafıma oy ver, size ulaşayım.', url }); return; } catch {}
               }
               await navigator.clipboard.writeText(url);
             }}
@@ -244,7 +245,7 @@ export default function UploadForm() {
           <label className="text-zinc-400 text-xs font-medium flex items-center gap-1">
             İletişim Bilgisi <span className="text-red-400">*</span>
           </label>
-          <p className="text-zinc-600 text-xs">Namusunuzu zirveye taşıtın — size ulaşsınlar</p>
+          <p className="text-zinc-600 text-xs">N4musunuzu zirveye taşıtın — size ulaşsınlar</p>
           <div className="flex gap-1.5 flex-wrap">
             {(['Telegram', 'Instagram', 'Telefon', 'E-posta'] as const).map(p => (
               <button key={p} type="button"
@@ -268,13 +269,29 @@ export default function UploadForm() {
           />
         </div>
 
+        {/* Onay */}
+        <label className="flex items-start gap-2.5 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={e => setConsent(e.target.checked)}
+            className="mt-0.5 w-4 h-4 shrink-0 accent-amber-400 cursor-pointer"
+          />
+          <span className="text-zinc-500 text-xs leading-relaxed group-hover:text-zinc-400 transition">
+            Yüklediğim fotoğraftaki tüm kişilerin <strong className="text-zinc-400">açık rızasını</strong> aldığımı,
+            içeriğin 18+ olduğunu ve{' '}
+            <a href="/yasal" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">yasal koşulları</a>{' '}
+            kabul ettiğimi onaylıyorum.
+          </span>
+        </label>
+
         {error && (
           <div className="flex items-center gap-2 text-red-400 text-sm bg-red-950/40 rounded-lg px-3 py-2">
             <AlertCircle className="w-4 h-4 shrink-0" /> {error}
           </div>
         )}
 
-        <button onClick={submit} disabled={!files.length || !contactValue.trim() || uploading}
+        <button onClick={submit} disabled={!files.length || !contactValue.trim() || !consent || uploading}
           className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
           {uploading
             ? <><span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full inline-block" /> Yükleniyor...</>

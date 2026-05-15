@@ -51,7 +51,7 @@ interface RunnerUp {
   voteCount: number;
 }
 
-const CONTACT_LABEL = 'Namusumu konuşmak için iletişim bilgisi';
+const CONTACT_LABEL = 'N4musumu konuşmak için iletişim bilgisi';
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -165,11 +165,11 @@ export default function LeaderBoard() {
       {/* Günün + Dünün yanyana */}
       <div className="grid grid-cols-2 gap-3">
 
-        {/* Günün Lider Namusu */}
+        {/* Günün Lider N4musu */}
         <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
           <div className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 border-b border-amber-500/20">
             <Trophy className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-            <h2 className="font-bold text-amber-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Günün Lider Namusu</h2>
+            <h2 className="font-bold text-amber-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Günün Lider N4musu</h2>
           </div>
           <div className="flex items-center justify-center px-3 py-1.5 bg-zinc-800/60 border-b border-zinc-700/50">
             <span className="text-amber-400 font-mono font-bold text-[10px] tabular-nums">{countdown}</span>
@@ -206,12 +206,12 @@ export default function LeaderBoard() {
           )}
         </div>
 
-        {/* Dünün Lider Namusu */}
+        {/* Dünün Lider N4musu */}
         {yesterday ? (
           <div className="rounded-2xl overflow-hidden border border-zinc-700 bg-zinc-900">
             <div className="flex items-center gap-1.5 px-3 py-2 bg-zinc-800 border-b border-zinc-700">
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-              <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Lider Namusu</h2>
+              <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Lider N4musu</h2>
             </div>
             <UploadGate mini>
               <AlbumViewer

@@ -19,11 +19,11 @@ export default function Home() {
             <Mountain className="w-5 h-5 text-amber-400" />
           </div>
           <span className="font-black text-xl tracking-tight bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-            ZİRVE NAMUS
+            ZİRVE N4MUS
           </span>
           <div className="hidden sm:flex items-center gap-1.5 bg-zinc-800/60 rounded-full px-3 py-1 ml-1">
             <Zap className="w-3 h-3 text-amber-400" />
-            <span className="text-zinc-400 text-xs">Namusunuzu zirveye taşıyın</span>
+            <span className="text-zinc-400 text-xs">N4musunuzu zirveye taşıyın</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <AddToHomeScreen />
@@ -37,13 +37,13 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">
-              En iyi namus kimde{' '}
+              En iyi n4mus kimde{' '}
               <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
                 sen karar ver
               </span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-              Fotoğraf yükleyin ve namusunuzu zirveye taşıyın. Kim olduğunu bilmeden
+              Fotoğraf yükleyin ve n4musunuzu zirveye taşıyın. Kim olduğunu bilmeden
               fotoğrafları puanla, halk kimi seçer?
               Takip kodunu al, zirvede kal ve sana ulaşsınlar.
             </p>
@@ -55,7 +55,7 @@ export default function Home() {
       <div className="border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <p className="text-zinc-500 text-xs">
-            Namusunuzu zirveye taşıyın — fotoğrafını yükle, puanlansın, size ulaşsınlar —{' '}
+            N4musunuzu zirveye taşıyın — fotoğrafını yükle, puanlansın, size ulaşsınlar —{' '}
             <span className="text-amber-400">kimi zirveye çıkarmak istiyorsan yükle ve insanlara sun...</span>
           </p>
         </div>
@@ -113,7 +113,7 @@ export default function Home() {
             </Link>
           </p>
           <p className="text-zinc-700">
-            © {new Date().getFullYear()} ZİRVE NAMUS — Tüm hakları saklıdır.
+            © {new Date().getFullYear()} ZİRVE N4MUS — Tüm hakları saklıdır.
           </p>
         </div>
       </div>

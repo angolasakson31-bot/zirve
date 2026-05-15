@@ -1,7 +1,7 @@
 {
-  "name": "Zirve Namus",
+  "name": "Zirve N4mus",
   "short_name": "Zirve",
-  "description": "Namusunuzu zirveye taşıtın. Fotoğrafını yükle, puanlandır, size ulaşsınlar.",
+  "description": "N4musunuzu zirveye taşıtın. Fotoğrafını yükle, puanlandır, size ulaşsınlar.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",

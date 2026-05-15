@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import BannedIP from '@/models/BannedIP';
 
 export const runtime = 'nodejs';
 
-function auth(req: NextRequest) {
-  return req.headers.get('x-admin-password') === process.env.ADMIN_PASSWORD;
-}
-
 export async function POST(req: NextRequest) {
-  if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
+  const authErr = checkAdmin(req);
+  if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
   const { ip } = await req.json();
   if (!ip || typeof ip !== 'string') return NextResponse.json({ error: 'IP gerekli.' }, { status: 400 });
   const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$|^[0-9a-f:]+$/i;
@@ -20,7 +18,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
+  const authErr = checkAdmin(req);
+  if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
   const { ip } = await req.json();
   if (!ip) return NextResponse.json({ error: 'IP gerekli.' }, { status: 400 });
   await connectDB();

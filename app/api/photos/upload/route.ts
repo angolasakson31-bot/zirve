@@ -6,6 +6,7 @@ import Photo from '@/models/Photo';
 import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 import { turkishStartOfDay } from '@/lib/daily-reset';
+import { hashIp } from '@/lib/hash-ip';
 
 export const runtime = 'nodejs';
 
@@ -33,8 +34,9 @@ async function uploadToCloudinary(buffer: Buffer): Promise<{ public_id: string; 
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
-  if (!checkLimit(ip))
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const ip = hashIp(rawIp);
+  if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
 
   try {
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const banned = await BannedIP.exists({ ip });
+    const banned = await BannedIP.exists({ ip: rawIp });
     if (banned) return NextResponse.json({ error: 'Yükleme erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
     const todayCount = await Photo.countDocuments({ uploaderIp: ip, createdAt: { $gte: turkishStartOfDay() } });

@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 
 export const runtime = 'nodejs';
 
-function auth(req: NextRequest) {
-  const pwd = req.headers.get('x-admin-password');
-  return pwd === process.env.ADMIN_PASSWORD;
-}
-
 export async function GET(req: NextRequest) {
-  if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
+  const authErr = checkAdmin(req);
+  if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
   await connectDB();
   const photos = await Photo.find({})
     .sort({ createdAt: -1 })

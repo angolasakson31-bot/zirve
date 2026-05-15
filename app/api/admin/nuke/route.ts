@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
 
 export const runtime = 'nodejs';
 
-function auth(req: NextRequest) {
-  return req.headers.get('x-admin-password') === process.env.ADMIN_PASSWORD;
-}
-
 export async function DELETE(req: NextRequest) {
-  if (!auth(req)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
+  const authErr = checkAdmin(req);
+  if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
   if (req.headers.get('x-confirm') !== 'DELETE_ALL')
     return NextResponse.json({ error: 'Onay başlığı eksik.' }, { status: 400 });
 

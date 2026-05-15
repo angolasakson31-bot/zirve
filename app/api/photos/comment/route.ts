@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
+import { hashIp } from '@/lib/hash-ip';
 
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(10);
 
-function hashIp(ip: string): string {
-  return createHash('md5').update(ip).digest('hex').slice(0, 8);
-}
-
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
-  if (!checkLimit(ip))
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
 
   try {
@@ -30,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const photo = await Photo.findOneAndUpdate(
       { _id: photoId, isArchived: false },
-      { $push: { comments: { text: trimmed, userHash: hashIp(ip), createdAt: new Date() } } },
+      { $push: { comments: { text: trimmed, userHash: hashIp(rawIp), createdAt: new Date() } } },
       { new: true }
     ).select('comments');
 

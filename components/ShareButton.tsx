@@ -9,7 +9,7 @@ export default function ShareButton() {
     const url = window.location.origin;
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'ZİRVE NAMUS', text: 'Namusunuzu zirveye taşıtın! Fotoğrafını yükle, puanlandır, size ulaşsınlar.', url });
+        await navigator.share({ title: 'ZİRVE N4MUS', text: 'N4musunuzu zirveye taşıtın! Fotoğrafını yükle, puanlandır, size ulaşsınlar.', url });
         return;
       } catch {}
     }
