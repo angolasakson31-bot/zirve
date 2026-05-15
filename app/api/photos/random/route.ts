@@ -4,20 +4,22 @@ import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
 import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
+import { hashIp } from '@/lib/hash-ip';
 
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(60);
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
-  if (!checkLimit(ip))
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
 
   try {
     await connectDB();
     await maybeRunDailyReset();
 
+    const ip = hashIp(rawIp);
     const startOfDay = turkishStartOfDay();
 
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
