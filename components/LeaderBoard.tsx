@@ -297,7 +297,7 @@ export default function LeaderBoard() {
         </p>
       )}
 
-      <RankingStrip photos={allPhotos} />
+      <RankingStrip photos={allPhotos.filter(p => p.rank !== 1)} />
 
       {/* Reset saati */}
       <div className="flex items-center gap-1.5 px-1">
