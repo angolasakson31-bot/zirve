@@ -31,6 +31,8 @@ const LEADER_THRESHOLD = 3;
 
 function computeRanks(photos: AdminPhoto[]): Map<string, number> {
   const sorted = [...photos].sort((a, b) => {
+    if (a.isChampion && !b.isChampion) return -1;
+    if (!a.isChampion && b.isChampion) return 1;
     const sa = a.voteCount >= LEADER_THRESHOLD ? (a.totalScore / a.voteCount) : -1;
     const sb = b.voteCount >= LEADER_THRESHOLD ? (b.totalScore / b.voteCount) : -1;
     return sb - sa;
@@ -259,6 +261,8 @@ export default function AdminPage() {
   const todayPhotos = groups.find(g => g.isToday)?.photos ?? [];
   const top5 = [...todayPhotos]
     .sort((a, b) => {
+      if (a.isChampion && !b.isChampion) return -1;
+      if (!a.isChampion && b.isChampion) return 1;
       const sa = a.voteCount >= LEADER_THRESHOLD ? (a.totalScore / a.voteCount) : -1;
       const sb = b.voteCount >= LEADER_THRESHOLD ? (b.totalScore / b.voteCount) : -1;
       return sb - sa;
