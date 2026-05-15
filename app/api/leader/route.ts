@@ -30,7 +30,12 @@ export async function GET(req: NextRequest) {
 
     const allPhotos = allToday
       .map(p => ({ ...p, _avg: p.voteCount > 0 ? p.totalScore / p.voteCount : 0 }))
-      .sort((a, b) => b._avg - a._avg || b.voteCount - a.voteCount)
+      .sort((a, b) => {
+        // Şampiyon her zaman 1. sıra
+        if (a.isChampion && !b.isChampion) return -1;
+        if (!a.isChampion && b.isChampion) return 1;
+        return b._avg - a._avg || b.voteCount - a.voteCount;
+      })
       .map((p, i) => ({
         _id: p._id.toString(),
         url: p.url,
