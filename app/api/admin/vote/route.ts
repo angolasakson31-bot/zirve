@@ -29,19 +29,30 @@ export async function POST(req: NextRequest) {
     photo.average = photo.totalScore / photo.voteCount;
     await photo.save();
 
+    // Her admin oyundan sonra gerçek şampiyonu yeniden hesapla
     let leaderChanged = false;
-    if (photo.voteCount >= LEADER_THRESHOLD && !photo.isArchived) {
-      const currentLeader = await Photo.findOne({ isChampion: true });
+    if (!photo.isArchived) {
+      const topPhoto = await Photo.findOne({
+        isArchived: false,
+        voteCount: { $gte: LEADER_THRESHOLD },
+        createdAt: { $gte: turkishStartOfDay() },
+      }).sort({ average: -1, voteCount: -1 });
 
-      if (currentLeader?._id.toString() !== photo._id.toString()) {
-        const leaderAvg = currentLeader
-          ? currentLeader.totalScore / currentLeader.voteCount
-          : -1;
-        if (photo.average > leaderAvg) {
-          if (currentLeader) { currentLeader.isChampion = false; await currentLeader.save(); }
-          photo.isChampion = true;
-          await photo.save();
+      if (topPhoto) {
+        const topId = topPhoto._id.toString();
+        // Yanlış şampiyonları temizle
+        await Photo.updateMany(
+          { isChampion: true, _id: { $ne: topPhoto._id } },
+          { $set: { isChampion: false } }
+        );
+        // Doğru şampiyonu ata
+        if (!topPhoto.isChampion) {
+          await Photo.findByIdAndUpdate(topPhoto._id, { $set: { isChampion: true } });
           leaderChanged = true;
+        }
+        // Oyladığımız fotoğraf şampiyon olduysa local state'i güncelle
+        if (topId === photo._id.toString()) {
+          photo.isChampion = true;
         }
       }
     }
