@@ -28,6 +28,8 @@ services:
         sync: false
       - key: SITE_ENABLED
         value: "true"
+      - key: IP_SALT
+        value: "90a56d398dc1ab19fb3cb98a0e5abeda5fe36badc31973610a2fa1e80047bb84"
 
   - type: cron
     name: zirve-daily-reset
