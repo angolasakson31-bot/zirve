@@ -246,7 +246,7 @@ export default function LeaderBoard() {
       {!uploaded && (
         <p className="text-center text-zinc-600 text-xs">
           Günün ve dünün liderini görmek için{' '}
-          <span className="text-amber-500 font-medium">fotoğraf yükle</span>
+          <a href="#upload-form" className="text-amber-500 font-medium hover:underline">fotoğraf yükle</a>
         </p>
       )}
 
