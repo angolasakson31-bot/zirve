@@ -110,6 +110,18 @@ export default function Home() {
             </p>
           </div>
 
+          {/* NCII */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Rıza Dışı Mahrem İçerik Yasağı</p>
+            <p>
+              Kişinin açık rızası olmaksızın paylaşılan mahrem görüntüler (rıza dışı müstehcen içerik / NCII)
+              kesinlikle <strong className="text-zinc-400">yasaktır</strong>. Bu tür içerikler{' '}
+              <strong className="text-zinc-400">TCK Madde 134</strong> ve{' '}
+              <strong className="text-zinc-400">TCK Madde 226</strong> kapsamında ağır cezai yaptırım gerektirir.
+              Tespit edilen her içerik derhal ve kalıcı olarak kaldırılır; gerektiğinde yetkili mercilere suç duyurusunda bulunulur.
+            </p>
+          </div>
+
           {/* TCK / müstehcenlik */}
           <div className="space-y-1">
             <p className="font-semibold text-zinc-500">Yasaklı İçerikler</p>
@@ -118,6 +130,18 @@ export default function Home() {
               <strong className="text-zinc-400"> TCK Madde 226</strong> ve ilgili mevzuat kapsamında kesinlikle yasaktır.
               Tespit edilen ihlaller derhal kaldırılır; gerektiğinde yetkili mercilere bildirim yapılır.
               Platform bu tür içerikler nedeniyle hiçbir hukuki sorumluluk kabul etmez.
+            </p>
+          </div>
+
+          {/* Yorum sorumluluğu */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Kullanıcı Yorumları ve Hakaret</p>
+            <p>
+              Platforma yapılan yorumlar tamamen kullanıcıların sorumluluğundadır. Hakaret, iftira veya
+              kişilik haklarını zedeleyen yorumlar <strong className="text-zinc-400">TCK Madde 125–131</strong>{' '}
+              (hakaret ve iftira) ve <strong className="text-zinc-400">TCK Madde 267</strong> kapsamında suç teşkil eder;
+              hukuki sorumluluk yorumu yapan kullanıcıya aittir. Platform yönetimi uygunsuz yorumları
+              önceden bildirim gerekmeksizin kaldırma hakkını saklı tutar.
             </p>
           </div>
 
@@ -175,6 +199,18 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Çerez */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Çerez Politikası</p>
+            <p>
+              Platform, oturum yönetimi ve takip kodu işlevleri için teknik çerezler kullanmaktadır.
+              Bu çerezler kişisel veri içermez ve yalnızca platformun düzgün çalışması amacıyla kullanılır.
+              Üçüncü taraf reklam veya analitik çerezi kullanılmamaktadır.
+              Tarayıcınızın ayarlarından çerezleri devre dışı bırakabilirsiniz; ancak bu durumda bazı
+              platform özellikleri çalışmayabilir.
+            </p>
+          </div>
+
           {/* Sorumluluk reddi */}
           <div className="space-y-1">
             <p className="font-semibold text-zinc-500">Sorumluluk Reddi</p>
@@ -185,8 +221,29 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Yetkili mahkeme */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Uygulanacak Hukuk ve Yetkili Mahkeme</p>
+            <p>
+              Bu platformun kullanımından doğabilecek her türlü uyuşmazlıkta{' '}
+              <strong className="text-zinc-400">Türkiye Cumhuriyeti hukuku</strong> uygulanır.
+              Anlaşmazlıklarda <strong className="text-zinc-400">İstanbul Mahkemeleri ve İcra Daireleri</strong> yetkilidir.
+            </p>
+          </div>
+
+          {/* Değişiklik hakkı */}
+          <div className="space-y-1">
+            <p className="font-semibold text-zinc-500">Koşulların Değiştirilmesi</p>
+            <p>
+              Platform yönetimi, yasal düzenlemeler veya platform politikalarındaki değişiklikler
+              doğrultusunda bu koşulları önceden bildirmeksizin güncelleme hakkını saklı tutar.
+              Güncel koşullar her zaman bu sayfada yayımlanır; platformu kullanmaya devam etmeniz
+              güncel koşulları kabul ettiğiniz anlamına gelir.
+            </p>
+          </div>
+
           <p className="pt-2 text-zinc-700">
-            © {new Date().getFullYear()} ZİRVE NAMUS — Tüm hakları saklıdır.
+            Son güncelleme: Mayıs 2025 · © {new Date().getFullYear()} ZİRVE NAMUS — Tüm hakları saklıdır.
           </p>
         </div>
       </div>
