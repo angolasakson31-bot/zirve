@@ -23,7 +23,7 @@ services:
       - key: CLOUDINARY_API_SECRET
         sync: false
       - key: CRON_SECRET
-        sync: false
+        value: "1ee5ea83dba93e245aa559a739422440885417783a31b749a9572317a9bad3d2"
       - key: ADMIN_PASSWORD
         sync: false
       - key: SITE_ENABLED
@@ -40,4 +40,4 @@ services:
     startCommand: node -e "fetch('https://zirve-app-node.onrender.com/api/cron/daily-reset',{method:'POST',headers:{'x-cron-secret':process.env.CRON_SECRET}}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d))).catch(console.error)"
     envVars:
       - key: CRON_SECRET
-        sync: false
+        value: "1ee5ea83dba93e245aa559a739422440885417783a31b749a9572317a9bad3d2"
