@@ -11,8 +11,9 @@ interface Props {
 }
 
 export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false }: Props) {
-  const [loaded, setLoaded]       = useState(false);
+  const [loaded, setLoaded]         = useState(false);
   const [pixelReady, setPixelReady] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const imgRef    = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const uploaded  = useUploadGate();
@@ -29,6 +30,18 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     const ctx = cv.getContext('2d');
     if (ctx) { ctx.drawImage(img, 0, 0, w, h); setPixelReady(true); }
   }, [loaded, uploaded]);
+
+  const imgSrc = useFallback ? src : addWatermark(src);
+
+  const handleError = () => {
+    if (!useFallback) {
+      // Watermark URL başarısız — orijinal URL'e dön
+      setUseFallback(true);
+    } else {
+      // Orijinal da başarısız
+      setLoaded(true);
+    }
+  };
 
   const showImg   = loaded && uploaded;
   const showPixel = loaded && !uploaded && pixelReady;
@@ -48,12 +61,12 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
-        src={addWatermark(src)}
+        src={imgSrc}
         alt={alt}
         className="w-full object-contain"
         style={{ maxHeight, display: showImg ? 'block' : 'none', opacity: dimmed ? 0.7 : 1 }}
         onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
+        onError={handleError}
         draggable={false}
       />
 
