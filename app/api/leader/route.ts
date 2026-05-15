@@ -18,15 +18,9 @@ export async function GET(req: NextRequest) {
     await connectDB();
     await maybeRunDailyReset();
 
-    const LEADER_THRESHOLD = 3;
     const startOfToday = turkishStartOfDay();
 
-    const leader = await Photo.findOne({
-      isArchived: false,
-      voteCount: { $gte: LEADER_THRESHOLD },
-      createdAt: { $gte: startOfToday },
-    })
-      .sort({ average: -1, voteCount: -1 })
+    const leader = await Photo.findOne({ isChampion: true })
       .select('url albumUrls average voteCount createdAt contactInfo comments');
     const yesterday = await Photo.findOne({ championDate: getYesterdayStr() })
       .select('url albumUrls average voteCount championDate contactInfo comments');
