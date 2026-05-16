@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
     await connectDB();
 
     const photo = await Photo.findOne({ trackingCode: code.toUpperCase() })
-      .select('url voteCount average likeCount dislikeCount isChampion createdAt isArchived');
+      .select('url voteCount average likeCount dislikeCount isChampion createdAt isArchived comments');
 
     if (!photo) return NextResponse.json({ error: 'Kod bulunamadı.' }, { status: 404 });
 
