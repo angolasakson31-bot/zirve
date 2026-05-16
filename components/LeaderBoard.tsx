@@ -229,11 +229,11 @@ export default function LeaderBoard() {
                   maxHeight={280}
                   bottomOverlay={
                     <div className="flex items-center gap-1">
-                      <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1">
-                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="text-white font-bold text-sm">{leader.average.toFixed(1)}</span>
+                      <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                        <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                        <span className="text-white font-bold text-xs">{leader.average.toFixed(1)}</span>
                       </div>
-                      <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 text-zinc-300 text-xs">
+                      <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 text-zinc-300 text-[10px]">
                         {leader.voteCount} oy
                       </div>
                     </div>
@@ -267,11 +267,11 @@ export default function LeaderBoard() {
                 dimmed
                 bottomOverlay={
                   <div className="flex items-center gap-1">
-                    <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1">
-                      <Star className="w-3 h-3 text-zinc-300 fill-zinc-300" />
-                      <span className="text-white font-bold text-sm">{yesterday.average.toFixed(1)}</span>
+                    <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                      <Star className="w-2.5 h-2.5 text-zinc-300 fill-zinc-300" />
+                      <span className="text-white font-bold text-xs">{yesterday.average.toFixed(1)}</span>
                     </div>
-                    <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1">{yesterday.voteCount} oy</span>
+                    <span className="text-zinc-400 text-[10px] bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5">{yesterday.voteCount} oy</span>
                   </div>
                 }
               />

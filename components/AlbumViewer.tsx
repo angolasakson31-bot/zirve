@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Images } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 import { addWatermark } from '@/lib/cloudinaryWatermark';
 
@@ -22,12 +21,6 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
       <div className="cursor-zoom-in" onClick={() => setLightbox(urls[active])}>
         <div className="relative">
           <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
-          {isAlbum && (
-            <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur text-white text-xs px-2 py-1 rounded-lg pointer-events-none">
-              <Images className="w-3 h-3" />
-              <span>Albüm · {urls.length}</span>
-            </div>
-          )}
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}
