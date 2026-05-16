@@ -1,6 +1,5 @@
 'use client';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { Lock } from 'lucide-react';
 
 interface Props {
   children: React.ReactNode;
@@ -20,11 +19,7 @@ export default function UploadGate({ children, label, mini }: Props) {
     return (
       <div className="relative rounded-2xl overflow-hidden">
         <div className="pointer-events-none select-none">{children}</div>
-        <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/20">
-          <div className="w-9 h-9 rounded-xl bg-zinc-900/80 border border-amber-500/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
-            <Lock className="w-4 h-4 text-amber-400" />
-          </div>
-        </div>
+        <div className="absolute inset-0 z-20 bg-black/20" />
       </div>
     );
   }
@@ -33,9 +28,6 @@ export default function UploadGate({ children, label, mini }: Props) {
     <div className="relative rounded-2xl overflow-hidden">
       <div className="pointer-events-none select-none">{children}</div>
       <a href="#upload-form" className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-20 bg-black/50">
-        <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-amber-500/40 flex items-center justify-center">
-          <Lock className="w-5 h-5 text-amber-400" />
-        </div>
         <p className="text-white font-bold text-base text-center px-6">
           {label ?? 'Görmek için fotoğraf yükle'}
         </p>
