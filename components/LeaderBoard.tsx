@@ -28,7 +28,6 @@ function useMidnightCountdown() {
 }
 
 interface PhotoComment {
-  _id: string;
   text: string;
   userHash: string;
   createdAt: string;
@@ -109,16 +108,24 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [duration, setDuration] = useState<number | null>(null);
-  const shouldScroll = comments.length > 2;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!shouldScroll || !innerRef.current) { setDuration(null); return; }
-    // Render sonrası yüksekliği ölç; bir kopyanın yüksekliği = toplam / 2
-    const halfH = innerRef.current.scrollHeight / 2;
-    setDuration(halfH / 14); // 14px/s
-  }, [comments, shouldScroll]);
+    const el = scrollRef.current;
+    if (!el) return;
+    let pos = 0;
+    const tick = () => {
+      if (el.scrollHeight > el.clientHeight) {
+        pos += 0.4;
+        if (pos >= el.scrollHeight - el.clientHeight) pos = 0;
+        el.scrollTop = pos;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [comments]);
 
   if (!comments || comments.length === 0) return null;
 
@@ -127,25 +134,17 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  const displayed = shouldScroll ? [...comments, ...comments] : comments;
+  function color(hash: string) {
+    return COLORS[parseInt(hash.slice(0, 2), 16) % COLORS.length];
+  }
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div className="overflow-hidden" style={{ maxHeight: '2.4rem' }}>
-        <div
-          ref={innerRef}
-          className="space-y-0.5"
-          style={shouldScroll && duration !== null
-            ? { animation: `zirve-scroll-up ${duration}s linear infinite` }
-            : undefined}
-        >
-          {displayed.map((c, i) => (
-            <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
-              <span className="text-zinc-600 mr-0.5">•</span>{c.text}
-            </p>
-          ))}
-        </div>
+      <div ref={scrollRef} className="max-h-[100px] overflow-hidden space-y-0.5">
+        {comments.map((c, i) => (
+          <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
+        ))}
       </div>
     </div>
   );
@@ -211,7 +210,7 @@ export default function LeaderBoard() {
   return (
     <div className="space-y-3">
       {/* Günün + Dünün yanyana */}
-      <div className="grid grid-cols-2 gap-3 items-start">
+      <div className="grid grid-cols-2 gap-3">
 
         {/* Günün Zirvesi */}
         <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
@@ -230,19 +229,19 @@ export default function LeaderBoard() {
                   maxHeight={280}
                   bottomOverlay={
                     <div className="flex items-center gap-0.5">
-                      <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
-                        <Star className="w-1.5 h-1.5 text-amber-400 fill-amber-400" />
-                        <span className="text-white font-bold text-[9px]">{leader.average.toFixed(1)}</span>
+                      <div className="bg-black/70 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                        <Star className="w-2 h-2 text-amber-400 fill-amber-400" />
+                        <span className="text-white font-bold text-[10px]">{leader.average.toFixed(1)}</span>
                       </div>
-                      <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 text-zinc-200 text-[9px]">
+                      <div className="bg-black/70 backdrop-blur rounded px-1 py-0.5 text-zinc-300 text-[10px]">
                         {leader.voteCount} oy
                       </div>
                     </div>
                   }
                 />
               </UploadGate>
-              {uploaded === true && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
-              {uploaded === true && leader.comments && leader.comments.length > 0 && (
+              {uploaded && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+              {uploaded && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
             </div>
@@ -268,17 +267,17 @@ export default function LeaderBoard() {
                 dimmed
                 bottomOverlay={
                   <div className="flex items-center gap-0.5">
-                    <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
-                      <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
-                      <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
+                    <div className="bg-black/70 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                      <Star className="w-2 h-2 text-zinc-300 fill-zinc-300" />
+                      <span className="text-white font-bold text-[10px]">{yesterday.average.toFixed(1)}</span>
                     </div>
-                    <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
+                    <span className="text-zinc-400 text-[10px] bg-black/70 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
                   </div>
                 }
               />
             </UploadGate>
-            {uploaded === true && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
-            {uploaded === true && yesterday.comments && yesterday.comments.length > 0 && (
+            {uploaded && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
+            {uploaded && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />
             )}
           </div>
@@ -291,7 +290,7 @@ export default function LeaderBoard() {
       </div>
 
       {/* Fotoğraf yükle notu (kilitli için) */}
-      {uploaded === false && (
+      {!uploaded && (
         <p className="text-center text-zinc-600 text-xs">
           Günün ve dünün liderini görmek için{' '}
           <a href="#upload-form" className="text-amber-500 font-medium hover:underline">fotoğraf yükle</a>
