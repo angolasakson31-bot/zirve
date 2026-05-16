@@ -2,8 +2,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
-import PixelImg from '@/components/PixelImg';
-import { useUploadGate } from '@/hooks/useUploadGate';
 import { addWatermark } from '@/lib/cloudinaryWatermark';
 
 interface Props {
@@ -16,15 +14,11 @@ interface Props {
 export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const uploaded = useUploadGate(); // null | true | false
   const isAlbum = urls.length > 1;
 
   return (
     <>
-      <div
-        className={uploaded === true ? 'cursor-zoom-in' : undefined}
-        onClick={() => uploaded === true && setLightbox(urls[active])}
-      >
+      <div className="cursor-zoom-in" onClick={() => setLightbox(urls[active])}>
         <div className="relative">
           <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
           {bottomOverlay && (
@@ -47,13 +41,14 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              <PixelImg src={addWatermark(url)} alt={`Foto ${i + 1}`} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={addWatermark(url)} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
       )}
 
-      {lightbox && uploaded === true && (
+      {lightbox && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}
