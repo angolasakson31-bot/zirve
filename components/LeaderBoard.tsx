@@ -135,10 +135,6 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  function color(hash: string, idx: number) {
-    return COLORS[(parseInt(hash.slice(0, 2), 16) + idx) % COLORS.length];
-  }
-
   const displayed = shouldScroll ? [...comments, ...comments] : comments;
 
   return (
@@ -150,7 +146,7 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
         style={{ maxHeight: '2.4rem' }}
       >
         {displayed.map((c, i) => (
-          <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${color(c.userHash, i % comments.length)}`}>
+          <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
             <span className="text-zinc-600 mr-0.5">•</span>{c.text}
           </p>
         ))}
