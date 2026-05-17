@@ -26,57 +26,86 @@ function saveSeenToStorage(ids: Set<string>) {
 }
 
 function Inner() {
-  const [photo, setPhoto]       = useState<Photo | null>(null);
-  const [loading, setLoading]   = useState(false);
-  const [noMore, setNoMore]     = useState(false);
-  const [score, setScore]       = useState(5);
-  const [voted, setVoted]       = useState(false);
-  const [average, setAverage]   = useState<number | null>(null);
+  const [photo, setPhoto]         = useState<Photo | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [nextBusy, setNextBusy]   = useState(false);
+  const [noMore, setNoMore]       = useState(false);
+  const [score, setScore]         = useState(5);
+  const [voted, setVoted]         = useState(false);
+  const [average, setAverage]     = useState<number | null>(null);
   const [voteCount, setVoteCount] = useState<number | null>(null);
-  const [hover, setHover]       = useState(0);
-  const [comment, setComment]   = useState('');
-  const [commented, setCommented] = useState(false);
-  const seenIds = useRef<Set<string>>(new Set());
-  const initialized = useRef(false);
-  const lastDate = useRef(todayKey());
+  const [hover, setHover]         = useState(0);
+  const [comment, setComment]     = useState('');
+  const seenIds        = useRef<Set<string>>(new Set());
+  const initialized    = useRef(false);
+  const lastDate       = useRef(todayKey());
+  const loadInProgress = useRef(false);
 
   const load = useCallback(async (silent = false) => {
-    const currentDate = todayKey();
-    if (lastDate.current !== currentDate) {
-      seenIds.current = new Set();
-      initialized.current = false;
-      lastDate.current = currentDate;
-    }
-    if (!initialized.current) {
-      seenIds.current = loadSeenFromStorage();
-      initialized.current = true;
-    }
-    if (!silent) setLoading(true);
-    setScore(5);
-    setVoted(false);
-    setAverage(null);
-    setVoteCount(null);
-    setHover(0);
-    setComment('');
-    setCommented(false);
+    if (loadInProgress.current) return;
+    loadInProgress.current = true;
 
-    const exc = Array.from(seenIds.current).join(',');
     try {
-      const res  = await fetch(`/api/photos/random${exc ? `?exclude=${exc}` : ''}`);
-      const data = await res.json();
-      if (!data.photo) {
-        setNoMore(true);
-        setPhoto(null);
-      } else {
-        seenIds.current.add(String(data.photo._id));
-        saveSeenToStorage(seenIds.current);
-        setPhoto(data.photo);
-        setNoMore(false);
+      const currentDate = todayKey();
+      if (lastDate.current !== currentDate) {
+        seenIds.current = new Set();
+        initialized.current = false;
+        lastDate.current = currentDate;
       }
-    } catch {
-      setNoMore(true);
+      if (!initialized.current) {
+        seenIds.current = loadSeenFromStorage();
+        initialized.current = true;
+      }
+
+      if (!silent) {
+        setLoading(true);
+        setScore(5);
+        setVoted(false);
+        setAverage(null);
+        setVoteCount(null);
+        setHover(0);
+        setComment('');
+      } else {
+        setNextBusy(true);
+      }
+
+      const exc = Array.from(seenIds.current).join(',');
+      let fetchOk = false;
+      let nextPhoto: Photo | null = null;
+      try {
+        const res = await fetch('/api/photos/random' + (exc ? `?exclude=${exc}` : ''));
+        if (res.ok) {
+          fetchOk = true;
+          const data = await res.json();
+          nextPhoto = data.photo ?? null;
+        }
+      } catch {}
+
+      if (fetchOk) {
+        if (nextPhoto) {
+          seenIds.current.add(String(nextPhoto._id));
+          saveSeenToStorage(seenIds.current);
+          if (silent) {
+            setScore(5);
+            setVoted(false);
+            setAverage(null);
+            setVoteCount(null);
+            setHover(0);
+            setComment('');
+          }
+          setPhoto(nextPhoto);
+          setNoMore(false);
+        } else {
+          setNoMore(true);
+          setPhoto(null);
+        }
+      }
+      // fetch failed (rate limit / network) — state unchanged, user stays on current photo
+    } finally {
+      if (!silent) setLoading(false);
+      setNextBusy(false);
+      loadInProgress.current = false;
     }
-    if (!silent) setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -93,10 +122,10 @@ function Inner() {
 
   useEffect(() => {
     if (!noMore) return;
-    const exc = () => Array.from(seenIds.current).join(',');
+    const getExc = () => Array.from(seenIds.current).join(',');
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/photos/has-new?exclude=${exc()}`);
+        const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
         const data = await res.json();
         if (data.available > 0) load();
       } catch {}
@@ -108,34 +137,32 @@ function Inner() {
     if (!photo || voted) return;
     setVoted(true);
     try {
-      const res  = await fetch('/api/photos/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId: photo._id, score }),
-      });
-      const data = await res.json();
-      if (res.ok && data.photo) {
+      const commentText = comment.trim();
+      const requests: Promise<Response | null>[] = [
+        fetch('/api/photos/vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoId: photo._id, score }),
+        }),
+      ];
+      if (commentText) {
+        requests.push(
+          fetch('/api/photos/comment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoId: photo._id, text: commentText }),
+          })
+        );
+      }
+      const [voteRes] = await Promise.all(requests) as [Response, ...unknown[]];
+      const data = await voteRes.json();
+      if (voteRes.ok && data.photo) {
         setAverage(data.photo.average);
         setVoteCount(data.photo.voteCount);
         markVoted();
         if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
       }
     } catch {}
-  };
-
-  const submitComment = async () => {
-    if (!photo || !comment.trim() || commented) return;
-    setCommented(true);
-    try {
-      await fetch('/api/photos/comment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId: photo._id, text: comment.trim() }),
-      });
-      window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
-    } catch {
-      setCommented(false);
-    }
   };
 
   if (loading) {
@@ -200,41 +227,44 @@ function Inner() {
                 </button>
               ))}
             </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
-              <div className="text-center">
-                <p className="text-zinc-500 text-xs">Senin puanın</p>
-                <p className="text-white font-black text-3xl">{score}</p>
-              </div>
-              <div className="w-px h-10 bg-zinc-700" />
-              <div className="text-center">
-                <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
-                <p className="text-amber-400 font-black text-3xl">
-                  {average !== null ? average.toFixed(1) : '—'}
-                </p>
-                {voteCount !== null && (
-                  <p className="text-zinc-600 text-xs">{voteCount} oy</p>
-                )}
-              </div>
-            </div>
             <input
               type="text"
               maxLength={60}
-              placeholder={commented ? 'Yorum gönderildi!' : 'İsteğe bağlı yorum bırak...'}
+              placeholder="İsteğe bağlı yorum bırak..."
               value={comment}
               onChange={e => setComment(e.target.value)}
-              disabled={commented}
-              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600 disabled:opacity-50"
+              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600"
             />
           </>
+        ) : (
+          <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
+            <div className="text-center">
+              <p className="text-zinc-500 text-xs">Senin puanın</p>
+              <p className="text-white font-black text-3xl">{score}</p>
+            </div>
+            <div className="w-px h-10 bg-zinc-700" />
+            <div className="text-center">
+              <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
+              <p className="text-amber-400 font-black text-3xl">
+                {average !== null ? average.toFixed(1) : '—'}
+              </p>
+              {voteCount !== null && (
+                <p className="text-zinc-600 text-xs">{voteCount} oy</p>
+              )}
+            </div>
+          </div>
         )}
 
         <button
-          onClick={voted ? () => { submitComment(); load(true); } : handleVote}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100">
-          Sonraki <ChevronRight className="w-4 h-4" />
+          disabled={nextBusy}
+          onClick={voted ? () => load(true) : handleVote}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed">
+          {nextBusy
+            ? <span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full" />
+            : voted
+              ? <>Sonraki <ChevronRight className="w-4 h-4" /></>
+              : 'Puan Ver'
+          }
         </button>
       </div>
     </div>
@@ -274,7 +304,7 @@ function Preview() {
           ))}
         </div>
         <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-zinc-800 text-zinc-600 cursor-not-allowed">
-          Sonraki <ChevronRight className="w-4 h-4" />
+          Puan Ver
         </div>
       </div>
     </div>
