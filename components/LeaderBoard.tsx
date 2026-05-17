@@ -116,11 +116,15 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el || !shouldScroll) return;
+    // half hesabını render sonrası al
+    let half = el.scrollHeight / 2;
     let pos = 0;
     const tick = () => {
       pos += 0.18;
-      const half = el.scrollHeight / 2;
-      if (pos >= half) pos -= half;
+      if (pos >= half) {
+        half = el.scrollHeight / 2;
+        pos -= half;
+      }
       el.scrollTop = pos;
       rafRef.current = requestAnimationFrame(tick);
     };
