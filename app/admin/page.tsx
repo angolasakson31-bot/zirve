@@ -484,41 +484,37 @@ export default function AdminPage() {
                         {photo.contactInfo}
                       </div>
                     )}
-                    <div className="border border-zinc-800 rounded-lg p-2 space-y-1.5">
-                      {photo.comments && photo.comments.length > 0 && (
-                        <>
-                          <p className="text-zinc-600 text-xs">Yorumlar ({photo.comments.length})</p>
-                          {photo.comments.map(c => (
-                            <div key={c._id} className="flex items-start gap-1.5">
-                              <span className="text-zinc-300 text-xs flex-1 break-all leading-snug">{c.text}</span>
-                              <button
-                                onClick={() => deleteComment(photo._id, c._id)}
-                                className="flex-shrink-0 text-red-500/50 hover:text-red-400 transition-colors mt-0.5">
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ))}
-                          <div className="border-t border-zinc-800 pt-1.5" />
-                        </>
-                      )}
-                      <div className="flex gap-1">
-                        <input
-                          type="text"
-                          maxLength={60}
-                          placeholder="Yorum yaz..."
-                          value={commentTexts[photo._id] ?? ''}
-                          onChange={e => setCommentTexts(prev => ({ ...prev, [photo._id]: e.target.value }))}
-                          onKeyDown={e => e.key === 'Enter' && addComment(photo._id)}
-                          className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-600 outline-none focus:border-amber-500/50"
-                        />
-                        <button
-                          onClick={() => addComment(photo._id)}
-                          disabled={commentingIds.has(photo._id) || !(commentTexts[photo._id] ?? '').trim()}
-                          className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 rounded-lg text-xs font-bold transition disabled:opacity-40"
-                        >
-                          {commentingIds.has(photo._id) ? '...' : 'Gönder'}
-                        </button>
+                    {photo.comments && photo.comments.length > 0 && (
+                      <div className="space-y-0.5">
+                        {photo.comments.map(c => (
+                          <div key={c._id} className="flex items-start gap-1">
+                            <span className="text-zinc-400 text-xs flex-1 break-all leading-snug">{c.text}</span>
+                            <button
+                              onClick={() => deleteComment(photo._id, c._id)}
+                              className="flex-shrink-0 text-red-500/40 hover:text-red-400 transition-colors">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
+                    )}
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        maxLength={60}
+                        placeholder="Yorum yaz..."
+                        value={commentTexts[photo._id] ?? ''}
+                        onChange={e => setCommentTexts(prev => ({ ...prev, [photo._id]: e.target.value }))}
+                        onKeyDown={e => e.key === 'Enter' && addComment(photo._id)}
+                        className="flex-1 min-w-0 bg-zinc-800/60 border border-zinc-700/50 rounded px-2 py-0.5 text-xs text-white placeholder-zinc-600 outline-none focus:border-amber-500/50"
+                      />
+                      <button
+                        onClick={() => addComment(photo._id)}
+                        disabled={commentingIds.has(photo._id) || !(commentTexts[photo._id] ?? '').trim()}
+                        className="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 rounded text-xs font-bold transition disabled:opacity-40 flex-shrink-0"
+                      >
+                        {commentingIds.has(photo._id) ? '…' : '+'}
+                      </button>
                     </div>
                     {/* Admin puan butonları */}
                     <div className="pt-1">
