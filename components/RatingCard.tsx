@@ -37,6 +37,8 @@ function Inner() {
   const initialized    = useRef(false);
   const lastDate       = useRef(todayKey());
   const loadInProgress = useRef(false);
+  const prefetchedPhoto = useRef<Photo | null>(null);
+  const prefetchGen    = useRef(0);
 
   const load = useCallback(async (silent = false) => {
     if (loadInProgress.current) return;
@@ -84,8 +86,25 @@ function Inner() {
             setHover(0);
             setComment('');
           }
+          prefetchedPhoto.current = null; // önceki prefetch'i sıfırla
+          const myGen = ++prefetchGen.current;
           setPhoto(nextPhoto);
           setNoMore(false);
+
+          // Sonraki fotoğrafı arka planda prefetch et
+          const exc2 = Array.from(seenIds.current).join(',');
+          fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+              if (d?.photo && prefetchGen.current === myGen) {
+                prefetchedPhoto.current = d.photo;
+                // Görseli de önceden yükle
+                const img = new window.Image();
+                img.src = d.photo.url;
+                if (d.photo.albumUrls?.length) img.src = d.photo.albumUrls[0];
+              }
+            })
+            .catch(() => {});
         } else {
           setNoMore(true);
           setPhoto(null);
@@ -154,8 +173,26 @@ function Inner() {
       }).catch(() => {});
     }
 
-    // Direkt sonraki fotoğrafa geç
-    load(true);
+    // Prefetch varsa anında geç, yoksa normal yükle
+    // Generation counter kontrolü: mevcut fotoğraf gösterildiğinde başlayan prefetch mi?
+    const pre = prefetchedPhoto.current;
+    prefetchedPhoto.current = null;
+    const myGen = ++prefetchGen.current;
+    if (pre) {
+      seenIds.current.add(String(pre._id));
+      saveSeenToStorage(seenIds.current);
+      setScore(5); setHover(0); setComment('');
+      setPhoto(pre);
+      setNoMore(false);
+      // Bir sonrakini arka planda getir
+      const exc2 = Array.from(seenIds.current).join(',');
+      fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.photo && prefetchGen.current === myGen) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })
+        .catch(() => {});
+    } else {
+      load(true);
+    }
   };
 
   if (loading) {
