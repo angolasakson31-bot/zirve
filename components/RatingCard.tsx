@@ -118,7 +118,7 @@ function Inner() {
       try {
         const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
         const data = await res.json();
-        if (data.available > 0) load();
+        if (data.available > 0) load(true);
       } catch {}
     }, 1_000);
     return () => clearInterval(interval);
