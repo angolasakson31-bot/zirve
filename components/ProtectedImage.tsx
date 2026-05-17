@@ -43,7 +43,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     }
   };
 
-  const showImg   = loaded && uploaded === true;
+  // null veya true → resim yüklenince göster; false → pikselleştirilmiş canvas göster
+  const showImg   = loaded && uploaded !== false;
   const showPixel = loaded && uploaded === false && pixelReady;
   const showSkel  = !showImg && !showPixel;
 

@@ -32,18 +32,21 @@ export function useUploadGate(): boolean | null {
       try {
         const local = localStorage.getItem(UPLOAD_KEY) === todayStr();
         if (!local) { if (!cancelled) setUploaded(false); return; }
+
+        // localStorage'da kayıt var → hemen true ver (fotoğraflar anında gösterilsin)
+        // Arka planda sunucu doğrulaması yap; geçersizse düzelt
+        if (!cancelled) setUploaded(true);
+
         try {
           const res = await fetch('/api/photos/check-upload');
           const data = await res.json();
           if (!data.valid) {
             localStorage.removeItem(UPLOAD_KEY);
             if (!cancelled) setUploaded(false);
-            return;
           }
         } catch {
-          // ağ hatası → localStorage'a güven
+          // ağ hatası → localStorage'a güven, true olarak kal
         }
-        if (!cancelled) setUploaded(true);
       } catch {
         if (!cancelled) setUploaded(false);
       }

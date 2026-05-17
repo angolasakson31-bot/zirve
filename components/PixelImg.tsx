@@ -42,7 +42,8 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         src={src}
         alt={alt}
         className={className}
-        style={{ display: uploaded === true && loaded ? 'block' : 'none' }}
+        // null veya true → resim yüklenince göster; false → canvas göster
+        style={{ display: uploaded !== false && loaded ? 'block' : 'none' }}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
         draggable={false}
@@ -52,8 +53,8 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         className="absolute inset-0 w-full h-full"
         style={{ display: uploaded === false && ready ? 'block' : 'none', imageRendering: 'pixelated' }}
       />
-      {/* null veya henüz hazır değilse skeleton göster */}
-      {(uploaded !== true || !loaded) && !(uploaded === false && ready) && (
+      {/* Sadece resim henüz yüklenmediyse skeleton göster */}
+      {!loaded && !(uploaded === false && ready) && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
       )}
     </div>
