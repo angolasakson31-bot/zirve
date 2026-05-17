@@ -26,16 +26,13 @@ function saveSeenToStorage(ids: Set<string>) {
 }
 
 function Inner() {
-  const [photo, setPhoto]         = useState<Photo | null>(null);
-  const [loading, setLoading]     = useState(false);
-  const [nextBusy, setNextBusy]   = useState(false);
-  const [noMore, setNoMore]       = useState(false);
-  const [score, setScore]         = useState(5);
-  const [voted, setVoted]         = useState(false);
-  const [average, setAverage]     = useState<number | null>(null);
-  const [voteCount, setVoteCount] = useState<number | null>(null);
-  const [hover, setHover]         = useState(0);
-  const [comment, setComment]     = useState('');
+  const [photo, setPhoto]       = useState<Photo | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [nextBusy, setNextBusy] = useState(false);
+  const [noMore, setNoMore]     = useState(false);
+  const [score, setScore]       = useState(5);
+  const [hover, setHover]       = useState(0);
+  const [comment, setComment]   = useState('');
   const seenIds        = useRef<Set<string>>(new Set());
   const initialized    = useRef(false);
   const lastDate       = useRef(todayKey());
@@ -60,9 +57,6 @@ function Inner() {
       if (!silent) {
         setLoading(true);
         setScore(5);
-        setVoted(false);
-        setAverage(null);
-        setVoteCount(null);
         setHover(0);
         setComment('');
       } else {
@@ -87,9 +81,6 @@ function Inner() {
           saveSeenToStorage(seenIds.current);
           if (silent) {
             setScore(5);
-            setVoted(false);
-            setAverage(null);
-            setVoteCount(null);
             setHover(0);
             setComment('');
           }
@@ -100,7 +91,7 @@ function Inner() {
           setPhoto(null);
         }
       }
-      // fetch failed (rate limit / network) — state unchanged, user stays on current photo
+      // fetch failed (rate limit / network) — kullanıcı mevcut fotoğrafta kalır
     } finally {
       if (!silent) setLoading(false);
       setNextBusy(false);
@@ -133,36 +124,34 @@ function Inner() {
     return () => clearInterval(interval);
   }, [noMore, load]);
 
-  const handleVote = async () => {
-    if (!photo || voted) return;
-    setVoted(true);
-    try {
-      const commentText = comment.trim();
-      const requests: Promise<Response | null>[] = [
-        fetch('/api/photos/vote', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photoId: photo._id, score }),
-        }),
-      ];
-      if (commentText) {
-        requests.push(
-          fetch('/api/photos/comment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ photoId: photo._id, text: commentText }),
-          })
-        );
-      }
-      const [voteRes] = await Promise.all(requests) as [Response, ...unknown[]];
-      const data = await voteRes.json();
-      if (voteRes.ok && data.photo) {
-        setAverage(data.photo.average);
-        setVoteCount(data.photo.voteCount);
-        markVoted();
-        if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
-      }
-    } catch {}
+  const handleVote = () => {
+    if (!photo || loadInProgress.current) return;
+    const photoId = photo._id;
+    const commentText = comment.trim();
+
+    // Oy gönder (sonucu beklemeden devam et)
+    fetch('/api/photos/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoId, score }),
+    }).then(r => r.json()).then(data => {
+      markVoted();
+      if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
+    }).catch(() => {});
+
+    // Yorum varsa gönder (fire and forget)
+    if (commentText) {
+      fetch('/api/photos/comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId, text: commentText }),
+      }).then(() => {
+        window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
+      }).catch(() => {});
+    }
+
+    // Direkt sonraki fotoğrafa geç
+    load(true);
   };
 
   if (loading) {
@@ -200,70 +189,47 @@ function Inner() {
       <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} />
 
       <div className="p-4 space-y-3">
-        {!voted ? (
-          <>
-            <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
-            <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
-              <span className="text-amber-400 font-black text-lg w-5 text-center flex-shrink-0">{score}</span>
-              <input
-                type="range" min={1} max={10} step={1}
-                value={score}
-                onChange={e => { setScore(Number(e.target.value)); setHover(0); }}
-                className="flex-1 accent-amber-400 cursor-pointer h-2"
-              />
-            </div>
-            <div className="flex justify-center gap-1.5 flex-wrap">
-              {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                <button key={n}
-                  onMouseEnter={() => setHover(n)}
-                  onMouseLeave={() => setHover(0)}
-                  onClick={() => { setScore(n); setHover(0); }}
-                  className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
-                    (hover > 0 ? hover : score) >= n
-                      ? 'bg-amber-400 text-black scale-110'
-                      : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                  }`}>
-                  {n}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              maxLength={60}
-              placeholder="İsteğe bağlı yorum bırak..."
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600"
-            />
-          </>
-        ) : (
-          <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
-            <div className="text-center">
-              <p className="text-zinc-500 text-xs">Senin puanın</p>
-              <p className="text-white font-black text-3xl">{score}</p>
-            </div>
-            <div className="w-px h-10 bg-zinc-700" />
-            <div className="text-center">
-              <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
-              <p className="text-amber-400 font-black text-3xl">
-                {average !== null ? average.toFixed(1) : '—'}
-              </p>
-              {voteCount !== null && (
-                <p className="text-zinc-600 text-xs">{voteCount} oy</p>
-              )}
-            </div>
-          </div>
-        )}
+        <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
+        <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
+          <span className="text-amber-400 font-black text-lg w-5 text-center flex-shrink-0">{score}</span>
+          <input
+            type="range" min={1} max={10} step={1}
+            value={score}
+            onChange={e => { setScore(Number(e.target.value)); setHover(0); }}
+            className="flex-1 accent-amber-400 cursor-pointer h-2"
+          />
+        </div>
+        <div className="flex justify-center gap-1.5 flex-wrap">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+            <button key={n}
+              onMouseEnter={() => setHover(n)}
+              onMouseLeave={() => setHover(0)}
+              onClick={() => { setScore(n); setHover(0); }}
+              className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                (hover > 0 ? hover : score) >= n
+                  ? 'bg-amber-400 text-black scale-110'
+                  : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
+              }`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          maxLength={60}
+          placeholder="İsteğe bağlı yorum bırak..."
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600"
+        />
 
         <button
           disabled={nextBusy}
-          onClick={voted ? () => load(true) : handleVote}
+          onClick={handleVote}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed">
           {nextBusy
             ? <span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full" />
-            : voted
-              ? <>Sonraki <ChevronRight className="w-4 h-4" /></>
-              : 'Puan Ver'
+            : <>Puan Ver <ChevronRight className="w-4 h-4" /></>
           }
         </button>
       </div>
@@ -304,7 +270,7 @@ function Preview() {
           ))}
         </div>
         <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-zinc-800 text-zinc-600 cursor-not-allowed">
-          Puan Ver
+          Puan Ver <ChevronRight className="w-4 h-4" />
         </div>
       </div>
     </div>
