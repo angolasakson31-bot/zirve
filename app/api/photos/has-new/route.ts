@@ -10,6 +10,15 @@ export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(120);
 
+function parseIdList(param: string | null, max: number): mongoose.Types.ObjectId[] {
+  if (!param) return [];
+  return param
+    .split(',')
+    .slice(0, max)
+    .filter(id => mongoose.Types.ObjectId.isValid(id))
+    .map(id => new mongoose.Types.ObjectId(id));
+}
+
 export async function GET(req: NextRequest) {
   const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
   if (!checkLimit(rawIp))
@@ -19,22 +28,20 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const ip = hashIp(rawIp);
-    const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
-    const excludeObjectIds = excludeParam
-      .split(',')
-      .slice(0, 200)
-      .filter(id => mongoose.Types.ObjectId.isValid(id))
-      .map(id => new mongoose.Types.ObjectId(id));
+    const excludeIds = parseIdList(req.nextUrl.searchParams.get('exclude'), 200);
+    const myUploadIds = parseIdList(req.nextUrl.searchParams.get('myUploads'), 100);
+    const allExclude = [...excludeIds, ...myUploadIds];
 
+    // random/route.ts ile uyumlu — uploaderIp filtresi CGNAT sorunundan kaldırıldı,
+    // yerine client'tan gelen myUploads listesi kullanılıyor.
     const match: Record<string, unknown> = {
       voters:     { $nin: [ip] },
-      uploaderIp: { $ne: ip },
       isArchived: false,
       createdAt:  { $gte: turkishStartOfDay() },
     };
 
-    if (excludeObjectIds.length > 0) {
-      match._id = { $nin: excludeObjectIds };
+    if (allExclude.length > 0) {
+      match._id = { $nin: allExclude };
     }
 
     const available = await Photo.countDocuments(match);

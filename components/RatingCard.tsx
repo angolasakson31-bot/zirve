@@ -4,10 +4,20 @@ import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
+import { getMyUploads } from '@/lib/my-uploads';
 
 interface Photo { _id: string; url: string; albumUrls?: string[]; }
 
 const SEEN_STORAGE_PREFIX = 'zirve_seen_';
+
+// Server'a gönderilecek query string'i oluştur — seenIds + myUploads
+function buildQuery(seenIds: Set<string>): string {
+  const parts: string[] = [];
+  if (seenIds.size > 0) parts.push('exclude=' + Array.from(seenIds).join(','));
+  const mine = getMyUploads();
+  if (mine.length > 0) parts.push('myUploads=' + mine.join(','));
+  return parts.length ? '?' + parts.join('&') : '';
+}
 
 function loadSeenFromStorage(): Set<string> {
   if (typeof window === 'undefined') return new Set();
@@ -65,11 +75,10 @@ function Inner() {
         setNextBusy(true);
       }
 
-      const exc = Array.from(seenIds.current).join(',');
       let fetchOk = false;
       let nextPhoto: Photo | null = null;
       try {
-        const res = await fetch('/api/photos/random' + (exc ? `?exclude=${exc}` : ''));
+        const res = await fetch('/api/photos/random' + buildQuery(seenIds.current));
         if (res.ok) {
           fetchOk = true;
           const data = await res.json();
@@ -86,19 +95,17 @@ function Inner() {
             setHover(0);
             setComment('');
           }
-          prefetchedPhoto.current = null; // önceki prefetch'i sıfırla
+          prefetchedPhoto.current = null;
           const myGen = ++prefetchGen.current;
           setPhoto(nextPhoto);
           setNoMore(false);
 
           // Sonraki fotoğrafı arka planda prefetch et
-          const exc2 = Array.from(seenIds.current).join(',');
-          fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
+          fetch('/api/photos/random' + buildQuery(seenIds.current))
             .then(r => r.ok ? r.json() : null)
             .then(d => {
               if (d?.photo && prefetchGen.current === myGen) {
                 prefetchedPhoto.current = d.photo;
-                // Görseli de önceden yükle
                 const img = new window.Image();
                 img.src = d.photo.url;
                 if (d.photo.albumUrls?.length) img.src = d.photo.albumUrls[0];
@@ -106,13 +113,12 @@ function Inner() {
             })
             .catch(() => {});
         } else {
-          // $sample null döndürdü — has-new kontrolü ile bir kez retry yap
+          // Server null döndürdü — has-new ile çift kontrol
           if (!_retrying) {
             try {
-              const hnRes = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
+              const hnRes = await fetch('/api/photos/has-new' + buildQuery(seenIds.current));
               const hnData = await hnRes.json();
               if (hnData.available > 0) {
-                // Fotoğraf var ama $sample kaçırdı — 500ms sonra bir kez daha dene
                 loadInProgress.current = false;
                 setTimeout(() => { load(silent, true); }, 500);
                 return;
@@ -181,10 +187,9 @@ function Inner() {
   // Yedek poll — SSE bağlantısı yokken veya noMore=true edge case'i için
   useEffect(() => {
     if (!noMore) return;
-    const getExc = () => Array.from(seenIds.current).join(',');
     const check = async () => {
       try {
-        const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
+        const res = await fetch('/api/photos/has-new' + buildQuery(seenIds.current));
         const data = await res.json();
         if (data.available > 0) load(true);
       } catch {}
@@ -196,11 +201,9 @@ function Inner() {
 
   // Evrensel yedek poll (60s) — photo=null race condition için
   useEffect(() => {
-    const getExc = () => Array.from(seenIds.current).join(',');
     const universalCheck = async () => {
       try {
-        const exc = getExc();
-        const res = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
+        const res = await fetch('/api/photos/has-new' + buildQuery(seenIds.current));
         const data = await res.json();
         if (data.available > 0 && !noMore && !photo) load(true);
       } catch {}
@@ -247,8 +250,7 @@ function Inner() {
       setPhoto(pre);
       setNoMore(false);
       // Bir sonrakini arka planda getir
-      const exc2 = Array.from(seenIds.current).join(',');
-      fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
+      fetch('/api/photos/random' + buildQuery(seenIds.current))
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d?.photo && prefetchGen.current === myGen) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })
         .catch(() => {});
@@ -276,7 +278,10 @@ function Inner() {
     return (
       <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-3">
         <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
-        <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
+        <p className="text-zinc-500 text-sm text-center">
+          Yeni fotoğraflar yüklenince otomatik olarak burada gözükecek.
+        </p>
+        <p className="text-zinc-600 text-xs">{seenIds.current.size} fotoğraf görüntülendi</p>
       </div>
     );
   }
@@ -344,7 +349,7 @@ function Preview() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/photos/random')
+    fetch('/api/photos/random' + buildQuery(new Set()))
       .then(r => r.json())
       .then(d => d.photo?.url && setPhotoUrl(d.photo.url))
       .catch(() => {});
