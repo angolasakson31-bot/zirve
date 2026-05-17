@@ -118,7 +118,7 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     if (!el || !shouldScroll) return;
     let pos = 0;
     const tick = () => {
-      pos += 0.35;
+      pos += 0.18;
       const half = el.scrollHeight / 2;
       if (pos >= half) pos -= half;
       el.scrollTop = pos;
@@ -215,7 +215,7 @@ export default function LeaderBoard() {
   return (
     <div className="space-y-3">
       {/* Günün + Dünün yanyana */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 items-start">
 
         {/* Günün Zirvesi */}
         <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
