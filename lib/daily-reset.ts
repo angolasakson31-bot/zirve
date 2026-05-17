@@ -12,7 +12,17 @@ export function toTurkishDateStr(date: Date): string {
   return new Date(date.getTime() + TZ_OFFSET_MS).toISOString().split('T')[0];
 }
 
+let lastResetCheck = 0;
+let lastResetDay = '';
+
 export async function maybeRunDailyReset(): Promise<void> {
+  const now = Date.now();
+  const todayStr = new Date(now + 3 * 3600_000).toISOString().slice(0, 10);
+  // Aynı gün içinde en fazla 60 saniyede bir kontrol et
+  if (todayStr === lastResetDay && now - lastResetCheck < 60_000) return;
+  lastResetCheck = now;
+  lastResetDay = todayStr;
+
   const startOfToday = turkishStartOfDay();
 
   const stale = await Photo.findOne({ isArchived: false, createdAt: { $lt: startOfToday } }).lean();

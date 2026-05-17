@@ -9,10 +9,19 @@ export const dynamic = 'force-dynamic';
 
 const checkLimit = rateLimit(60);
 
+type LeaderCache = { data: unknown; at: number };
+let leaderCache: LeaderCache | null = null;
+const CACHE_TTL = 15_000; // 15 saniye
+
 export async function GET(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
   if (!checkLimit(ip))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
+
+  // Cache geçerliyse hemen dön
+  if (leaderCache && Date.now() - leaderCache.at < CACHE_TTL) {
+    return NextResponse.json(leaderCache.data);
+  }
 
   try {
     await connectDB();
@@ -31,7 +40,6 @@ export async function GET(req: NextRequest) {
     const allPhotos = allToday
       .map(p => ({ ...p, _avg: p.voteCount > 0 ? p.totalScore / p.voteCount : 0 }))
       .sort((a, b) => {
-        // Şampiyon her zaman 1. sıra
         if (a.isChampion && !b.isChampion) return -1;
         if (!a.isChampion && b.isChampion) return 1;
         return b._avg - a._avg || b.voteCount - a.voteCount;
@@ -44,7 +52,9 @@ export async function GET(req: NextRequest) {
         rank: i + 1,
       }));
 
-    return NextResponse.json({ leader, yesterday, allPhotos });
+    const payload = { leader, yesterday, allPhotos };
+    leaderCache = { data: payload, at: Date.now() };
+    return NextResponse.json(payload);
   } catch {
     return NextResponse.json({ error: 'Lider alınamadı.' }, { status: 500 });
   }
