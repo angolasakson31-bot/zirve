@@ -109,16 +109,24 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const [page, setPage] = useState(0);
-
-  useEffect(() => { setPage(0); }, [comments]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const shouldScroll = comments.length > 2;
 
   useEffect(() => {
-    const pageCount = Math.ceil(comments.length / 2);
-    if (pageCount <= 1) return;
-    const id = setInterval(() => setPage(p => (p + 1) % pageCount), 3500);
-    return () => clearInterval(id);
-  }, [comments]);
+    const el = containerRef.current;
+    if (!el || !shouldScroll) return;
+    let pos = 0;
+    const tick = () => {
+      pos += 0.35;
+      const half = el.scrollHeight / 2;
+      if (pos >= half) pos -= half;
+      el.scrollTop = pos;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [comments, shouldScroll]);
 
   if (!comments || comments.length === 0) return null;
 
@@ -131,24 +139,20 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     return COLORS[(parseInt(hash.slice(0, 2), 16) + idx) % COLORS.length];
   }
 
-  const pageCount = Math.ceil(comments.length / 2);
-  const visible = comments.slice(page * 2, page * 2 + 2);
+  const displayed = shouldScroll ? [...comments, ...comments] : comments;
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide">Yorumlar</p>
-        {pageCount > 1 && (
-          <div className="flex gap-0.5 items-center">
-            {Array.from({ length: pageCount }, (_, i) => (
-              <span key={i} className={`rounded-full transition-all duration-300 ${i === page ? 'w-2 h-1 bg-zinc-400' : 'w-1 h-1 bg-zinc-700'}`} />
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="space-y-0.5 min-h-[1rem]">
-        {visible.map((c, i) => (
-          <p key={c._id} className={`text-xs leading-snug ${color(c.userHash, page * 2 + i)}`}>{c.text}</p>
+      <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
+      <div
+        ref={containerRef}
+        className="overflow-hidden space-y-0.5"
+        style={{ maxHeight: '2.4rem' }}
+      >
+        {displayed.map((c, i) => (
+          <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${color(c.userHash, i % comments.length)}`}>
+            <span className="text-zinc-600 mr-0.5">•</span>{c.text}
+          </p>
         ))}
       </div>
     </div>
