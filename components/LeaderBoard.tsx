@@ -28,6 +28,7 @@ function useMidnightCountdown() {
 }
 
 interface PhotoComment {
+  _id: string;
   text: string;
   userHash: string;
   createdAt: string;
@@ -126,8 +127,8 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  function color(hash: string, id: string) {
-    return COLORS[(parseInt(hash.slice(0, 2), 16) ^ parseInt(id.slice(-2), 16)) % COLORS.length];
+  function color(hash: string, idx: number) {
+    return COLORS[(parseInt(hash.slice(0, 2), 16) + idx) % COLORS.length];
   }
 
   const pageCount = Math.ceil(comments.length / 2);
@@ -146,8 +147,8 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
         )}
       </div>
       <div className="space-y-0.5 min-h-[1rem]">
-        {visible.map(c => (
-          <p key={c._id} className={`text-xs leading-snug ${color(c.userHash, c._id)}`}>{c.text}</p>
+        {visible.map((c, i) => (
+          <p key={c._id} className={`text-xs leading-snug ${color(c.userHash, page * 2 + i)}`}>{c.text}</p>
         ))}
       </div>
     </div>
