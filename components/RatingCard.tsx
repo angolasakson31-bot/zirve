@@ -160,9 +160,10 @@ function Inner() {
     return () => clearInterval(interval);
   }, [noMore, load]);
 
-  // Evrensel arka plan poll'u (30s) — noMore durumundan bağımsız çalışır.
-  // noMore=false iken yeni fotoğraf var ama $sample'a düşmemişse sessizce loglar;
-  // noMore=true iken ilk poll döngüsünden kaçırıldıysa load(true) tetikler.
+  // Evrensel arka plan poll'u (20s) — noMore durumundan bağımsız çalışır.
+  // noMore=false + photo=null: race condition edge case — sessizce yeniden yükle.
+  // noMore=false + photo var: yeni fotoğraflar $sample ile zaten karşılaşılacak.
+  // noMore=true: birincil poll zaten 3s'de yakalıyor; bu yedek güvencedir.
   useEffect(() => {
     const getExc = () => Array.from(seenIds.current).join(',');
     const universalCheck = async () => {
@@ -170,18 +171,16 @@ function Inner() {
         const exc = getExc();
         const res = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
         const data = await res.json();
-        if (data.available > 0) {
-          if (noMore) {
-            load(true);
-          } else {
-            console.log('[RatingCard] Arka planda yeni fotoğraf mevcut, oylama akışına girecek.');
-          }
+        if (data.available > 0 && !noMore && !photo) {
+          // photo=null ama noMore=false: oy akışı içinde race condition —
+          // yeni fotoğraf algılandı, sessizce yükle
+          load(true);
         }
       } catch {}
     };
-    const interval = setInterval(universalCheck, 30_000);
+    const interval = setInterval(universalCheck, 20_000);
     return () => clearInterval(interval);
-  }, [noMore, load]);
+  }, [noMore, photo, load]);
 
   const handleVote = () => {
     if (!photo || loadInProgress.current) return;
