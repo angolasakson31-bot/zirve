@@ -26,19 +26,37 @@ export function useUploadGate(): boolean | null {
   const [uploaded, setUploaded] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const check = () => {
+    let cancelled = false;
+
+    const check = async () => {
       try {
-        setUploaded(localStorage.getItem(UPLOAD_KEY) === todayStr());
+        const local = localStorage.getItem(UPLOAD_KEY) === todayStr();
+        if (!local) { if (!cancelled) setUploaded(false); return; }
+        try {
+          const res = await fetch('/api/photos/check-upload');
+          const data = await res.json();
+          if (!data.valid) {
+            localStorage.removeItem(UPLOAD_KEY);
+            if (!cancelled) setUploaded(false);
+            return;
+          }
+        } catch {
+          // ağ hatası → localStorage'a güven
+        }
+        if (!cancelled) setUploaded(true);
       } catch {
-        setUploaded(false);
+        if (!cancelled) setUploaded(false);
       }
     };
+
+    const handler = () => check();
     check();
-    window.addEventListener(UPLOAD_EVENT, check);
-    window.addEventListener('storage', check);
+    window.addEventListener(UPLOAD_EVENT, handler);
+    window.addEventListener('storage', handler);
     return () => {
-      window.removeEventListener(UPLOAD_EVENT, check);
-      window.removeEventListener('storage', check);
+      cancelled = true;
+      window.removeEventListener(UPLOAD_EVENT, handler);
+      window.removeEventListener('storage', handler);
     };
   }, []);
 

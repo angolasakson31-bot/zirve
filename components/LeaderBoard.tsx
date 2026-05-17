@@ -118,9 +118,9 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     if (!el || !shouldScroll) return;
     let pos = 0;
     const tick = () => {
+      const max = el.scrollHeight - el.clientHeight;
+      if (pos >= max) return; // alta ulaşınca dur
       pos += 0.18;
-      const half = el.scrollHeight / 2;
-      if (pos >= half) pos -= half;
       el.scrollTop = pos;
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -135,8 +135,6 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  const displayed = shouldScroll ? [...comments, ...comments] : comments;
-
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
@@ -145,8 +143,8 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
         className="overflow-hidden space-y-0.5"
         style={{ maxHeight: '2.4rem' }}
       >
-        {displayed.map((c, i) => (
-          <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
+        {comments.map((c, i) => (
+          <p key={c._id} className={`text-xs leading-snug ${COLORS[i % COLORS.length]}`}>
             <span className="text-zinc-600 mr-0.5">•</span>{c.text}
           </p>
         ))}
