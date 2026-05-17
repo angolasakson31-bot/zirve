@@ -108,23 +108,15 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+  const [page, setPage] = useState(0);
+
+  useEffect(() => { setPage(0); }, [comments]);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let pos = 0;
-    const tick = () => {
-      if (el.scrollHeight > el.clientHeight) {
-        pos += 0.4;
-        if (pos >= el.scrollHeight - el.clientHeight) pos = 0;
-        el.scrollTop = pos;
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    const pageCount = Math.ceil(comments.length / 2);
+    if (pageCount <= 1) return;
+    const id = setInterval(() => setPage(p => (p + 1) % pageCount), 3500);
+    return () => clearInterval(id);
   }, [comments]);
 
   if (!comments || comments.length === 0) return null;
@@ -134,16 +126,28 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  function color(hash: string) {
-    return COLORS[parseInt(hash.slice(0, 2), 16) % COLORS.length];
+  function color(hash: string, id: string) {
+    return COLORS[(parseInt(hash.slice(0, 2), 16) ^ parseInt(id.slice(-2), 16)) % COLORS.length];
   }
+
+  const pageCount = Math.ceil(comments.length / 2);
+  const visible = comments.slice(page * 2, page * 2 + 2);
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
-      <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div ref={scrollRef} className="max-h-[100px] overflow-hidden space-y-0.5">
-        {comments.map((c, i) => (
-          <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide">Yorumlar</p>
+        {pageCount > 1 && (
+          <div className="flex gap-0.5 items-center">
+            {Array.from({ length: pageCount }, (_, i) => (
+              <span key={i} className={`rounded-full transition-all duration-300 ${i === page ? 'w-2 h-1 bg-zinc-400' : 'w-1 h-1 bg-zinc-700'}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="space-y-0.5 min-h-[1rem]">
+        {visible.map(c => (
+          <p key={c._id} className={`text-xs leading-snug ${color(c.userHash, c._id)}`}>{c.text}</p>
         ))}
       </div>
     </div>
