@@ -105,6 +105,8 @@ function Inner() {
     const handler = () => {
       seenIds.current = new Set();
       saveSeenToStorage(seenIds.current);
+      initialized.current = false;
+      prefetchedPhoto.current = null;
       load();
     };
     window.addEventListener('zirve:photoUploaded', handler);
@@ -114,13 +116,15 @@ function Inner() {
   useEffect(() => {
     if (!noMore) return;
     const getExc = () => Array.from(seenIds.current).join(',');
-    const interval = setInterval(async () => {
+    const check = async () => {
       try {
         const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
         const data = await res.json();
         if (data.available > 0) load(true);
       } catch {}
-    }, 1_000);
+    };
+    check(); // Hemen kontrol et — yeni fotoğraf yeni yüklenmiş olabilir
+    const interval = setInterval(check, 3_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
 
