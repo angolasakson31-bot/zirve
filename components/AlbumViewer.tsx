@@ -16,14 +16,14 @@ interface Props {
 export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const uploaded = useUploadGate();
+  const uploaded = useUploadGate(); // null | true | false
   const isAlbum = urls.length > 1;
 
   return (
     <>
       <div
-        className={uploaded ? 'cursor-zoom-in' : undefined}
-        onClick={() => uploaded && setLightbox(urls[active])}
+        className={uploaded === true ? 'cursor-zoom-in' : undefined}
+        onClick={() => uploaded === true && setLightbox(urls[active])}
       >
         <div className="relative">
           <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
@@ -53,7 +53,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
         </div>
       )}
 
-      {lightbox && uploaded && (
+      {lightbox && uploaded === true && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}

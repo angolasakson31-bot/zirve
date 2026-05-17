@@ -11,15 +11,16 @@ interface Props {
 }
 
 export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false }: Props) {
-  const [loaded, setLoaded]         = useState(false);
-  const [pixelReady, setPixelReady] = useState(false);
+  const [loaded, setLoaded]           = useState(false);
+  const [pixelReady, setPixelReady]   = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const imgRef    = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const uploaded  = useUploadGate();
+  const uploaded  = useUploadGate(); // null | true | false
 
   useEffect(() => {
-    if (uploaded || !loaded) return;
+    // null = henüz bilinmiyor, sadece false olduğunda piksel uygula
+    if (uploaded !== false || !loaded) return;
     const img = imgRef.current;
     const cv  = canvasRef.current;
     if (!img || !cv) return;
@@ -35,16 +36,14 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
 
   const handleError = () => {
     if (!useFallback) {
-      // Watermark URL başarısız — orijinal URL'e dön
       setUseFallback(true);
     } else {
-      // Orijinal da başarısız
       setLoaded(true);
     }
   };
 
-  const showImg   = loaded && uploaded;
-  const showPixel = loaded && !uploaded && pixelReady;
+  const showImg   = loaded && uploaded === true;
+  const showPixel = loaded && uploaded === false && pixelReady;
   const showSkel  = !showImg && !showPixel;
 
   return (
@@ -70,7 +69,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         draggable={false}
       />
 
-      {!uploaded && (
+      {uploaded === false && (
         <canvas
           ref={canvasRef}
           style={{
