@@ -6,9 +6,10 @@ interface Props {
   src: string;
   alt: string;
   className?: string;
+  lazy?: boolean;
 }
 
-export default function PixelImg({ src, alt, className = 'w-full h-full object-cover' }: Props) {
+export default function PixelImg({ src, alt, className = 'w-full h-full object-cover', lazy = true }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [ready,  setReady]  = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -47,6 +48,8 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
         draggable={false}
+        loading={lazy ? 'lazy' : 'eager'}
+        decoding="async"
       />
       <canvas
         ref={cvRef}

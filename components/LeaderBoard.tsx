@@ -5,7 +5,7 @@ import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import PixelImg from '@/components/PixelImg';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { addWatermark } from '@/lib/cloudinaryWatermark';
+import { thumbUrl } from '@/lib/cloudinaryWatermark';
 
 function useMidnightCountdown() {
   const calc = () => {
@@ -55,14 +55,19 @@ interface RankedPhoto {
 
 const CONTACT_LABEL = 'Sana ulaşmak için iletişim bilgisi';
 
+// Çok fazla fotoğraf olduğunda strip'i ilk 30 ile sınırla (bandwidth tasarrufu).
+// Sıralama listesi 60+ olduğunda bile sadece ilk 30 yüklenip scroll'da gösterilir.
+const MAX_STRIP_PHOTOS = 30;
+
 function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef    = useRef<number>(0);
-  const doubled   = [...photos, ...photos];
+  const limited   = photos.slice(0, MAX_STRIP_PHOTOS);
+  const doubled   = [...limited, ...limited];
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || photos.length < 2) return;
+    if (!el || limited.length < 2) return;
     let pos = 0;
     const tick = () => {
       pos += 0.5;
@@ -72,7 +77,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [photos.length]);
+  }, [limited.length]);
 
   if (photos.length === 0) return null;
 
@@ -90,7 +95,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
         {doubled.map((photo, i) => (
           <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
             <div className="relative" style={{ aspectRatio: '1' }}>
-              <PixelImg src={addWatermark(photo.url)} alt={`${photo.rank}. sıra`} />
+              <PixelImg src={thumbUrl(photo.url, 128)} alt={`${photo.rank}. sıra`} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
                 photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>
