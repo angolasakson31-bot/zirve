@@ -7,8 +7,12 @@ import ShareButton from '@/components/ShareButton';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
 import HeaderFlash from '@/components/HeaderFlash';
 import Link from 'next/link';
+import { connectDB } from '@/lib/mongoose';
 
-export default function Home() {
+export default async function Home() {
+  // DB bağlantısını sayfa server-render sırasında ısıt
+  // Böylece ilk /api/photos/random isteği cold-start olmaz
+  try { await connectDB(); } catch {}
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}

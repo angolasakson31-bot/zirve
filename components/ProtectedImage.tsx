@@ -8,9 +8,10 @@ interface Props {
   alt: string;
   maxHeight?: number;
   dimmed?: boolean;
+  priority?: boolean;
 }
 
-export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false }: Props) {
+export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, priority = false }: Props) {
   const [loaded, setLoaded]           = useState(false);
   const [pixelReady, setPixelReady]   = useState(false);
   const [useFallback, setUseFallback] = useState(false);
@@ -58,6 +59,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       )}
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={imgSrc}
@@ -67,6 +69,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         onLoad={() => setLoaded(true)}
         onError={handleError}
         draggable={false}
+        // @ts-expect-error fetchpriority is a valid HTML attribute
+        fetchpriority={priority ? 'high' : 'auto'}
       />
 
       {uploaded === false && (

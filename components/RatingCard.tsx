@@ -133,6 +133,7 @@ function Inner() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Kendi yükleme eventi (aynı tarayıcı)
   useEffect(() => {
     const handler = () => {
       seenIds.current = new Set();
@@ -145,6 +146,39 @@ function Inner() {
     return () => window.removeEventListener('zirve:photoUploaded', handler);
   }, [load]);
 
+  // SSE — diğer kullanıcıların yüklediği fotoğraflar anında gelsin
+  useEffect(() => {
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      es = new EventSource('/api/photos/stream');
+
+      es.addEventListener('new-photo', () => {
+        // noMore=true → hemen yeni fotoğrafı getir
+        // photo=null (race condition) → sessizce yükle
+        // Aktif fotoğraf görüntüleniyorsa → bir sonraki load'da $sample zaten yeni fotoğrafı getirir
+        if (noMore || !photo) {
+          load(true);
+        }
+      });
+
+      es.onerror = () => {
+        es?.close();
+        // 5s sonra yeniden bağlan
+        reconnectTimer = setTimeout(connect, 5_000);
+      };
+    };
+
+    connect();
+    return () => {
+      es?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [load, noMore, photo]);
+
+  // Yedek poll — SSE bağlantısı yokken veya noMore=true edge case'i için
   useEffect(() => {
     if (!noMore) return;
     const getExc = () => Array.from(seenIds.current).join(',');
@@ -155,15 +189,12 @@ function Inner() {
         if (data.available > 0) load(true);
       } catch {}
     };
-    check(); // Hemen kontrol et — yeni fotoğraf yeni yüklenmiş olabilir
-    const interval = setInterval(check, 3_000);
+    check();
+    const interval = setInterval(check, 10_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
 
-  // Evrensel arka plan poll'u (20s) — noMore durumundan bağımsız çalışır.
-  // noMore=false + photo=null: race condition edge case — sessizce yeniden yükle.
-  // noMore=false + photo var: yeni fotoğraflar $sample ile zaten karşılaşılacak.
-  // noMore=true: birincil poll zaten 3s'de yakalıyor; bu yedek güvencedir.
+  // Evrensel yedek poll (60s) — photo=null race condition için
   useEffect(() => {
     const getExc = () => Array.from(seenIds.current).join(',');
     const universalCheck = async () => {
@@ -171,14 +202,10 @@ function Inner() {
         const exc = getExc();
         const res = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
         const data = await res.json();
-        if (data.available > 0 && !noMore && !photo) {
-          // photo=null ama noMore=false: oy akışı içinde race condition —
-          // yeni fotoğraf algılandı, sessizce yükle
-          load(true);
-        }
+        if (data.available > 0 && !noMore && !photo) load(true);
       } catch {}
     };
-    const interval = setInterval(universalCheck, 20_000);
+    const interval = setInterval(universalCheck, 60_000);
     return () => clearInterval(interval);
   }, [noMore, photo, load]);
 

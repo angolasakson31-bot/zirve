@@ -26,7 +26,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
         onClick={() => uploaded === true && setLightbox(urls[active])}
       >
         <div className="relative">
-          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
+          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} priority={active === 0} />
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}

@@ -66,6 +66,8 @@ PhotoSchema.index({ isChampion: 1 });
 PhotoSchema.index({ championDate: 1 });
 // random/has-new sorgularının hızlanması için compound index
 PhotoSchema.index({ isArchived: 1, createdAt: -1, uploaderIp: 1 });
+// voters $nin filtresinin taradığı alan için ayrı index
+PhotoSchema.index({ voters: 1 });
 
 const Photo: Model<IPhoto> =
   mongoose.models.Photo || mongoose.model<IPhoto>('Photo', PhotoSchema);

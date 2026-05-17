@@ -7,6 +7,7 @@ import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 import { turkishStartOfDay } from '@/lib/daily-reset';
 import { hashIp } from '@/lib/hash-ip';
+import sseEmitter from '@/lib/sse-emitter';
 
 export const runtime = 'nodejs';
 
@@ -105,6 +106,9 @@ export async function POST(req: NextRequest) {
       trackingCode,
       fileHash,
     });
+
+    // Tüm bağlı SSE istemcilerine yeni fotoğraf sinyali gönder
+    sseEmitter.emit('new-photo');
 
     return NextResponse.json({ photo, trackingCode }, { status: 201 });
   } catch (err) {
