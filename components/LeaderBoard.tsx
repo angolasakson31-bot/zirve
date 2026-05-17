@@ -109,27 +109,15 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [duration, setDuration] = useState<number | null>(null);
   const shouldScroll = comments.length > 2;
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el || !shouldScroll) return;
-    // half hesabını render sonrası al
-    let half = el.scrollHeight / 2;
-    let pos = 0;
-    const tick = () => {
-      pos += 0.18;
-      if (pos >= half) {
-        half = el.scrollHeight / 2; // yeniden hesapla (güvenlik için)
-        pos -= half;
-      }
-      el.scrollTop = pos;
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    if (!shouldScroll || !innerRef.current) { setDuration(null); return; }
+    // Render sonrası yüksekliği ölç; bir kopyanın yüksekliği = toplam / 2
+    const halfH = innerRef.current.scrollHeight / 2;
+    setDuration(halfH / 14); // 14px/s
   }, [comments, shouldScroll]);
 
   if (!comments || comments.length === 0) return null;
@@ -139,22 +127,25 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  // Sonsuz döngü: listeyi iki kez render et, yarıda sessizce sıfırla
   const displayed = shouldScroll ? [...comments, ...comments] : comments;
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div
-        ref={containerRef}
-        className="overflow-hidden space-y-0.5"
-        style={{ maxHeight: '2.4rem' }}
-      >
-        {displayed.map((c, i) => (
-          <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
-            <span className="text-zinc-600 mr-0.5">•</span>{c.text}
-          </p>
-        ))}
+      <div className="overflow-hidden" style={{ maxHeight: '2.4rem' }}>
+        <div
+          ref={innerRef}
+          className="space-y-0.5"
+          style={shouldScroll && duration !== null
+            ? { animation: `zirve-scroll-up ${duration}s linear infinite` }
+            : undefined}
+        >
+          {displayed.map((c, i) => (
+            <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
+              <span className="text-zinc-600 mr-0.5">•</span>{c.text}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );
