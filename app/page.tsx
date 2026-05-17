@@ -9,10 +9,13 @@ import HeaderFlash from '@/components/HeaderFlash';
 import Link from 'next/link';
 import { connectDB } from '@/lib/mongoose';
 
-export default async function Home() {
-  // DB bağlantısını sayfa server-render sırasında ısıt
-  // Böylece ilk /api/photos/random isteği cold-start olmaz
-  try { await connectDB(); } catch {}
+export default function Home() {
+  // DB bağlantısını arka planda ısıt (await YOK — render'ı bloke etme)
+  // Cold-start sırasında sayfa anında HTML olarak gelsin, DB bağlantısı
+  // paralel kursun. API çağrısı geldiğinde bağlantı çoktan hazır olur.
+  if (typeof window === 'undefined') {
+    void connectDB().catch(() => {});
+  }
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}

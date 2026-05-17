@@ -152,37 +152,42 @@ function Inner() {
     return () => window.removeEventListener('zirve:photoUploaded', handler);
   }, [load]);
 
+  // noMore ve photo'yu ref'te tut — her değişimde SSE'nin yeniden bağlanmasını önle
+  const noMoreRef = useRef(noMore);
+  const photoRef = useRef(photo);
+  useEffect(() => { noMoreRef.current = noMore; }, [noMore]);
+  useEffect(() => { photoRef.current = photo; }, [photo]);
+
   // SSE — diğer kullanıcıların yüklediği fotoğraflar anında gelsin
+  // ÖNEMLİ: deps sadece [load]. noMore/photo değiştiğinde yeniden bağlanmamalı,
+  // aksi halde her oy yeni HTTP handshake'i tetikler ve gecikmeye sebep olur.
   useEffect(() => {
     let es: EventSource | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
 
     const connect = () => {
+      if (cancelled) return;
       es = new EventSource('/api/photos/stream');
 
       es.addEventListener('new-photo', () => {
-        // noMore=true → hemen yeni fotoğrafı getir
-        // photo=null (race condition) → sessizce yükle
-        // Aktif fotoğraf görüntüleniyorsa → bir sonraki load'da $sample zaten yeni fotoğrafı getirir
-        if (noMore || !photo) {
-          load(true);
-        }
+        if (noMoreRef.current || !photoRef.current) load(true);
       });
 
       es.onerror = () => {
         es?.close();
-        // 5s sonra yeniden bağlan
-        reconnectTimer = setTimeout(connect, 5_000);
+        es = null;
+        if (!cancelled) reconnectTimer = setTimeout(connect, 5_000);
       };
     };
 
     connect();
     return () => {
+      cancelled = true;
       es?.close();
       if (reconnectTimer) clearTimeout(reconnectTimer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [load, noMore, photo]);
+  }, [load]);
 
   // Yedek poll — SSE bağlantısı yokken veya noMore=true edge case'i için
   useEffect(() => {
