@@ -95,8 +95,10 @@ export default function AdminPage() {
   const [recalcing, setRecalcing] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [votingId, setVotingId] = useState<string | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
+  const [commentingIds, setCommentingIds] = useState<Set<string>>(new Set());
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadPreviews, setUploadPreviews] = useState<string[]>([]);
   const [uploadContact, setUploadContact] = useState('');
   const [uploading, setUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -216,6 +218,28 @@ export default function AdminPage() {
     if (res.ok) showToast(`${ip} engellendi.`);
     else showToast('Engelleme başarısız.');
     setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
+  };
+
+  const addComment = async (photoId: string) => {
+    const text = (commentTexts[photoId] ?? '').trim();
+    if (!text) return;
+    setCommentingIds(s => new Set(s).add(photoId));
+    const res = await fetch(`/api/admin/photos/${photoId}/comment`, {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setPhotos(prev => prev.map(p =>
+        p._id === photoId ? { ...p, comments: data.comments } : p
+      ));
+      setCommentTexts(prev => ({ ...prev, [photoId]: '' }));
+      showToast('Yorum eklendi.');
+    } else {
+      showToast(data.error || 'Yorum eklenemedi.');
+    }
+    setCommentingIds(s => { const n = new Set(s); n.delete(photoId); return n; });
   };
 
   const deleteComment = async (photoId: string, commentId: string) => {
@@ -443,21 +467,42 @@ export default function AdminPage() {
                         {photo.contactInfo}
                       </div>
                     )}
-                    {photo.comments && photo.comments.length > 0 && (
-                      <div className="border border-zinc-800 rounded-lg p-2 space-y-1">
-                        <p className="text-zinc-600 text-xs mb-1">Yorumlar ({photo.comments.length})</p>
-                        {photo.comments.map(c => (
-                          <div key={c._id} className="flex items-start gap-1.5">
-                            <span className="text-zinc-300 text-xs flex-1 break-all leading-snug">{c.text}</span>
-                            <button
-                              onClick={() => deleteComment(photo._id, c._id)}
-                              className="flex-shrink-0 text-red-500/50 hover:text-red-400 transition-colors mt-0.5">
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
+                    <div className="border border-zinc-800 rounded-lg p-2 space-y-1.5">
+                      {photo.comments && photo.comments.length > 0 && (
+                        <>
+                          <p className="text-zinc-600 text-xs">Yorumlar ({photo.comments.length})</p>
+                          {photo.comments.map(c => (
+                            <div key={c._id} className="flex items-start gap-1.5">
+                              <span className="text-zinc-300 text-xs flex-1 break-all leading-snug">{c.text}</span>
+                              <button
+                                onClick={() => deleteComment(photo._id, c._id)}
+                                className="flex-shrink-0 text-red-500/50 hover:text-red-400 transition-colors mt-0.5">
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          <div className="border-t border-zinc-800 pt-1.5" />
+                        </>
+                      )}
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          maxLength={60}
+                          placeholder="Yorum yaz..."
+                          value={commentTexts[photo._id] ?? ''}
+                          onChange={e => setCommentTexts(prev => ({ ...prev, [photo._id]: e.target.value }))}
+                          onKeyDown={e => e.key === 'Enter' && addComment(photo._id)}
+                          className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-white placeholder-zinc-600 outline-none focus:border-amber-500/50"
+                        />
+                        <button
+                          onClick={() => addComment(photo._id)}
+                          disabled={commentingIds.has(photo._id) || !(commentTexts[photo._id] ?? '').trim()}
+                          className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 rounded-lg text-xs font-bold transition disabled:opacity-40"
+                        >
+                          {commentingIds.has(photo._id) ? '...' : 'Gönder'}
+                        </button>
                       </div>
-                    )}
+                    </div>
                     {/* Admin puan butonları */}
                     <div className="pt-1">
                       <p className="text-zinc-600 text-xs mb-1">Puan ver</p>
