@@ -95,8 +95,8 @@ export default function AdminPage() {
   const [recalcing, setRecalcing] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [votingId, setVotingId] = useState<string | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadPreviews, setUploadPreviews] = useState<string[]>([]);
   const [uploadContact, setUploadContact] = useState('');
   const [uploading, setUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -148,17 +148,17 @@ export default function AdminPage() {
   };
 
   const adminUpload = async () => {
-    if (!uploadFile) return;
+    if (!uploadFiles.length) return;
     setUploading(true);
     const form = new FormData();
-    form.append('file', uploadFile);
+    uploadFiles.forEach(f => form.append('files', f));
     form.append('contactInfo', uploadContact.trim() || 'Admin');
     const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-password': password }, body: form });
     const data = await res.json();
     if (res.ok) {
       showToast(`Yüklendi! Kod: ${data.trackingCode}`);
-      setUploadFile(null);
-      setUploadPreview(null);
+      setUploadFiles([]);
+      setUploadPreviews([]);
       setUploadContact('');
       fetchPhotos(password);
     } else {
@@ -332,29 +332,46 @@ export default function AdminPage() {
             <ImagePlus className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-semibold text-amber-400">Bugüne Fotoğraf Ekle</span>
           </div>
-          <input ref={uploadInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+          <input ref={uploadInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
             onChange={e => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              setUploadFile(f);
-              setUploadPreview(URL.createObjectURL(f));
+              const newFiles = Array.from(e.target.files ?? []);
+              if (!newFiles.length) return;
+              setUploadFiles(prev => {
+                const merged = [...prev, ...newFiles].slice(0, 3);
+                setUploadPreviews(merged.map(f => URL.createObjectURL(f)));
+                return merged;
+              });
               e.target.value = '';
             }} />
-          {!uploadPreview ? (
+          {!uploadPreviews.length ? (
             <button onClick={() => uploadInputRef.current?.click()}
               className="w-full border-2 border-dashed border-zinc-700 hover:border-amber-500/50 rounded-xl py-8 flex flex-col items-center gap-2 text-zinc-500 hover:text-zinc-300 transition">
               <ImagePlus className="w-8 h-8" />
-              <span className="text-sm">Fotoğraf seç</span>
+              <span className="text-sm">Fotoğraf seç (maks 3)</span>
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="relative w-full max-w-xs">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={uploadPreview} alt="Önizleme" className="rounded-xl object-cover w-full max-h-48" />
-                <button onClick={() => { setUploadFile(null); setUploadPreview(null); }}
-                  className="absolute top-2 right-2 bg-black/70 hover:bg-black rounded-full p-1">
-                  <X className="w-4 h-4 text-white" />
-                </button>
+              <div className={`grid gap-2 ${uploadPreviews.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+                {uploadPreviews.map((src, i) => (
+                  <div key={i} className="relative rounded-xl overflow-hidden aspect-square bg-zinc-800">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    <button onClick={() => {
+                      setUploadFiles(prev => { const n = prev.filter((_, j) => j !== i); setUploadPreviews(n.map(f => URL.createObjectURL(f))); return n; });
+                    }} className="absolute top-1 right-1 bg-black/70 hover:bg-black rounded-full p-0.5">
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                    {i === 0 && uploadPreviews.length > 1 && (
+                      <span className="absolute bottom-1 left-1 bg-amber-400 text-black text-xs px-1.5 py-0.5 rounded font-bold">Ana</span>
+                    )}
+                  </div>
+                ))}
+                {uploadPreviews.length < 3 && (
+                  <button onClick={() => uploadInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-zinc-700 hover:border-amber-500/50 flex items-center justify-center text-zinc-600 hover:text-zinc-400 transition">
+                    <ImagePlus className="w-6 h-6" />
+                  </button>
+                )}
               </div>
               <input type="text" value={uploadContact} onChange={e => setUploadContact(e.target.value)}
                 placeholder="İletişim bilgisi (opsiyonel)"
