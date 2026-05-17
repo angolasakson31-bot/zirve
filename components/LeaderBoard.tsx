@@ -266,22 +266,20 @@ export default function LeaderBoard() {
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
               <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Zirvesi</h2>
             </div>
-            <UploadGate mini>
-              <AlbumViewer
-                urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
-                maxHeight={280}
-                dimmed
-                bottomOverlay={
-                  <div className="flex items-center gap-0.5">
-                    <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
-                      <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
-                      <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
-                    </div>
-                    <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
+            <AlbumViewer
+              urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
+              maxHeight={280}
+              forceShow
+              bottomOverlay={
+                <div className="flex items-center gap-0.5">
+                  <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                    <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
+                    <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
                   </div>
-                }
-              />
-            </UploadGate>
+                  <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
+                </div>
+              }
+            />
             {uploaded === true && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
             {uploaded === true && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />

@@ -9,9 +9,10 @@ interface Props {
   maxHeight?: number;
   dimmed?: boolean;
   priority?: boolean;
+  forceShow?: boolean;
 }
 
-export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, priority = false }: Props) {
+export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, priority = false, forceShow = false }: Props) {
   const [loaded, setLoaded]           = useState(false);
   const [pixelReady, setPixelReady]   = useState(false);
   const [useFallback, setUseFallback] = useState(false);
@@ -30,7 +31,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   }, [src]);
 
   useEffect(() => {
-    if (uploaded !== false || !loaded || failed) return;
+    if (forceShow || uploaded !== false || !loaded || failed) return;
     const img = imgRef.current;
     const cv  = canvasRef.current;
     if (!img || !cv || !img.naturalWidth) return;
@@ -45,7 +46,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         setPixelReady(true);
       } catch {}
     }
-  }, [loaded, uploaded, failed]);
+  }, [loaded, uploaded, failed, forceShow]);
 
   const imgSrc = useFallback ? src : addWatermark(src);
 
@@ -67,8 +68,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     setRetryKey(k => k + 1);
   };
 
-  const showImg   = loaded && !failed && uploaded !== false;
-  const showPixel = loaded && !failed && uploaded === false && pixelReady;
+  const showImg   = loaded && !failed && (forceShow || uploaded !== false);
+  const showPixel = loaded && !failed && !forceShow && uploaded === false && pixelReady;
   const showSkel  = !failed && !showImg && !showPixel;
 
   return (
@@ -112,7 +113,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         fetchpriority={priority ? 'high' : 'auto'}
       />
 
-      {uploaded === false && (
+      {!forceShow && uploaded === false && (
         <canvas
           ref={canvasRef}
           style={{

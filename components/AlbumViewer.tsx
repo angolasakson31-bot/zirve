@@ -11,22 +11,24 @@ interface Props {
   maxHeight?: number;
   dimmed?: boolean;
   bottomOverlay?: ReactNode;
+  forceShow?: boolean;
 }
 
-export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
+export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, forceShow }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const uploaded = useUploadGate(); // null | true | false
   const isAlbum = urls.length > 1;
+  const canZoom = forceShow || uploaded === true;
 
   return (
     <>
       <div
-        className={uploaded === true ? 'cursor-zoom-in' : undefined}
-        onClick={() => uploaded === true && setLightbox(urls[active])}
+        className={canZoom ? 'cursor-zoom-in' : undefined}
+        onClick={() => canZoom && setLightbox(urls[active])}
       >
         <div className="relative">
-          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} priority={active === 0} />
+          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} priority={active === 0} forceShow={forceShow} />
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}
@@ -53,7 +55,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
         </div>
       )}
 
-      {lightbox && uploaded === true && (
+      {lightbox && canZoom && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}
