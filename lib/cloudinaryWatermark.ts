@@ -7,5 +7,11 @@ const WATERMARK_LAYER = `l_text:Arial_40_bold:${WATERMARK_TEXT},co_white,o_40,a_
 
 export function addWatermark(url: string): string {
   if (!url || !url.includes('res.cloudinary.com')) return url;
-  return url.replace('/upload/', `/upload/${WATERMARK_LAYER}/`);
+  return url.replace('/upload/', `/upload/${WATERMARK_LAYER}/f_auto,q_75/`);
+}
+
+// Filigransız ama optimize edilmiş (admin panel, vs.)
+export function optimizeUrl(url: string): string {
+  if (!url || !url.includes('res.cloudinary.com')) return url;
+  return url.replace('/upload/', '/upload/f_auto,q_80/');
 }
