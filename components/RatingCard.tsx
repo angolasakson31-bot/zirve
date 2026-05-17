@@ -38,6 +38,7 @@ function Inner() {
   const lastDate       = useRef(todayKey());
   const loadInProgress = useRef(false);
   const prefetchedPhoto = useRef<Photo | null>(null);
+  const prefetchGen    = useRef(0);
 
   const load = useCallback(async (silent = false) => {
     if (loadInProgress.current) return;
@@ -86,6 +87,7 @@ function Inner() {
             setComment('');
           }
           prefetchedPhoto.current = null; // önceki prefetch'i sıfırla
+          const myGen = ++prefetchGen.current;
           setPhoto(nextPhoto);
           setNoMore(false);
 
@@ -94,7 +96,7 @@ function Inner() {
           fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
             .then(r => r.ok ? r.json() : null)
             .then(d => {
-              if (d?.photo) {
+              if (d?.photo && prefetchGen.current === myGen) {
                 prefetchedPhoto.current = d.photo;
                 // Görseli de önceden yükle
                 const img = new window.Image();
@@ -172,9 +174,11 @@ function Inner() {
     }
 
     // Prefetch varsa anında geç, yoksa normal yükle
+    // Generation counter kontrolü: mevcut fotoğraf gösterildiğinde başlayan prefetch mi?
     const pre = prefetchedPhoto.current;
+    prefetchedPhoto.current = null;
+    const myGen = ++prefetchGen.current;
     if (pre) {
-      prefetchedPhoto.current = null;
       seenIds.current.add(String(pre._id));
       saveSeenToStorage(seenIds.current);
       setScore(5); setHover(0); setComment('');
@@ -184,7 +188,7 @@ function Inner() {
       const exc2 = Array.from(seenIds.current).join(',');
       fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
         .then(r => r.ok ? r.json() : null)
-        .then(d => { if (d?.photo) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })
+        .then(d => { if (d?.photo && prefetchGen.current === myGen) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })
         .catch(() => {});
     } else {
       load(true);
