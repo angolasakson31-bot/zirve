@@ -49,7 +49,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, fo
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              <PixelImg src={thumbUrl(url, 128)} alt={`Foto ${i + 1}`} />
+              <PixelImg src={thumbUrl(url, 128)} alt={`Foto ${i + 1}`} forceShow={forceShow} />
             </button>
           ))}
         </div>

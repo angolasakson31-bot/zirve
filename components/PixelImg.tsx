@@ -7,9 +7,10 @@ interface Props {
   alt: string;
   className?: string;
   lazy?: boolean;
+  forceShow?: boolean;
 }
 
-export default function PixelImg({ src, alt, className = 'w-full h-full object-cover', lazy = true }: Props) {
+export default function PixelImg({ src, alt, className = 'w-full h-full object-cover', lazy = true, forceShow = false }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [ready,  setReady]  = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -17,8 +18,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
   const uploaded = useUploadGate(); // null | true | false
 
   useEffect(() => {
-    // null = henüz bilinmiyor, sadece false olduğunda piksel uygula
-    if (uploaded !== false || !loaded) return;
+    if (forceShow || uploaded !== false || !loaded) return;
     const img = imgRef.current;
     const cv  = cvRef.current;
     if (!img || !cv) return;
@@ -33,7 +33,10 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
     const sx = (iw - sw) / 2,  sy = (ih - sh) / 2;
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, size, size);
     setReady(true);
-  }, [loaded, uploaded]);
+  }, [loaded, uploaded, forceShow]);
+
+  const showImg    = loaded && (forceShow || uploaded !== false);
+  const showPixel  = loaded && !forceShow && uploaded === false && ready;
 
   return (
     <div className="relative w-full h-full">
@@ -43,8 +46,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         src={src}
         alt={alt}
         className={className}
-        // null veya true → resim yüklenince göster; false → canvas göster
-        style={{ display: uploaded !== false && loaded ? 'block' : 'none' }}
+        style={{ display: showImg ? 'block' : 'none' }}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
         draggable={false}
@@ -54,10 +56,9 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
       <canvas
         ref={cvRef}
         className="absolute inset-0 w-full h-full"
-        style={{ display: uploaded === false && ready ? 'block' : 'none', imageRendering: 'pixelated' }}
+        style={{ display: showPixel ? 'block' : 'none', imageRendering: 'pixelated' }}
       />
-      {/* Sadece resim henüz yüklenmediyse skeleton göster */}
-      {!loaded && !(uploaded === false && ready) && (
+      {!loaded && !showPixel && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
       )}
     </div>
