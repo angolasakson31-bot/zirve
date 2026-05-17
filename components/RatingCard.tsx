@@ -4,10 +4,20 @@ import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
+import { getMyUploads } from '@/lib/my-uploads';
 
 interface Photo { _id: string; url: string; albumUrls?: string[]; }
 
 const SEEN_STORAGE_PREFIX = 'zirve_seen_';
+
+// Server'a gönderilecek query string'i oluştur — seenIds + myUploads
+function buildQuery(seenIds: Set<string>): string {
+  const parts: string[] = [];
+  if (seenIds.size > 0) parts.push('exclude=' + Array.from(seenIds).join(','));
+  const mine = getMyUploads();
+  if (mine.length > 0) parts.push('myUploads=' + mine.join(','));
+  return parts.length ? '?' + parts.join('&') : '';
+}
 
 function loadSeenFromStorage(): Set<string> {
   if (typeof window === 'undefined') return new Set();
@@ -28,113 +38,229 @@ function saveSeenToStorage(ids: Set<string>) {
 function Inner() {
   const [photo, setPhoto]       = useState<Photo | null>(null);
   const [loading, setLoading]   = useState(false);
+  const [nextBusy, setNextBusy] = useState(false);
   const [noMore, setNoMore]     = useState(false);
   const [score, setScore]       = useState(5);
-  const [voted, setVoted]       = useState(false);
-  const [average, setAverage]   = useState<number | null>(null);
-  const [voteCount, setVoteCount] = useState<number | null>(null);
   const [hover, setHover]       = useState(0);
   const [comment, setComment]   = useState('');
-  const [commented, setCommented] = useState(false);
-  const seenIds = useRef<Set<string>>(new Set());
-  const initialized = useRef(false);
-  const lastDate = useRef(todayKey());
+  const seenIds        = useRef<Set<string>>(new Set());
+  const initialized    = useRef(false);
+  const lastDate       = useRef(todayKey());
+  const loadInProgress = useRef(false);
+  const prefetchedPhoto = useRef<Photo | null>(null);
+  const prefetchGen    = useRef(0);
 
-  const load = useCallback(async (silent = false) => {
-    const currentDate = todayKey();
-    if (lastDate.current !== currentDate) {
-      seenIds.current = new Set();
-      initialized.current = false;
-      lastDate.current = currentDate;
-    }
-    if (!initialized.current) {
-      seenIds.current = loadSeenFromStorage();
-      initialized.current = true;
-    }
-    if (!silent) setLoading(true);
-    setScore(5);
-    setVoted(false);
-    setAverage(null);
-    setVoteCount(null);
-    setHover(0);
-    setComment('');
-    setCommented(false);
+  const load = useCallback(async (silent = false, _retrying = false) => {
+    if (loadInProgress.current) return;
+    loadInProgress.current = true;
 
-    const exc = Array.from(seenIds.current).join(',');
     try {
-      const res  = await fetch(`/api/photos/random${exc ? `?exclude=${exc}` : ''}`);
-      const data = await res.json();
-      if (!data.photo) {
-        setNoMore(true);
-        setPhoto(null);
-      } else {
-        seenIds.current.add(String(data.photo._id));
-        saveSeenToStorage(seenIds.current);
-        setPhoto(data.photo);
-        setNoMore(false);
+      const currentDate = todayKey();
+      if (lastDate.current !== currentDate) {
+        seenIds.current = new Set();
+        initialized.current = false;
+        lastDate.current = currentDate;
       }
-    } catch {
-      setNoMore(true);
+      if (!initialized.current) {
+        seenIds.current = loadSeenFromStorage();
+        initialized.current = true;
+      }
+
+      if (!silent) {
+        setLoading(true);
+        setScore(5);
+        setHover(0);
+        setComment('');
+      } else {
+        setNextBusy(true);
+      }
+
+      let fetchOk = false;
+      let nextPhoto: Photo | null = null;
+      try {
+        const res = await fetch('/api/photos/random' + buildQuery(seenIds.current));
+        if (res.ok) {
+          fetchOk = true;
+          const data = await res.json();
+          nextPhoto = data.photo ?? null;
+        }
+      } catch {}
+
+      if (fetchOk) {
+        if (nextPhoto) {
+          seenIds.current.add(String(nextPhoto._id));
+          saveSeenToStorage(seenIds.current);
+          if (silent) {
+            setScore(5);
+            setHover(0);
+            setComment('');
+          }
+          prefetchedPhoto.current = null;
+          const myGen = ++prefetchGen.current;
+          setPhoto(nextPhoto);
+          setNoMore(false);
+
+          // Sonraki fotoğrafı arka planda prefetch et
+          fetch('/api/photos/random' + buildQuery(seenIds.current))
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+              if (d?.photo && prefetchGen.current === myGen) {
+                prefetchedPhoto.current = d.photo;
+                const img = new window.Image();
+                img.src = d.photo.url;
+                if (d.photo.albumUrls?.length) img.src = d.photo.albumUrls[0];
+              }
+            })
+            .catch(() => {});
+        } else {
+          // Server null döndürdü — has-new ile çift kontrol
+          if (!_retrying) {
+            try {
+              const hnRes = await fetch('/api/photos/has-new' + buildQuery(seenIds.current));
+              const hnData = await hnRes.json();
+              if (hnData.available > 0) {
+                loadInProgress.current = false;
+                setTimeout(() => { load(silent, true); }, 500);
+                return;
+              }
+            } catch {}
+          }
+          setNoMore(true);
+          setPhoto(null);
+        }
+      }
+      // fetch failed (rate limit / network) — kullanıcı mevcut fotoğrafta kalır
+    } finally {
+      if (!silent) setLoading(false);
+      setNextBusy(false);
+      loadInProgress.current = false;
     }
-    if (!silent) setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
+  // Kendi yükleme eventi (aynı tarayıcı)
   useEffect(() => {
     const handler = () => {
       seenIds.current = new Set();
       saveSeenToStorage(seenIds.current);
+      initialized.current = false;
+      prefetchedPhoto.current = null;
       load();
     };
     window.addEventListener('zirve:photoUploaded', handler);
     return () => window.removeEventListener('zirve:photoUploaded', handler);
   }, [load]);
 
+  // noMore ve photo'yu ref'te tut — her değişimde SSE'nin yeniden bağlanmasını önle
+  const noMoreRef = useRef(noMore);
+  const photoRef = useRef(photo);
+  useEffect(() => { noMoreRef.current = noMore; }, [noMore]);
+  useEffect(() => { photoRef.current = photo; }, [photo]);
+
+  // SSE — diğer kullanıcıların yüklediği fotoğraflar anında gelsin
+  // ÖNEMLİ: deps sadece [load]. noMore/photo değiştiğinde yeniden bağlanmamalı,
+  // aksi halde her oy yeni HTTP handshake'i tetikler ve gecikmeye sebep olur.
+  useEffect(() => {
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+
+    const connect = () => {
+      if (cancelled) return;
+      es = new EventSource('/api/photos/stream');
+
+      es.addEventListener('new-photo', () => {
+        if (noMoreRef.current || !photoRef.current) load(true);
+      });
+
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        if (!cancelled) reconnectTimer = setTimeout(connect, 5_000);
+      };
+    };
+
+    connect();
+    return () => {
+      cancelled = true;
+      es?.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [load]);
+
+  // Yedek poll — SSE bağlantısı yokken veya noMore=true edge case'i için
   useEffect(() => {
     if (!noMore) return;
-    const exc = () => Array.from(seenIds.current).join(',');
-    const interval = setInterval(async () => {
+    const check = async () => {
       try {
-        const res = await fetch(`/api/photos/has-new?exclude=${exc()}`);
+        const res = await fetch('/api/photos/has-new' + buildQuery(seenIds.current));
         const data = await res.json();
-        if (data.available > 0) load();
+        if (data.available > 0) load(true);
       } catch {}
-    }, 1_000);
+    };
+    check();
+    const interval = setInterval(check, 10_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
 
-  const handleVote = async () => {
-    if (!photo || voted) return;
-    setVoted(true);
-    try {
-      const res  = await fetch('/api/photos/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId: photo._id, score }),
-      });
-      const data = await res.json();
-      if (res.ok && data.photo) {
-        setAverage(data.photo.average);
-        setVoteCount(data.photo.voteCount);
-        markVoted();
-        if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
-      }
-    } catch {}
-  };
+  // Evrensel yedek poll (60s) — photo=null race condition için
+  useEffect(() => {
+    const universalCheck = async () => {
+      try {
+        const res = await fetch('/api/photos/has-new' + buildQuery(seenIds.current));
+        const data = await res.json();
+        if (data.available > 0 && !noMore && !photo) load(true);
+      } catch {}
+    };
+    const interval = setInterval(universalCheck, 60_000);
+    return () => clearInterval(interval);
+  }, [noMore, photo, load]);
 
-  const submitComment = async () => {
-    if (!photo || !comment.trim() || commented) return;
-    setCommented(true);
-    try {
-      await fetch('/api/photos/comment', {
+  const handleVote = () => {
+    if (!photo || loadInProgress.current) return;
+    const photoId = photo._id;
+    const commentText = comment.trim();
+
+    // Oy gönder (sonucu beklemeden devam et)
+    fetch('/api/photos/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoId, score }),
+    }).then(r => r.json()).then(data => {
+      markVoted();
+      if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
+    }).catch(() => {});
+
+    // Yorum varsa gönder (fire and forget)
+    if (commentText) {
+      fetch('/api/photos/comment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId: photo._id, text: comment.trim() }),
-      });
-      window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
-    } catch {
-      setCommented(false);
+        body: JSON.stringify({ photoId, text: commentText }),
+      }).then(() => {
+        window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
+      }).catch(() => {});
+    }
+
+    // Prefetch varsa anında geç, yoksa normal yükle
+    // Generation counter kontrolü: mevcut fotoğraf gösterildiğinde başlayan prefetch mi?
+    const pre = prefetchedPhoto.current;
+    prefetchedPhoto.current = null;
+    const myGen = ++prefetchGen.current;
+    if (pre) {
+      seenIds.current.add(String(pre._id));
+      saveSeenToStorage(seenIds.current);
+      setScore(5); setHover(0); setComment('');
+      setPhoto(pre);
+      setNoMore(false);
+      // Bir sonrakini arka planda getir
+      fetch('/api/photos/random' + buildQuery(seenIds.current))
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.photo && prefetchGen.current === myGen) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })
+        .catch(() => {});
+    } else {
+      load(true);
     }
   };
 
@@ -157,7 +283,10 @@ function Inner() {
     return (
       <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-3">
         <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
-        <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
+        <p className="text-zinc-500 text-sm text-center">
+          Yeni fotoğraflar yüklenince otomatik olarak burada gözükecek.
+        </p>
+        <p className="text-zinc-600 text-xs">{seenIds.current.size} fotoğraf görüntülendi</p>
       </div>
     );
   }
@@ -173,68 +302,48 @@ function Inner() {
       <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} />
 
       <div className="p-4 space-y-3">
-        {!voted ? (
-          <>
-            <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
-            <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
-              <span className="text-amber-400 font-black text-lg w-5 text-center flex-shrink-0">{score}</span>
-              <input
-                type="range" min={1} max={10} step={1}
-                value={score}
-                onChange={e => { setScore(Number(e.target.value)); setHover(0); }}
-                className="flex-1 accent-amber-400 cursor-pointer h-2"
-              />
-            </div>
-            <div className="flex justify-center gap-1.5 flex-wrap">
-              {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                <button key={n}
-                  onMouseEnter={() => setHover(n)}
-                  onMouseLeave={() => setHover(0)}
-                  onClick={() => { setScore(n); setHover(0); }}
-                  className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
-                    (hover > 0 ? hover : score) >= n
-                      ? 'bg-amber-400 text-black scale-110'
-                      : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                  }`}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center justify-between bg-zinc-800 rounded-xl px-4 py-3">
-              <div className="text-center">
-                <p className="text-zinc-500 text-xs">Senin puanın</p>
-                <p className="text-white font-black text-3xl">{score}</p>
-              </div>
-              <div className="w-px h-10 bg-zinc-700" />
-              <div className="text-center">
-                <p className="text-zinc-500 text-xs">Topluluk ortalaması</p>
-                <p className="text-amber-400 font-black text-3xl">
-                  {average !== null ? average.toFixed(1) : '—'}
-                </p>
-                {voteCount !== null && (
-                  <p className="text-zinc-600 text-xs">{voteCount} oy</p>
-                )}
-              </div>
-            </div>
-            <input
-              type="text"
-              maxLength={60}
-              placeholder={commented ? 'Yorum gönderildi!' : 'İsteğe bağlı yorum bırak...'}
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              disabled={commented}
-              className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600 disabled:opacity-50"
-            />
-          </>
-        )}
+        <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
+        <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
+          <span className="text-amber-400 font-black text-lg w-5 text-center flex-shrink-0">{score}</span>
+          <input
+            type="range" min={1} max={10} step={1}
+            value={score}
+            onChange={e => { setScore(Number(e.target.value)); setHover(0); }}
+            className="flex-1 accent-amber-400 cursor-pointer h-2"
+          />
+        </div>
+        <div className="flex justify-center gap-1.5 flex-wrap">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+            <button key={n}
+              onMouseEnter={() => setHover(n)}
+              onMouseLeave={() => setHover(0)}
+              onClick={() => { setScore(n); setHover(0); }}
+              className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${
+                (hover > 0 ? hover : score) >= n
+                  ? 'bg-amber-400 text-black scale-110'
+                  : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
+              }`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        <input
+          type="text"
+          maxLength={60}
+          placeholder="İsteğe bağlı yorum bırak..."
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          className="w-full bg-zinc-800 text-white text-sm rounded-xl px-3 py-2 outline-none border border-zinc-700 focus:border-amber-500/40 placeholder:text-zinc-600"
+        />
 
         <button
-          onClick={voted ? () => { submitComment(); load(true); } : handleVote}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100">
-          Sonraki <ChevronRight className="w-4 h-4" />
+          disabled={nextBusy}
+          onClick={handleVote}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed">
+          {nextBusy
+            ? <span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full" />
+            : <>Puan Ver <ChevronRight className="w-4 h-4" /></>
+          }
         </button>
       </div>
     </div>
@@ -245,7 +354,7 @@ function Preview() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/photos/random')
+    fetch('/api/photos/random' + buildQuery(new Set()))
       .then(r => r.json())
       .then(d => d.photo?.url && setPhotoUrl(d.photo.url))
       .catch(() => {});
@@ -274,7 +383,7 @@ function Preview() {
           ))}
         </div>
         <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-zinc-800 text-zinc-600 cursor-not-allowed">
-          Sonraki <ChevronRight className="w-4 h-4" />
+          Puan Ver <ChevronRight className="w-4 h-4" />
         </div>
       </div>
     </div>
@@ -282,8 +391,10 @@ function Preview() {
 }
 
 export default function RatingCard() {
-  const uploaded = useUploadGate();
-  if (!uploaded) return (
+  const uploaded = useUploadGate(); // null | true | false
+  // null = henüz bilinmiyor → Inner göster (localStorage okunana kadar)
+  // false = yüklenmedi → gate göster
+  if (uploaded === false) return (
     <UploadGate label="Oy vermek için önce bir fotoğraf yükle" strong>
       <Preview />
     </UploadGate>

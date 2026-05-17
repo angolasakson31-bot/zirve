@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Images } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
-import { addWatermark } from '@/lib/cloudinaryWatermark';
+import PixelImg from '@/components/PixelImg';
+import { useUploadGate } from '@/hooks/useUploadGate';
+import { addWatermark, thumbUrl } from '@/lib/cloudinaryWatermark';
 
 interface Props {
   urls: string[];
@@ -15,19 +16,17 @@ interface Props {
 export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const uploaded = useUploadGate(); // null | true | false
   const isAlbum = urls.length > 1;
 
   return (
     <>
-      <div className="cursor-zoom-in" onClick={() => setLightbox(urls[active])}>
+      <div
+        className={uploaded === true ? 'cursor-zoom-in' : undefined}
+        onClick={() => uploaded === true && setLightbox(urls[active])}
+      >
         <div className="relative">
-          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
-          {isAlbum && (
-            <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/70 backdrop-blur text-white text-xs px-2 py-1 rounded-lg pointer-events-none">
-              <Images className="w-3 h-3" />
-              <span>Albüm · {urls.length}</span>
-            </div>
-          )}
+          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} priority={active === 0} />
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}
@@ -48,14 +47,13 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={addWatermark(url)} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+              <PixelImg src={thumbUrl(url, 128)} alt={`Foto ${i + 1}`} />
             </button>
           ))}
         </div>
       )}
 
-      {lightbox && (
+      {lightbox && uploaded === true && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}

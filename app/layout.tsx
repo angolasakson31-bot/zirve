@@ -20,6 +20,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr" className="h-full">
+      <head>
+        {/* Cloudinary CDN DNS + bağlantı ön ısıtma — ilk görsel yüklemesini hızlandırır */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+      </head>
       <body className={`${inter.className} min-h-full bg-zinc-950 select-none`}>
         <MediaGuard />
         {children}

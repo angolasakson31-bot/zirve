@@ -11,6 +11,7 @@ interface TrackResult {
   dislikeCount: number;
   isChampion: boolean;
   createdAt: string;
+  comments: { text: string }[];
 }
 
 export default function TrackCode() {
@@ -132,6 +133,17 @@ export default function TrackCode() {
                   <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all"
                     style={{ width: `${likeRate}%` }} />
                 </div>
+              </div>
+            )}
+
+            {result.comments && result.comments.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-zinc-500 text-xs font-medium">Yorumlar ({result.comments.length})</p>
+                {result.comments.map((c, i) => (
+                  <div key={i} className="bg-zinc-800 rounded-xl px-3 py-2 text-zinc-300 text-xs">
+                    {c.text}
+                  </div>
+                ))}
               </div>
             )}
           </div>

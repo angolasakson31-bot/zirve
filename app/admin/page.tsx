@@ -92,11 +92,14 @@ export default function AdminPage() {
   const [toast, setToast] = useState('');
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [banningIps, setBanningIps] = useState<Set<string>>(new Set());
+  const [bannedIps, setBannedIps] = useState<Set<string>>(new Set());
   const [recalcing, setRecalcing] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [votingId, setVotingId] = useState<string | null>(null);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
+  const [commentTexts, setCommentTexts] = useState<Record<string, string>>({});
+  const [commentingIds, setCommentingIds] = useState<Set<string>>(new Set());
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadPreviews, setUploadPreviews] = useState<string[]>([]);
   const [uploadContact, setUploadContact] = useState('');
   const [uploading, setUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -111,6 +114,14 @@ export default function AdminPage() {
     'x-admin-password': pw,
   }), []);
 
+  const fetchBanned = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/ban', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      setBannedIps(new Set(data.banned ?? []));
+    }
+  }, []);
+
   const fetchPhotos = useCallback(async (pw: string) => {
     setLoading(true);
     setError('');
@@ -119,7 +130,8 @@ export default function AdminPage() {
     const data = await res.json();
     setPhotos(data.photos ?? []);
     setLoading(false);
-  }, []);
+    fetchBanned(pw);
+  }, [fetchBanned]);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,17 +160,17 @@ export default function AdminPage() {
   };
 
   const adminUpload = async () => {
-    if (!uploadFile) return;
+    if (!uploadFiles.length) return;
     setUploading(true);
     const form = new FormData();
-    form.append('file', uploadFile);
+    uploadFiles.forEach(f => form.append('files', f));
     form.append('contactInfo', uploadContact.trim() || 'Admin');
     const res = await fetch('/api/admin/upload', { method: 'POST', headers: { 'x-admin-password': password }, body: form });
     const data = await res.json();
     if (res.ok) {
       showToast(`Yüklendi! Kod: ${data.trackingCode}`);
-      setUploadFile(null);
-      setUploadPreview(null);
+      setUploadFiles([]);
+      setUploadPreviews([]);
       setUploadContact('');
       fetchPhotos(password);
     } else {
@@ -208,14 +220,46 @@ export default function AdminPage() {
   };
 
   const banIp = async (ip: string) => {
-    if (!confirm(`${ip} adresini engellemek istiyor musun?`)) return;
+    if (!confirm('Bu kişiyi engellemek istiyor musun?')) return;
     setBanningIps(s => new Set(s).add(ip));
     const res = await fetch('/api/admin/ban', {
       method: 'POST', headers: headers(password), body: JSON.stringify({ ip }),
     });
-    if (res.ok) showToast(`${ip} engellendi.`);
+    if (res.ok) { showToast('Engellendi.'); setBannedIps(s => new Set(s).add(ip)); }
     else showToast('Engelleme başarısız.');
     setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
+  };
+
+  const unbanIp = async (ip: string) => {
+    setBanningIps(s => new Set(s).add(ip));
+    const res = await fetch('/api/admin/ban', {
+      method: 'DELETE', headers: headers(password), body: JSON.stringify({ ip }),
+    });
+    if (res.ok) { showToast('Engel kaldırıldı.'); setBannedIps(s => { const n = new Set(s); n.delete(ip); return n; }); }
+    else showToast('Engel kaldırılamadı.');
+    setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
+  };
+
+  const addComment = async (photoId: string) => {
+    const text = (commentTexts[photoId] ?? '').trim();
+    if (!text) return;
+    setCommentingIds(s => new Set(s).add(photoId));
+    const res = await fetch(`/api/admin/photos/${photoId}/comment`, {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ text }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setPhotos(prev => prev.map(p =>
+        p._id === photoId ? { ...p, comments: data.comments } : p
+      ));
+      setCommentTexts(prev => ({ ...prev, [photoId]: '' }));
+      showToast('Yorum eklendi.');
+    } else {
+      showToast(data.error || 'Yorum eklenemedi.');
+    }
+    setCommentingIds(s => { const n = new Set(s); n.delete(photoId); return n; });
   };
 
   const deleteComment = async (photoId: string, commentId: string) => {
@@ -332,29 +376,46 @@ export default function AdminPage() {
             <ImagePlus className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-semibold text-amber-400">Bugüne Fotoğraf Ekle</span>
           </div>
-          <input ref={uploadInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+          <input ref={uploadInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
             onChange={e => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              setUploadFile(f);
-              setUploadPreview(URL.createObjectURL(f));
+              const newFiles = Array.from(e.target.files ?? []);
+              if (!newFiles.length) return;
+              setUploadFiles(prev => {
+                const merged = [...prev, ...newFiles].slice(0, 3);
+                setUploadPreviews(merged.map(f => URL.createObjectURL(f)));
+                return merged;
+              });
               e.target.value = '';
             }} />
-          {!uploadPreview ? (
+          {!uploadPreviews.length ? (
             <button onClick={() => uploadInputRef.current?.click()}
               className="w-full border-2 border-dashed border-zinc-700 hover:border-amber-500/50 rounded-xl py-8 flex flex-col items-center gap-2 text-zinc-500 hover:text-zinc-300 transition">
               <ImagePlus className="w-8 h-8" />
-              <span className="text-sm">Fotoğraf seç</span>
+              <span className="text-sm">Fotoğraf seç (maks 3)</span>
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="relative w-full max-w-xs">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={uploadPreview} alt="Önizleme" className="rounded-xl object-cover w-full max-h-48" />
-                <button onClick={() => { setUploadFile(null); setUploadPreview(null); }}
-                  className="absolute top-2 right-2 bg-black/70 hover:bg-black rounded-full p-1">
-                  <X className="w-4 h-4 text-white" />
-                </button>
+              <div className={`grid gap-2 ${uploadPreviews.length === 1 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+                {uploadPreviews.map((src, i) => (
+                  <div key={i} className="relative rounded-xl overflow-hidden aspect-square bg-zinc-800">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    <button onClick={() => {
+                      setUploadFiles(prev => { const n = prev.filter((_, j) => j !== i); setUploadPreviews(n.map(f => URL.createObjectURL(f))); return n; });
+                    }} className="absolute top-1 right-1 bg-black/70 hover:bg-black rounded-full p-0.5">
+                      <X className="w-3.5 h-3.5 text-white" />
+                    </button>
+                    {i === 0 && uploadPreviews.length > 1 && (
+                      <span className="absolute bottom-1 left-1 bg-amber-400 text-black text-xs px-1.5 py-0.5 rounded font-bold">Ana</span>
+                    )}
+                  </div>
+                ))}
+                {uploadPreviews.length < 3 && (
+                  <button onClick={() => uploadInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-zinc-700 hover:border-amber-500/50 flex items-center justify-center text-zinc-600 hover:text-zinc-400 transition">
+                    <ImagePlus className="w-6 h-6" />
+                  </button>
+                )}
               </div>
               <input type="text" value={uploadContact} onChange={e => setUploadContact(e.target.value)}
                 placeholder="İletişim bilgisi (opsiyonel)"
@@ -444,20 +505,37 @@ export default function AdminPage() {
                       </div>
                     )}
                     {photo.comments && photo.comments.length > 0 && (
-                      <div className="border border-zinc-800 rounded-lg p-2 space-y-1">
-                        <p className="text-zinc-600 text-xs mb-1">Yorumlar ({photo.comments.length})</p>
+                      <div className="space-y-0.5">
                         {photo.comments.map(c => (
-                          <div key={c._id} className="flex items-start gap-1.5">
-                            <span className="text-zinc-300 text-xs flex-1 break-all leading-snug">{c.text}</span>
+                          <div key={c._id} className="flex items-start gap-1">
+                            <span className="text-zinc-400 text-xs flex-1 break-all leading-snug">{c.text}</span>
                             <button
                               onClick={() => deleteComment(photo._id, c._id)}
-                              className="flex-shrink-0 text-red-500/50 hover:text-red-400 transition-colors mt-0.5">
+                              className="flex-shrink-0 text-red-500/40 hover:text-red-400 transition-colors">
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
                         ))}
                       </div>
                     )}
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        maxLength={60}
+                        placeholder="Yorum yaz..."
+                        value={commentTexts[photo._id] ?? ''}
+                        onChange={e => setCommentTexts(prev => ({ ...prev, [photo._id]: e.target.value }))}
+                        onKeyDown={e => e.key === 'Enter' && addComment(photo._id)}
+                        className="flex-1 min-w-0 bg-zinc-800/60 border border-zinc-700/50 rounded px-2 py-0.5 text-xs text-white placeholder-zinc-600 outline-none focus:border-amber-500/50"
+                      />
+                      <button
+                        onClick={() => addComment(photo._id)}
+                        disabled={commentingIds.has(photo._id) || !(commentTexts[photo._id] ?? '').trim()}
+                        className="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 rounded text-xs font-bold transition disabled:opacity-40 flex-shrink-0"
+                      >
+                        {commentingIds.has(photo._id) ? '…' : '+'}
+                      </button>
+                    </div>
                     {/* Admin puan butonları */}
                     <div className="pt-1">
                       <p className="text-zinc-600 text-xs mb-1">Puan ver</p>
@@ -487,13 +565,23 @@ export default function AdminPage() {
                       >
                         <Trash2 className="w-3 h-3" /> Sil
                       </button>
-                      <button
-                        onClick={() => banIp(photo.uploaderIp)}
-                        disabled={banningIps.has(photo.uploaderIp)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
-                      >
-                        <Ban className="w-3 h-3" /> Engelle
-                      </button>
+                      {bannedIps.has(photo.uploaderIp) ? (
+                        <button
+                          onClick={() => unbanIp(photo.uploaderIp)}
+                          disabled={banningIps.has(photo.uploaderIp)}
+                          className="flex-1 flex items-center justify-center gap-1 bg-green-950/50 hover:bg-green-900/60 border border-green-900/50 rounded-lg py-1.5 text-green-400 text-xs transition disabled:opacity-40"
+                        >
+                          <Ban className="w-3 h-3" /> Engel Kaldır
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => banIp(photo.uploaderIp)}
+                          disabled={banningIps.has(photo.uploaderIp)}
+                          className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
+                        >
+                          <Ban className="w-3 h-3" /> Engelle
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import PixelImg from '@/components/PixelImg';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { addWatermark } from '@/lib/cloudinaryWatermark';
+import { thumbUrl } from '@/lib/cloudinaryWatermark';
 
 function useMidnightCountdown() {
   const calc = () => {
@@ -28,6 +28,7 @@ function useMidnightCountdown() {
 }
 
 interface PhotoComment {
+  _id: string;
   text: string;
   userHash: string;
   createdAt: string;
@@ -54,14 +55,19 @@ interface RankedPhoto {
 
 const CONTACT_LABEL = 'Sana ulaşmak için iletişim bilgisi';
 
+// Çok fazla fotoğraf olduğunda strip'i ilk 30 ile sınırla (bandwidth tasarrufu).
+// Sıralama listesi 60+ olduğunda bile sadece ilk 30 yüklenip scroll'da gösterilir.
+const MAX_STRIP_PHOTOS = 30;
+
 function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef    = useRef<number>(0);
-  const doubled   = [...photos, ...photos];
+  const limited   = photos.slice(0, MAX_STRIP_PHOTOS);
+  const doubled   = [...limited, ...limited];
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || photos.length < 2) return;
+    if (!el || limited.length < 2) return;
     let pos = 0;
     const tick = () => {
       pos += 0.5;
@@ -71,7 +77,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [photos.length]);
+  }, [limited.length]);
 
   if (photos.length === 0) return null;
 
@@ -89,7 +95,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
         {doubled.map((photo, i) => (
           <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
             <div className="relative" style={{ aspectRatio: '1' }}>
-              <PixelImg src={addWatermark(photo.url)} alt={`${photo.rank}. sıra`} />
+              <PixelImg src={thumbUrl(photo.url, 128)} alt={`${photo.rank}. sıra`} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
                 photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>
@@ -108,24 +114,16 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [duration, setDuration] = useState<number | null>(null);
+  const shouldScroll = comments.length > 2;
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let pos = 0;
-    const tick = () => {
-      if (el.scrollHeight > el.clientHeight) {
-        pos += 0.4;
-        if (pos >= el.scrollHeight - el.clientHeight) pos = 0;
-        el.scrollTop = pos;
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [comments]);
+    if (!shouldScroll || !innerRef.current) { setDuration(null); return; }
+    // Render sonrası yüksekliği ölç; bir kopyanın yüksekliği = toplam / 2
+    const halfH = innerRef.current.scrollHeight / 2;
+    setDuration(halfH / 14); // 14px/s
+  }, [comments, shouldScroll]);
 
   if (!comments || comments.length === 0) return null;
 
@@ -134,17 +132,25 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
     'text-pink-400', 'text-violet-400', 'text-orange-400',
   ];
 
-  function color(hash: string) {
-    return COLORS[parseInt(hash.slice(0, 2), 16) % COLORS.length];
-  }
+  const displayed = shouldScroll ? [...comments, ...comments] : comments;
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div ref={scrollRef} className="max-h-[100px] overflow-hidden space-y-0.5">
-        {comments.map((c, i) => (
-          <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
-        ))}
+      <div className="overflow-hidden" style={{ maxHeight: '2.4rem' }}>
+        <div
+          ref={innerRef}
+          className="space-y-0.5"
+          style={shouldScroll && duration !== null
+            ? { animation: `zirve-scroll-up ${duration}s linear infinite` }
+            : undefined}
+        >
+          {displayed.map((c, i) => (
+            <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
+              <span className="text-zinc-600 mr-0.5">•</span>{c.text}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -210,7 +216,7 @@ export default function LeaderBoard() {
   return (
     <div className="space-y-3">
       {/* Günün + Dünün yanyana */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 items-start">
 
         {/* Günün Zirvesi */}
         <div className="rounded-2xl overflow-hidden border border-amber-500/30 bg-zinc-900">
@@ -228,20 +234,20 @@ export default function LeaderBoard() {
                   urls={[leader.url, ...(leader.albumUrls ?? [])]}
                   maxHeight={280}
                   bottomOverlay={
-                    <div className="flex items-center gap-1">
-                      <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1">
-                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="text-white font-bold text-sm">{leader.average.toFixed(1)}</span>
+                    <div className="flex items-center gap-0.5">
+                      <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                        <Star className="w-1.5 h-1.5 text-amber-400 fill-amber-400" />
+                        <span className="text-white font-bold text-[9px]">{leader.average.toFixed(1)}</span>
                       </div>
-                      <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 text-zinc-300 text-xs">
+                      <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 text-zinc-200 text-[9px]">
                         {leader.voteCount} oy
                       </div>
                     </div>
                   }
                 />
               </UploadGate>
-              {uploaded && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
-              {uploaded && leader.comments && leader.comments.length > 0 && (
+              {uploaded === true && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+              {uploaded === true && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
             </div>
@@ -266,18 +272,18 @@ export default function LeaderBoard() {
                 maxHeight={280}
                 dimmed
                 bottomOverlay={
-                  <div className="flex items-center gap-1">
-                    <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1">
-                      <Star className="w-3 h-3 text-zinc-300 fill-zinc-300" />
-                      <span className="text-white font-bold text-sm">{yesterday.average.toFixed(1)}</span>
+                  <div className="flex items-center gap-0.5">
+                    <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                      <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
+                      <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
                     </div>
-                    <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1">{yesterday.voteCount} oy</span>
+                    <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
                   </div>
                 }
               />
             </UploadGate>
-            {uploaded && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
-            {uploaded && yesterday.comments && yesterday.comments.length > 0 && (
+            {uploaded === true && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
+            {uploaded === true && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />
             )}
           </div>
@@ -290,7 +296,7 @@ export default function LeaderBoard() {
       </div>
 
       {/* Fotoğraf yükle notu (kilitli için) */}
-      {!uploaded && (
+      {uploaded === false && (
         <p className="text-center text-zinc-600 text-xs">
           Günün ve dünün liderini görmek için{' '}
           <a href="#upload-form" className="text-amber-500 font-medium hover:underline">fotoğraf yükle</a>

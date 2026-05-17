@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles, Share2, X, Images } from 'lucide-react';
 import { markUploaded } from '@/hooks/useUploadGate';
+import { addMyUpload } from '@/lib/my-uploads';
 
 const MAX_FILES = 3;
 
@@ -113,6 +114,9 @@ export default function UploadForm() {
       if (!res.ok) { setError(data.error || 'Hata oluştu.'); }
       else {
         markUploaded();
+        // Bu tarayıcının kendi yüklediği fotoğrafı kaydet — paylaşımlı IP'lerde
+        // (CGNAT, WiFi) IP filtresi çalışmadığı için kendi-fotoğraf gizleme bunu kullanıyor
+        if (data?.photo?._id) addMyUpload(String(data.photo._id));
         window.dispatchEvent(new CustomEvent('zirve:photoUploaded'));
         setTrackingCode(data.trackingCode);
         setFiles([]); setPreviews([]);
