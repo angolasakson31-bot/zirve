@@ -40,7 +40,7 @@ function Inner() {
   const prefetchedPhoto = useRef<Photo | null>(null);
   const prefetchGen    = useRef(0);
 
-  const load = useCallback(async (silent = false) => {
+  const load = useCallback(async (silent = false, _retrying = false) => {
     if (loadInProgress.current) return;
     loadInProgress.current = true;
 
@@ -106,6 +106,19 @@ function Inner() {
             })
             .catch(() => {});
         } else {
+          // $sample null döndürdü — has-new kontrolü ile bir kez retry yap
+          if (!_retrying) {
+            try {
+              const hnRes = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
+              const hnData = await hnRes.json();
+              if (hnData.available > 0) {
+                // Fotoğraf var ama $sample kaçırdı — 500ms sonra bir kez daha dene
+                loadInProgress.current = false;
+                setTimeout(() => { load(silent, true); }, 500);
+                return;
+              }
+            } catch {}
+          }
           setNoMore(true);
           setPhoto(null);
         }
@@ -144,6 +157,29 @@ function Inner() {
     };
     check(); // Hemen kontrol et — yeni fotoğraf yeni yüklenmiş olabilir
     const interval = setInterval(check, 3_000);
+    return () => clearInterval(interval);
+  }, [noMore, load]);
+
+  // Evrensel arka plan poll'u (30s) — noMore durumundan bağımsız çalışır.
+  // noMore=false iken yeni fotoğraf var ama $sample'a düşmemişse sessizce loglar;
+  // noMore=true iken ilk poll döngüsünden kaçırıldıysa load(true) tetikler.
+  useEffect(() => {
+    const getExc = () => Array.from(seenIds.current).join(',');
+    const universalCheck = async () => {
+      try {
+        const exc = getExc();
+        const res = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
+        const data = await res.json();
+        if (data.available > 0) {
+          if (noMore) {
+            load(true);
+          } else {
+            console.log('[RatingCard] Arka planda yeni fotoğraf mevcut, oylama akışına girecek.');
+          }
+        }
+      } catch {}
+    };
+    const interval = setInterval(universalCheck, 30_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
 
