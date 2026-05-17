@@ -13,14 +13,14 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
   const [ready,  setReady]  = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const cvRef  = useRef<HTMLCanvasElement>(null);
-  const uploaded = useUploadGate();
+  const uploaded = useUploadGate(); // null | true | false
 
   useEffect(() => {
-    if (uploaded || !loaded) return;
+    // null = henüz bilinmiyor, sadece false olduğunda piksel uygula
+    if (uploaded !== false || !loaded) return;
     const img = imgRef.current;
     const cv  = cvRef.current;
     if (!img || !cv) return;
-    // square center-crop at 1/10 resolution (object-cover behaviour)
     const size = 20;
     cv.width  = size;
     cv.height = size;
@@ -42,7 +42,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         src={src}
         alt={alt}
         className={className}
-        style={{ display: uploaded && loaded ? 'block' : 'none' }}
+        style={{ display: uploaded === true && loaded ? 'block' : 'none' }}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
         draggable={false}
@@ -50,9 +50,10 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
       <canvas
         ref={cvRef}
         className="absolute inset-0 w-full h-full"
-        style={{ display: !uploaded && ready ? 'block' : 'none', imageRendering: 'pixelated' }}
+        style={{ display: uploaded === false && ready ? 'block' : 'none', imageRendering: 'pixelated' }}
       />
-      {(!loaded || (!uploaded && !ready)) && (
+      {/* null veya henüz hazır değilse skeleton göster */}
+      {(uploaded !== true || !loaded) && !(uploaded === false && ready) && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
       )}
     </div>

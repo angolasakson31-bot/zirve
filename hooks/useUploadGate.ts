@@ -19,8 +19,11 @@ export function markUploaded() {
   } catch {}
 }
 
-export function useUploadGate(): boolean {
-  const [uploaded, setUploaded] = useState(false);
+// null = henüz kontrol edilmedi (SSR veya ilk render)
+// true = bugün fotoğraf yüklendi
+// false = yüklenmedi
+export function useUploadGate(): boolean | null {
+  const [uploaded, setUploaded] = useState<boolean | null>(null);
 
   useEffect(() => {
     const check = () => {
@@ -32,7 +35,6 @@ export function useUploadGate(): boolean {
     };
     check();
     window.addEventListener(UPLOAD_EVENT, check);
-    // storage eventi diğer sekmelerdeki localStorage değişikliklerini yakalar
     window.addEventListener('storage', check);
     return () => {
       window.removeEventListener(UPLOAD_EVENT, check);
@@ -51,8 +53,8 @@ export function markVoted() {
   } catch {}
 }
 
-export function useVoteGate(): boolean {
-  const [voted, setVoted] = useState(false);
+export function useVoteGate(): boolean | null {
+  const [voted, setVoted] = useState<boolean | null>(null);
 
   useEffect(() => {
     const check = () => {

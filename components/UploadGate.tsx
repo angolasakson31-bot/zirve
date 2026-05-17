@@ -12,7 +12,9 @@ interface Props {
 export default function UploadGate({ children, label, mini }: Props) {
   const uploaded = useUploadGate();
 
-  if (uploaded) return <>{children}</>;
+  // null = henüz bilinmiyor, true = yükledi → blur gösterme
+  // Böylece fotoğraf atan kullanıcılar sayfayı yenilediklerinde blur flash görmez
+  if (uploaded !== false) return <>{children}</>;
 
   if (mini) {
     return (

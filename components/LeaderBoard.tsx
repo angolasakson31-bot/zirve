@@ -240,8 +240,8 @@ export default function LeaderBoard() {
                   }
                 />
               </UploadGate>
-              {uploaded && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
-              {uploaded && leader.comments && leader.comments.length > 0 && (
+              {uploaded === true && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+              {uploaded === true && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
             </div>
@@ -276,8 +276,8 @@ export default function LeaderBoard() {
                 }
               />
             </UploadGate>
-            {uploaded && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
-            {uploaded && yesterday.comments && yesterday.comments.length > 0 && (
+            {uploaded === true && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
+            {uploaded === true && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />
             )}
           </div>
@@ -290,7 +290,7 @@ export default function LeaderBoard() {
       </div>
 
       {/* Fotoğraf yükle notu (kilitli için) */}
-      {!uploaded && (
+      {uploaded === false && (
         <p className="text-center text-zinc-600 text-xs">
           Günün ve dünün liderini görmek için{' '}
           <a href="#upload-form" className="text-amber-500 font-medium hover:underline">fotoğraf yükle</a>

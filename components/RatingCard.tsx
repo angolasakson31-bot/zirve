@@ -278,8 +278,10 @@ function Preview() {
 }
 
 export default function RatingCard() {
-  const uploaded = useUploadGate();
-  if (!uploaded) return (
+  const uploaded = useUploadGate(); // null | true | false
+  // null = henüz bilinmiyor → Inner göster (localStorage okunana kadar)
+  // false = yüklenmedi → gate göster
+  if (uploaded === false) return (
     <UploadGate label="Oy vermek için önce bir fotoğraf yükle" strong>
       <Preview />
     </UploadGate>
