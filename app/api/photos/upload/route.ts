@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const banned = await BannedIP.exists({ ip: rawIp });
+    const banned = await BannedIP.exists({ ip: hashIp(rawIp) });
     if (banned) return NextResponse.json({ error: 'Yükleme erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
     const todayCount = await Photo.countDocuments({ uploaderIp: ip, createdAt: { $gte: turkishStartOfDay() } });

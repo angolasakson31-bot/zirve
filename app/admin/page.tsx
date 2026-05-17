@@ -92,6 +92,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState('');
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [banningIps, setBanningIps] = useState<Set<string>>(new Set());
+  const [bannedIps, setBannedIps] = useState<Set<string>>(new Set());
   const [recalcing, setRecalcing] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [votingId, setVotingId] = useState<string | null>(null);
@@ -113,6 +114,14 @@ export default function AdminPage() {
     'x-admin-password': pw,
   }), []);
 
+  const fetchBanned = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/ban', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      setBannedIps(new Set(data.banned ?? []));
+    }
+  }, []);
+
   const fetchPhotos = useCallback(async (pw: string) => {
     setLoading(true);
     setError('');
@@ -121,7 +130,8 @@ export default function AdminPage() {
     const data = await res.json();
     setPhotos(data.photos ?? []);
     setLoading(false);
-  }, []);
+    fetchBanned(pw);
+  }, [fetchBanned]);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,13 +220,23 @@ export default function AdminPage() {
   };
 
   const banIp = async (ip: string) => {
-    if (!confirm(`${ip} adresini engellemek istiyor musun?`)) return;
+    if (!confirm('Bu kişiyi engellemek istiyor musun?')) return;
     setBanningIps(s => new Set(s).add(ip));
     const res = await fetch('/api/admin/ban', {
       method: 'POST', headers: headers(password), body: JSON.stringify({ ip }),
     });
-    if (res.ok) showToast(`${ip} engellendi.`);
+    if (res.ok) { showToast('Engellendi.'); setBannedIps(s => new Set(s).add(ip)); }
     else showToast('Engelleme başarısız.');
+    setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
+  };
+
+  const unbanIp = async (ip: string) => {
+    setBanningIps(s => new Set(s).add(ip));
+    const res = await fetch('/api/admin/ban', {
+      method: 'DELETE', headers: headers(password), body: JSON.stringify({ ip }),
+    });
+    if (res.ok) { showToast('Engel kaldırıldı.'); setBannedIps(s => { const n = new Set(s); n.delete(ip); return n; }); }
+    else showToast('Engel kaldırılamadı.');
     setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
   };
 
@@ -545,13 +565,23 @@ export default function AdminPage() {
                       >
                         <Trash2 className="w-3 h-3" /> Sil
                       </button>
-                      <button
-                        onClick={() => banIp(photo.uploaderIp)}
-                        disabled={banningIps.has(photo.uploaderIp)}
-                        className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
-                      >
-                        <Ban className="w-3 h-3" /> Engelle
-                      </button>
+                      {bannedIps.has(photo.uploaderIp) ? (
+                        <button
+                          onClick={() => unbanIp(photo.uploaderIp)}
+                          disabled={banningIps.has(photo.uploaderIp)}
+                          className="flex-1 flex items-center justify-center gap-1 bg-green-950/50 hover:bg-green-900/60 border border-green-900/50 rounded-lg py-1.5 text-green-400 text-xs transition disabled:opacity-40"
+                        >
+                          <Ban className="w-3 h-3" /> Engel Kaldır
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => banIp(photo.uploaderIp)}
+                          disabled={banningIps.has(photo.uploaderIp)}
+                          className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
+                        >
+                          <Ban className="w-3 h-3" /> Engelle
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
