@@ -109,27 +109,15 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [duration, setDuration] = useState<number | null>(null);
   const shouldScroll = comments.length > 2;
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el || !shouldScroll) return;
-    // half hesabını render sonrası al
-    let half = el.scrollHeight / 2;
-    let pos = 0;
-    const tick = () => {
-      pos += 0.18;
-      if (pos >= half) {
-        half = el.scrollHeight / 2;
-        pos -= half;
-      }
-      el.scrollTop = pos;
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    if (!shouldScroll || !innerRef.current) { setDuration(null); return; }
+    // Render sonrası yüksekliği ölç; bir kopyanın yüksekliği = toplam / 2
+    const halfH = innerRef.current.scrollHeight / 2;
+    setDuration(halfH / 14); // 14px/s
   }, [comments, shouldScroll]);
 
   if (!comments || comments.length === 0) return null;
@@ -144,16 +132,20 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div
-        ref={containerRef}
-        className="overflow-hidden space-y-0.5"
-        style={{ maxHeight: '2.4rem' }}
-      >
-        {displayed.map((c, i) => (
-          <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
-            <span className="text-zinc-600 mr-0.5">•</span>{c.text}
-          </p>
-        ))}
+      <div className="overflow-hidden" style={{ maxHeight: '2.4rem' }}>
+        <div
+          ref={innerRef}
+          className="space-y-0.5"
+          style={shouldScroll && duration !== null
+            ? { animation: `zirve-scroll-up ${duration}s linear infinite` }
+            : undefined}
+        >
+          {displayed.map((c, i) => (
+            <p key={`${c._id}-${i}`} className={`text-xs leading-snug ${COLORS[(i % comments.length) % COLORS.length]}`}>
+              <span className="text-zinc-600 mr-0.5">•</span>{c.text}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -237,12 +229,12 @@ export default function LeaderBoard() {
                   urls={[leader.url, ...(leader.albumUrls ?? [])]}
                   maxHeight={280}
                   bottomOverlay={
-                    <div className="flex items-center gap-1">
-                      <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1">
-                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="text-white font-bold text-sm">{leader.average.toFixed(1)}</span>
+                    <div className="flex items-center gap-0.5">
+                      <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                        <Star className="w-1.5 h-1.5 text-amber-400 fill-amber-400" />
+                        <span className="text-white font-bold text-[9px]">{leader.average.toFixed(1)}</span>
                       </div>
-                      <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 text-zinc-300 text-xs">
+                      <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 text-zinc-200 text-[9px]">
                         {leader.voteCount} oy
                       </div>
                     </div>
@@ -275,12 +267,12 @@ export default function LeaderBoard() {
                 maxHeight={280}
                 dimmed
                 bottomOverlay={
-                  <div className="flex items-center gap-1">
-                    <div className="bg-black/70 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1">
-                      <Star className="w-3 h-3 text-zinc-300 fill-zinc-300" />
-                      <span className="text-white font-bold text-sm">{yesterday.average.toFixed(1)}</span>
+                  <div className="flex items-center gap-0.5">
+                    <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                      <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
+                      <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
                     </div>
-                    <span className="text-zinc-400 text-xs bg-black/70 backdrop-blur rounded-lg px-2 py-1">{yesterday.voteCount} oy</span>
+                    <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
                   </div>
                 }
               />
