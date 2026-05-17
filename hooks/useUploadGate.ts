@@ -13,18 +13,31 @@ function todayStr() {
 
 export function markUploaded() {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(UPLOAD_KEY, todayStr());
-  window.dispatchEvent(new Event(UPLOAD_EVENT));
+  try {
+    localStorage.setItem(UPLOAD_KEY, todayStr());
+    window.dispatchEvent(new Event(UPLOAD_EVENT));
+  } catch {}
 }
 
 export function useUploadGate(): boolean {
   const [uploaded, setUploaded] = useState(false);
 
   useEffect(() => {
-    const check = () => setUploaded(localStorage.getItem(UPLOAD_KEY) === todayStr());
+    const check = () => {
+      try {
+        setUploaded(localStorage.getItem(UPLOAD_KEY) === todayStr());
+      } catch {
+        setUploaded(false);
+      }
+    };
     check();
     window.addEventListener(UPLOAD_EVENT, check);
-    return () => window.removeEventListener(UPLOAD_EVENT, check);
+    // storage eventi diğer sekmelerdeki localStorage değişikliklerini yakalar
+    window.addEventListener('storage', check);
+    return () => {
+      window.removeEventListener(UPLOAD_EVENT, check);
+      window.removeEventListener('storage', check);
+    };
   }, []);
 
   return uploaded;
@@ -32,18 +45,30 @@ export function useUploadGate(): boolean {
 
 export function markVoted() {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(VOTE_KEY, todayStr());
-  window.dispatchEvent(new Event(VOTE_EVENT));
+  try {
+    localStorage.setItem(VOTE_KEY, todayStr());
+    window.dispatchEvent(new Event(VOTE_EVENT));
+  } catch {}
 }
 
 export function useVoteGate(): boolean {
   const [voted, setVoted] = useState(false);
 
   useEffect(() => {
-    const check = () => setVoted(localStorage.getItem(VOTE_KEY) === todayStr());
+    const check = () => {
+      try {
+        setVoted(localStorage.getItem(VOTE_KEY) === todayStr());
+      } catch {
+        setVoted(false);
+      }
+    };
     check();
     window.addEventListener(VOTE_EVENT, check);
-    return () => window.removeEventListener(VOTE_EVENT, check);
+    window.addEventListener('storage', check);
+    return () => {
+      window.removeEventListener(VOTE_EVENT, check);
+      window.removeEventListener('storage', check);
+    };
   }, []);
 
   return voted;
