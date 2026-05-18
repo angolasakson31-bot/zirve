@@ -95,7 +95,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
         {doubled.map((photo, i) => (
           <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
             <div className="relative" style={{ aspectRatio: '1' }}>
-              <PixelImg src={thumbUrl(photo.url, 128)} alt={`${photo.rank}. sıra`} forceShow />
+              <PixelImg src={thumbUrl(photo.url, 128)} alt={`${photo.rank}. sıra`} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
                 photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>
@@ -266,20 +266,22 @@ export default function LeaderBoard() {
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
               <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Zirvesi</h2>
             </div>
-            <AlbumViewer
-              urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
-              maxHeight={280}
-              forceShow
-              bottomOverlay={
-                <div className="flex items-center gap-0.5">
-                  <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
-                    <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
-                    <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
+            <UploadGate mini>
+              <AlbumViewer
+                urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
+                maxHeight={280}
+                dimmed
+                bottomOverlay={
+                  <div className="flex items-center gap-0.5">
+                    <div className="bg-black/40 backdrop-blur rounded px-1 py-0.5 flex items-center gap-0.5">
+                      <Star className="w-1.5 h-1.5 text-zinc-300 fill-zinc-300" />
+                      <span className="text-white font-bold text-[9px]">{yesterday.average.toFixed(1)}</span>
+                    </div>
+                    <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
                   </div>
-                  <span className="text-zinc-200 text-[9px] bg-black/40 backdrop-blur rounded px-1 py-0.5">{yesterday.voteCount} oy</span>
-                </div>
-              }
-            />
+                }
+              />
+            </UploadGate>
             {uploaded === true && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
             {uploaded === true && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />
