@@ -44,6 +44,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         ref={imgRef}
         src={src}
         alt={alt}
+        crossOrigin="anonymous"
         className={className}
         style={{ display: showImg ? 'block' : 'none' }}
         onLoad={() => setLoaded(true)}
@@ -57,7 +58,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         className="absolute inset-0 w-full h-full"
         style={{ display: showPixel ? 'block' : 'none', imageRendering: 'pixelated' }}
       />
-      {!loaded && !showPixel && (
+      {!showImg && !showPixel && (
         <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
       )}
     </div>

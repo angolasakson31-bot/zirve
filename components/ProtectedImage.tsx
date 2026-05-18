@@ -97,6 +97,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         ref={imgRef}
         src={imgSrc}
         alt={alt}
+        crossOrigin="anonymous"
         className="w-full object-contain"
         style={{ maxHeight, display: showImg ? 'block' : 'none', opacity: dimmed ? 0.7 : 1 }}
         onLoad={() => setLoaded(true)}
