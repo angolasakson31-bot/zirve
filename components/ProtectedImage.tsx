@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { addWatermark, pixelateUrl } from '@/lib/cloudinaryWatermark';
+import { addWatermark } from '@/lib/cloudinaryWatermark';
 import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface Props {
@@ -18,30 +18,27 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   const [retryKey, setRetryKey]       = useState(0);
   const uploaded = useUploadGate();
 
-  // uploaded===true hemen localStorage'dan gelir (useUploadGate optimizasyonu).
-  // null veya false → blur; true → watermark.
   const isBlocked = uploaded !== true;
+  // Engelli modda Cloudinary transform KULLANMA — transform hatası HTTP 200 + siyah
+  // resim döndürüyor, onError tetiklenmiyor. Orijinal URL + CSS pikselasyon her zaman çalışır.
   const imgSrc = isBlocked
-    ? pixelateUrl(src)
+    ? src
     : (useFallback ? src : addWatermark(src));
 
-  // SADECE src değişince sıfırla — uploaded değişince SIFIRLAMIYORUZ.
-  // uploaded null→false geçişinde imgSrc değişmez; sıfırlama onLoad'un
-  // bir daha tetiklenmemesine yol açardı (sonsuz skeleton/siyah).
   useEffect(() => {
     setLoaded(false);
     setUseFallback(false);
     setFailed(false);
   }, [src]);
 
-  // imgSrc değişince (null→true geçişinde URL farklılaşır) yeniden yükle.
   useEffect(() => {
     setLoaded(false);
+    setFailed(false);
   }, [imgSrc]);
 
   const handleError = () => {
-    if (isBlocked) { setFailed(true); return; }
-    if (!useFallback) { setUseFallback(true); } else { setFailed(true); }
+    if (!useFallback && !isBlocked) { setUseFallback(true); }
+    else { setFailed(true); }
   };
 
   const retry = () => {
@@ -51,21 +48,23 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     setRetryKey(k => k + 1);
   };
 
+  const blockHeight = Math.min(maxHeight, 400);
+
   return (
     <div
       className="relative w-full overflow-hidden select-none"
-      style={{ maxHeight }}
+      style={{ maxHeight, height: isBlocked ? blockHeight : undefined }}
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
     >
       {!loaded && !failed && (
-        <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
+        <div className="w-full animate-pulse bg-zinc-800" style={{ height: blockHeight }} />
       )}
 
       {failed && (
         <div
           className="w-full flex flex-col items-center justify-center gap-2 bg-zinc-800/50 text-zinc-400"
-          style={{ height: Math.min(maxHeight, 400) }}
+          style={{ height: blockHeight }}
         >
           <p className="text-xs">Fotoğraf yüklenemedi</p>
           <button onClick={retry} className="text-xs px-3 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-100">
@@ -79,14 +78,24 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         key={imgSrc + retryKey}
         src={imgSrc}
         alt={alt}
-        className="w-full object-contain"
-        style={{
+        style={isBlocked ? {
+          display: loaded && !failed ? 'block' : 'none',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '20%',
+          height: '20%',
+          objectFit: 'cover',
+          imageRendering: 'pixelated',
+          transform: 'scale(5)',
+          transformOrigin: '0 0',
+          opacity: dimmed ? 0.7 : 1,
+        } : {
           maxHeight,
           display: loaded && !failed ? 'block' : 'none',
+          width: '100%',
+          objectFit: 'contain',
           opacity: dimmed ? 0.7 : 1,
-          imageRendering: isBlocked ? 'pixelated' : undefined,
-          objectFit: isBlocked ? 'cover' : undefined,
-          height: isBlocked ? '100%' : undefined,
         }}
         onLoad={() => setLoaded(true)}
         onError={handleError}
