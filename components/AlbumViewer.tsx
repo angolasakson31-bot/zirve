@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import PixelImg from '@/components/PixelImg';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { addWatermark, thumbUrl } from '@/lib/cloudinaryWatermark';
+import { addWatermark } from '@/lib/cloudinaryWatermark';
 
 interface Props {
   urls: string[];
@@ -47,7 +47,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              <PixelImg src={thumbUrl(url, 128)} alt={`Foto ${i + 1}`} />
+              <PixelImg src={url} alt={`Foto ${i + 1}`} />
             </button>
           ))}
         </div>

@@ -22,7 +22,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     setLoaded(false);
     setUseFallback(false);
     setFailed(false);
-  }, [src]);
+  }, [src, uploaded]);
 
   // uploaded=false → pikselleştirilmiş Cloudinary URL (canvas/CORS sorunu yok)
   // uploaded=null|true → watermarklı tam çözünürlük
@@ -71,7 +71,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        key={retryKey}
+        key={imgSrc + retryKey}
         src={imgSrc}
         alt={alt}
         className="w-full object-contain"

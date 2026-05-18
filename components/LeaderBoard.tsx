@@ -5,7 +5,6 @@ import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import PixelImg from '@/components/PixelImg';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { thumbUrl } from '@/lib/cloudinaryWatermark';
 
 function useMidnightCountdown() {
   const calc = () => {
@@ -95,7 +94,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
         {doubled.map((photo, i) => (
           <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
             <div className="relative" style={{ aspectRatio: '1' }}>
-              <PixelImg src={thumbUrl(photo.url, 128)} alt={`${photo.rank}. sıra`} />
+              <PixelImg src={photo.url} alt={`${photo.rank}. sıra`} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
                 photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>

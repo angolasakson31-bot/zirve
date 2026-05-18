@@ -1,27 +1,29 @@
 'use client';
 import { useState } from 'react';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { thumbPixelateUrl } from '@/lib/cloudinaryWatermark';
+import { thumbUrl, thumbPixelateUrl } from '@/lib/cloudinaryWatermark';
 
 interface Props {
-  src: string;
+  src: string;        // orijinal Cloudinary URL
   alt: string;
+  size?: number;      // thumbnail boyutu (px), default 128
   className?: string;
   lazy?: boolean;
 }
 
-export default function PixelImg({ src, alt, className = 'w-full h-full object-cover', lazy = true }: Props) {
+export default function PixelImg({ src, alt, size = 128, className = 'w-full h-full object-cover', lazy = true }: Props) {
   const [loaded, setLoaded] = useState(false);
   const uploaded = useUploadGate(); // null | true | false
 
-  // uploaded=false → pikselleştirilmiş thumbnail (Cloudinary e_pixelate)
-  // uploaded=null|true → normal thumbnail (zaten thumbUrl ile geliyor)
-  const imgSrc = uploaded === false ? thumbPixelateUrl(src) : src;
+  const imgSrc = uploaded === false
+    ? thumbPixelateUrl(src, size)
+    : thumbUrl(src, size);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        key={imgSrc}
         src={imgSrc}
         alt={alt}
         className={className}
