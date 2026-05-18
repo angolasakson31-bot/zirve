@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUploadGate } from '@/hooks/useUploadGate';
 import { thumbUrl, thumbPixelateUrl } from '@/lib/cloudinaryWatermark';
 
@@ -19,11 +19,15 @@ export default function PixelImg({ src, alt, size = 128, className = 'w-full h-f
     ? thumbPixelateUrl(src, size)
     : thumbUrl(src, size);
 
+  // imgSrc değişince (uploaded null→false/true geçişi) skeleton tekrar göster
+  useEffect(() => {
+    setLoaded(false);
+  }, [imgSrc]);
+
   return (
     <div className="relative w-full h-full overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        key={imgSrc}
         src={imgSrc}
         alt={alt}
         className={className}

@@ -39,18 +39,19 @@ export function optimizeUrl(url: string): string {
   return url.replace('/upload/', '/upload/f_auto,q_80/');
 }
 
-// Sansürlü (upload yapmayan kullanıcılar için) — Cloudinary e_pixelate ile sunucu tarafında pikselleştirir.
-// Canvas/CORS sorunu yok, her tarayıcıda çalışır.
-export function pixelateUrl(url: string, blockSize: number = 25): string {
+// Sansürlü — ana fotoğraf (lider kartı). Önce 800px'e scale, sonra pixelate.
+// Bu sıra kritik: orijinal büyük görsele e_pixelate uygularsan
+// thumbnail'a crop yapınca bloklar görünmez olur.
+export function pixelateUrl(url: string, blockSize: number = 24): string {
   if (!url || !url.includes('res.cloudinary.com')) return url;
-  return url.replace('/upload/', `/upload/e_pixelate:${blockSize}/f_auto,q_60/`);
+  return url.replace('/upload/', `/upload/w_800,c_scale/e_pixelate:${blockSize}/f_auto,q_60/`);
 }
 
-// Küçük thumbnail'lar için sansürlü versiyon
-export function thumbPixelateUrl(url: string, size: number = 128, blockSize: number = 10): string {
+// Sansürlü — küçük thumbnail (sıralama şeridi, albüm). Önce crop, sonra pixelate.
+export function thumbPixelateUrl(url: string, size: number = 128, blockSize: number = 6): string {
   if (!url || !url.includes('res.cloudinary.com')) return url;
   return url.replace(
     '/upload/',
-    `/upload/e_pixelate:${blockSize}/f_auto,q_60,w_${size},h_${size},c_fill,g_auto/`,
+    `/upload/w_${size},h_${size},c_fill,g_auto/e_pixelate:${blockSize}/f_auto,q_60/`,
   );
 }
