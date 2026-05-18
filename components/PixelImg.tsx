@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useUploadGate } from '@/hooks/useUploadGate';
-import { thumbUrl, thumbPixelateUrl } from '@/lib/cloudinaryWatermark';
+import { thumbUrl } from '@/lib/cloudinaryWatermark';
 
 interface Props {
   src: string;        // orijinal Cloudinary URL
   alt: string;
-  size?: number;      // thumbnail boyutu (px), default 128
+  size?: number;
   className?: string;
   lazy?: boolean;
 }
@@ -15,14 +15,10 @@ export default function PixelImg({ src, alt, size = 128, className = 'w-full h-f
   const [loaded, setLoaded] = useState(false);
   const uploaded = useUploadGate(); // null | true | false
 
-  // null veya false → pixelate; sadece true → watermarklı thumbnail
-  const imgSrc = uploaded === true
-    ? thumbUrl(src, size)
-    : thumbPixelateUrl(src, size);
-
-  useEffect(() => {
-    setLoaded(false);
-  }, [imgSrc]);
+  // Her iki durumda da aynı URL — sadece CSS filtresi değişir.
+  // e_pixelate URL'i fail edince siyah görünüyordu; thumbUrl her zaman çalışır.
+  const imgSrc = thumbUrl(src, size);
+  const blurred = uploaded !== true;
 
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -31,7 +27,11 @@ export default function PixelImg({ src, alt, size = 128, className = 'w-full h-f
         src={imgSrc}
         alt={alt}
         className={className}
-        style={{ display: loaded ? 'block' : 'none' }}
+        style={{
+          display: loaded ? 'block' : 'none',
+          filter: blurred ? 'blur(5px)' : undefined,
+          transform: blurred ? 'scale(1.15)' : undefined,
+        }}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
         draggable={false}
