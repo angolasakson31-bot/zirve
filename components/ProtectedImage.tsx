@@ -24,9 +24,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     setFailed(false);
   }, [src, uploaded]);
 
-  // uploaded=false → pikselleştirilmiş Cloudinary URL (canvas/CORS sorunu yok)
-  // uploaded=null|true → watermarklı tam çözünürlük
-  const isBlocked = uploaded === false;
+  // null veya false → pixelate; sadece true → watermarklı tam çözünürlük
+  const isBlocked = uploaded !== true;
   const imgSrc = isBlocked
     ? pixelateUrl(src)
     : (useFallback ? src : addWatermark(src));

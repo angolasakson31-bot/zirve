@@ -15,11 +15,11 @@ export default function PixelImg({ src, alt, size = 128, className = 'w-full h-f
   const [loaded, setLoaded] = useState(false);
   const uploaded = useUploadGate(); // null | true | false
 
-  const imgSrc = uploaded === false
-    ? thumbPixelateUrl(src, size)
-    : thumbUrl(src, size);
+  // null veya false → pixelate; sadece true → watermarklı thumbnail
+  const imgSrc = uploaded === true
+    ? thumbUrl(src, size)
+    : thumbPixelateUrl(src, size);
 
-  // imgSrc değişince (uploaded null→false/true geçişi) skeleton tekrar göster
   useEffect(() => {
     setLoaded(false);
   }, [imgSrc]);
