@@ -1,6 +1,6 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import { addWatermark } from '@/lib/cloudinaryWatermark';
+import { useState, useEffect } from 'react';
+import { addWatermark, pixelateUrl } from '@/lib/cloudinaryWatermark';
 import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface Props {
@@ -13,57 +13,35 @@ interface Props {
 
 export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, priority = false }: Props) {
   const [loaded, setLoaded]           = useState(false);
-  const [pixelReady, setPixelReady]   = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const [failed, setFailed]           = useState(false);
   const [retryKey, setRetryKey]       = useState(0);
-  const imgRef    = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const uploaded  = useUploadGate(); // null | true | false
+  const uploaded = useUploadGate(); // null | true | false
 
   useEffect(() => {
     setLoaded(false);
-    setPixelReady(false);
     setUseFallback(false);
     setFailed(false);
   }, [src]);
 
-  useEffect(() => {
-    if (uploaded !== false || !loaded || failed) return;
-    const img = imgRef.current;
-    const cv  = canvasRef.current;
-    if (!img || !cv || !img.naturalWidth) return;
-    const w = Math.max(1, Math.floor(img.naturalWidth / 32));
-    const h = Math.max(1, Math.floor(img.naturalHeight / 32));
-    cv.width = w;
-    cv.height = h;
-    const ctx = cv.getContext('2d');
-    if (ctx) {
-      try { ctx.drawImage(img, 0, 0, w, h); setPixelReady(true); } catch {}
-    }
-  }, [loaded, uploaded, failed]);
-
-  const imgSrc = useFallback ? src : addWatermark(src);
+  // uploaded=false → pikselleştirilmiş Cloudinary URL (canvas/CORS sorunu yok)
+  // uploaded=null|true → watermarklı tam çözünürlük
+  const isBlocked = uploaded === false;
+  const imgSrc = isBlocked
+    ? pixelateUrl(src)
+    : (useFallback ? src : addWatermark(src));
 
   const handleError = () => {
-    if (!useFallback) {
-      setUseFallback(true);
-    } else {
-      setFailed(true);
-    }
+    if (isBlocked) { setFailed(true); return; }
+    if (!useFallback) { setUseFallback(true); } else { setFailed(true); }
   };
 
   const retry = () => {
     setFailed(false);
     setLoaded(false);
     setUseFallback(false);
-    setPixelReady(false);
     setRetryKey(k => k + 1);
   };
-
-  const showImg   = loaded && !failed && uploaded !== false;
-  const showPixel = loaded && !failed && uploaded === false && pixelReady;
-  const showSkel  = !failed && !showImg && !showPixel;
 
   return (
     <div
@@ -72,7 +50,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
     >
-      {showSkel && (
+      {!loaded && !failed && (
         <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
       )}
 
@@ -94,30 +72,20 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         key={retryKey}
-        ref={imgRef}
         src={imgSrc}
         alt={alt}
-        crossOrigin="anonymous"
         className="w-full object-contain"
-        style={{ maxHeight, display: showImg ? 'block' : 'none', opacity: dimmed ? 0.7 : 1 }}
+        style={{
+          maxHeight,
+          display: loaded && !failed ? 'block' : 'none',
+          opacity: dimmed ? 0.7 : 1,
+        }}
         onLoad={() => setLoaded(true)}
         onError={handleError}
         draggable={false}
         // @ts-expect-error fetchpriority is a valid HTML attribute
         fetchpriority={priority ? 'high' : 'auto'}
       />
-
-      {uploaded === false && (
-        <canvas
-          ref={canvasRef}
-          style={{
-            width: '100%',
-            display: showPixel ? 'block' : 'none',
-            imageRendering: 'pixelated',
-            opacity: dimmed ? 0.7 : 1,
-          }}
-        />
-      )}
 
       <div className="absolute inset-0" style={{ zIndex: 10 }} onContextMenu={e => e.preventDefault()} />
     </div>

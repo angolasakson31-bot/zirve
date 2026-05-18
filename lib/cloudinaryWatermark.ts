@@ -38,3 +38,19 @@ export function optimizeUrl(url: string): string {
   if (!url || !url.includes('res.cloudinary.com')) return url;
   return url.replace('/upload/', '/upload/f_auto,q_80/');
 }
+
+// Sansürlü (upload yapmayan kullanıcılar için) — Cloudinary e_pixelate ile sunucu tarafında pikselleştirir.
+// Canvas/CORS sorunu yok, her tarayıcıda çalışır.
+export function pixelateUrl(url: string, blockSize: number = 25): string {
+  if (!url || !url.includes('res.cloudinary.com')) return url;
+  return url.replace('/upload/', `/upload/e_pixelate:${blockSize}/f_auto,q_60/`);
+}
+
+// Küçük thumbnail'lar için sansürlü versiyon
+export function thumbPixelateUrl(url: string, size: number = 128, blockSize: number = 10): string {
+  if (!url || !url.includes('res.cloudinary.com')) return url;
+  return url.replace(
+    '/upload/',
+    `/upload/e_pixelate:${blockSize}/f_auto,q_60,w_${size},h_${size},c_fill,g_auto/`,
+  );
+}
