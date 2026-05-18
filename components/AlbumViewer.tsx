@@ -11,24 +11,22 @@ interface Props {
   maxHeight?: number;
   dimmed?: boolean;
   bottomOverlay?: ReactNode;
-  forceShow?: boolean;
 }
 
-export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, forceShow }: Props) {
+export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const uploaded = useUploadGate(); // null | true | false
   const isAlbum = urls.length > 1;
-  const canZoom = forceShow || uploaded === true;
 
   return (
     <>
       <div
-        className={canZoom ? 'cursor-zoom-in' : undefined}
-        onClick={() => canZoom && setLightbox(urls[active])}
+        className={uploaded === true ? 'cursor-zoom-in' : undefined}
+        onClick={() => uploaded === true && setLightbox(urls[active])}
       >
         <div className="relative">
-          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} priority={active === 0} forceShow={forceShow} />
+          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} priority={active === 0} />
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}
@@ -49,13 +47,13 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, fo
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              <PixelImg src={thumbUrl(url, 128)} alt={`Foto ${i + 1}`} forceShow={forceShow} />
+              <PixelImg src={thumbUrl(url, 128)} alt={`Foto ${i + 1}`} />
             </button>
           ))}
         </div>
       )}
 
-      {lightbox && canZoom && (
+      {lightbox && uploaded === true && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}
