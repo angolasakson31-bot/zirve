@@ -16,19 +16,28 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   const [useFallback, setUseFallback] = useState(false);
   const [failed, setFailed]           = useState(false);
   const [retryKey, setRetryKey]       = useState(0);
-  const uploaded = useUploadGate(); // null | true | false
+  const uploaded = useUploadGate();
 
-  useEffect(() => {
-    setLoaded(false);
-    setUseFallback(false);
-    setFailed(false);
-  }, [src, uploaded]);
-
-  // null veya false → pixelate; sadece true → watermarklı tam çözünürlük
+  // uploaded===true hemen localStorage'dan gelir (useUploadGate optimizasyonu).
+  // null veya false → blur; true → watermark.
   const isBlocked = uploaded !== true;
   const imgSrc = isBlocked
     ? pixelateUrl(src)
     : (useFallback ? src : addWatermark(src));
+
+  // SADECE src değişince sıfırla — uploaded değişince SIFIRLAMIYORUZ.
+  // uploaded null→false geçişinde imgSrc değişmez; sıfırlama onLoad'un
+  // bir daha tetiklenmemesine yol açardı (sonsuz skeleton/siyah).
+  useEffect(() => {
+    setLoaded(false);
+    setUseFallback(false);
+    setFailed(false);
+  }, [src]);
+
+  // imgSrc değişince (null→true geçişinde URL farklılaşır) yeniden yükle.
+  useEffect(() => {
+    setLoaded(false);
+  }, [imgSrc]);
 
   const handleError = () => {
     if (isBlocked) { setFailed(true); return; }
@@ -59,10 +68,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
           style={{ height: Math.min(maxHeight, 400) }}
         >
           <p className="text-xs">Fotoğraf yüklenemedi</p>
-          <button
-            onClick={retry}
-            className="text-xs px-3 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-100"
-          >
+          <button onClick={retry} className="text-xs px-3 py-1 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-100">
             Tekrar dene
           </button>
         </div>
