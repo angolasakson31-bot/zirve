@@ -84,6 +84,9 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
           maxHeight,
           display: loaded && !failed ? 'block' : 'none',
           opacity: dimmed ? 0.7 : 1,
+          imageRendering: isBlocked ? 'pixelated' : undefined,
+          objectFit: isBlocked ? 'cover' : undefined,
+          height: isBlocked ? '100%' : undefined,
         }}
         onLoad={() => setLoaded(true)}
         onError={handleError}

@@ -39,8 +39,8 @@ export function optimizeUrl(url: string): string {
   return url.replace('/upload/', '/upload/f_auto,q_80/');
 }
 
-// Sansürlü — ana fotoğraf (lider kartı). e_blur Cloudinary'de her hesapta çalışır.
+// Sansürlü — 24px küçük thumbnail; CSS image-rendering:pixelated ile büyütülür.
 export function pixelateUrl(url: string): string {
   if (!url || !url.includes('res.cloudinary.com')) return url;
-  return url.replace('/upload/', `/upload/w_800,c_scale,e_blur:1200/f_auto,q_60/`);
+  return url.replace('/upload/', '/upload/w_24,h_24,c_fill,g_auto/f_auto,q_50/');
 }

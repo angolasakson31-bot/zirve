@@ -15,10 +15,9 @@ export default function PixelImg({ src, alt, size = 128, className = 'w-full h-f
   const [loaded, setLoaded] = useState(false);
   const uploaded = useUploadGate(); // null | true | false
 
-  // Her iki durumda da aynı URL — sadece CSS filtresi değişir.
-  // e_pixelate URL'i fail edince siyah görünüyordu; thumbUrl her zaman çalışır.
-  const imgSrc = thumbUrl(src, size);
   const blurred = uploaded !== true;
+  // Sansürlü durumda 20px küçük thumbnail; CSS image-rendering:pixelated ile piksel görünümü.
+  const imgSrc = blurred ? thumbUrl(src, 20) : thumbUrl(src, size);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
@@ -29,8 +28,7 @@ export default function PixelImg({ src, alt, size = 128, className = 'w-full h-f
         className={className}
         style={{
           display: loaded ? 'block' : 'none',
-          filter: blurred ? 'blur(5px)' : undefined,
-          transform: blurred ? 'scale(1.15)' : undefined,
+          imageRendering: blurred ? 'pixelated' : undefined,
         }}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
