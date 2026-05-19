@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles, Share2, X, Images } from 'lucide-react';
-import { markUploaded } from '@/hooks/useUploadGate';
+import { markUploaded, saveOwnPhotoId } from '@/hooks/useUploadGate';
 
 const MAX_FILES = 3;
 
@@ -113,6 +113,7 @@ export default function UploadForm() {
       if (!res.ok) { setError(data.error || 'Hata oluştu.'); }
       else {
         markUploaded();
+        if (data.photo?._id) saveOwnPhotoId(String(data.photo._id));
         window.dispatchEvent(new CustomEvent('zirve:photoUploaded'));
         setTrackingCode(data.trackingCode);
         setFiles([]); setPreviews([]);

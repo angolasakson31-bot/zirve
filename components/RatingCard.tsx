@@ -3,7 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
-import { useUploadGate, markVoted, todayKey } from '@/hooks/useUploadGate';
+import { useUploadGate, markVoted, todayKey, getOwnPhotoIds } from '@/hooks/useUploadGate';
 
 interface Photo { _id: string; url: string; albumUrls?: string[]; }
 
@@ -65,7 +65,9 @@ function Inner() {
         setNextBusy(true);
       }
 
-      const exc = Array.from(seenIds.current).slice(-1000).join(',');
+      const ownIds = getOwnPhotoIds();
+      const allExclude = [...new Set([...ownIds, ...Array.from(seenIds.current)])].slice(-1000);
+      const exc = allExclude.join(',');
       let fetchOk = false;
       let nextPhoto: Photo | null = null;
       try {
@@ -92,7 +94,7 @@ function Inner() {
           setNoMore(false);
 
           // Sonraki fotoğrafı arka planda prefetch et
-          const exc2 = Array.from(seenIds.current).slice(-1000).join(',');
+          const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
           fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
             .then(r => r.ok ? r.json() : null)
             .then(d => {
@@ -147,7 +149,7 @@ function Inner() {
 
   useEffect(() => {
     if (!noMore) return;
-    const getExc = () => Array.from(seenIds.current).slice(-1000).join(',');
+    const getExc = () => [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
     const check = async () => {
       try {
         const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
@@ -165,7 +167,7 @@ function Inner() {
   // noMore=false + photo var: yeni fotoğraflar $sample ile zaten karşılaşılacak.
   // noMore=true: birincil poll zaten 3s'de yakalıyor; bu yedek güvencedir.
   useEffect(() => {
-    const getExc = () => Array.from(seenIds.current).slice(-1000).join(',');
+    const getExc = () => [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
     const universalCheck = async () => {
       try {
         const exc = getExc();
@@ -220,7 +222,7 @@ function Inner() {
       setPhoto(pre);
       setNoMore(false);
       // Bir sonrakini arka planda getir
-      const exc2 = Array.from(seenIds.current).slice(-1000).join(',');
+      const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
       fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d?.photo && prefetchGen.current === myGen) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })

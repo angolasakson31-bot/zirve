@@ -5,10 +5,33 @@ const UPLOAD_KEY = 'zirve_uploaded_date';
 const UPLOAD_EVENT = 'zirve_uploaded_change';
 const VOTE_KEY = 'zirve_voted_date';
 const VOTE_EVENT = 'zirve_voted_change';
+const OWN_PHOTOS_KEY = 'zirve_own_photos';
 
 function todayStr() {
   const TZ_OFFSET_MS = 3 * 60 * 60 * 1000;
   return new Date(Date.now() + TZ_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+export function saveOwnPhotoId(id: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(OWN_PHOTOS_KEY);
+    const ids: string[] = raw ? JSON.parse(raw) : [];
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem(OWN_PHOTOS_KEY, JSON.stringify(ids));
+    }
+  } catch {}
+}
+
+export function getOwnPhotoIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(OWN_PHOTOS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
 export function markUploaded() {
