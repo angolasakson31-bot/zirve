@@ -8,9 +8,10 @@ interface Props {
   alt: string;
   maxHeight?: number;
   dimmed?: boolean;
+  blurPlaceholder?: string;
 }
 
-export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false }: Props) {
+export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, blurPlaceholder }: Props) {
   const [loaded, setLoaded]         = useState(false);
   const [pixelReady, setPixelReady] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
@@ -75,7 +76,14 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         </div>
       )}
       {showSkel && (
-        <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
+        blurPlaceholder ? (
+          <div className="relative w-full overflow-hidden" style={{ height: Math.min(maxHeight, 400) }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={blurPlaceholder} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(16px)', transform: 'scale(1.15)' }} />
+          </div>
+        ) : (
+          <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
+        )
       )}
 
       {/* eslint-disable-next-line @next/next/no-img-element */}

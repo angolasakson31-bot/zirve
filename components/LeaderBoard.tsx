@@ -37,6 +37,7 @@ interface LeaderPhoto {
   _id: string;
   url: string;
   albumUrls?: string[];
+  blurPlaceholder?: string;
   average: number;
   voteCount: number;
   championDate?: string;
@@ -228,6 +229,7 @@ export default function LeaderBoard() {
                 <AlbumViewer
                   urls={[leader.url, ...(leader.albumUrls ?? [])]}
                   maxHeight={280}
+                  blurPlaceholder={leader.blurPlaceholder}
                   bottomOverlay={
                     <div className="flex items-center gap-1">
                       <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
@@ -265,6 +267,7 @@ export default function LeaderBoard() {
               <AlbumViewer
                 urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
                 maxHeight={280}
+                blurPlaceholder={yesterday.blurPlaceholder}
                 dimmed
                 bottomOverlay={
                   <div className="flex items-center gap-1">

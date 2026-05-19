@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, randomBytes } from 'crypto';
+import sharp from 'sharp';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
@@ -23,6 +24,19 @@ function generateCode(): string {
 
 function sanitizeContactInfo(info: string): string {
   return info.replace(/<[^>]*>/g, '').replace(/[<>"'`]/g, '').trim().slice(0, 200);
+}
+
+async function generateBlurPlaceholder(buf: Buffer): Promise<string> {
+  try {
+    const out = await sharp(buf)
+      .resize(10, 10, { fit: 'inside', withoutEnlargement: true })
+      .blur(1)
+      .png()
+      .toBuffer();
+    return `data:image/png;base64,${out.toString('base64')}`;
+  } catch {
+    return '';
+  }
 }
 
 async function uploadToCloudinary(buffer: Buffer): Promise<{ public_id: string; secure_url: string }> {
@@ -73,13 +87,13 @@ export async function POST(req: NextRequest) {
     if (todayCount >= DAILY_UPLOAD_LIMIT)
       return NextResponse.json({ error: `Bugün en fazla ${DAILY_UPLOAD_LIMIT} yükleme yapabilirsiniz.` }, { status: 429 });
 
-    // Duplicate check for first (main) file
     const mainBuffer = Buffer.from(await rawFiles[0].arrayBuffer());
     const fileHash = createHash('sha256').update(mainBuffer).digest('hex');
     const duplicate = await Photo.exists({ fileHash });
     if (duplicate) return NextResponse.json({ error: 'Bu fotoğraf zaten yüklenmiş.' }, { status: 409 });
 
-    // Upload all files to Cloudinary
+    const blurPlaceholder = await generateBlurPlaceholder(mainBuffer);
+
     const mainResult = await uploadToCloudinary(mainBuffer);
     const albumResults: string[] = [];
     for (const f of rawFiles.slice(1)) {
@@ -107,6 +121,7 @@ export async function POST(req: NextRequest) {
       contactInfo,
       trackingCode,
       fileHash,
+      blurPlaceholder,
     });
 
     return NextResponse.json({ photo, trackingCode }, { status: 201 });

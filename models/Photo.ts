@@ -25,6 +25,7 @@ export interface IPhoto extends Document {
   isArchived: boolean;
   trackingCode: string;
   fileHash: string;
+  blurPlaceholder: string;
   comments: IComment[];
   createdAt: Date;
 }
@@ -54,9 +55,10 @@ const PhotoSchema = new Schema<IPhoto>(
     },
     isChampion:    { type: Boolean, default: false },
     championDate:  { type: String, default: null },
-    isArchived:    { type: Boolean, default: false },
-    trackingCode:  { type: String, required: true, unique: true },
-    fileHash:      { type: String, required: true },
+    isArchived:       { type: Boolean, default: false },
+    trackingCode:     { type: String, required: true, unique: true },
+    fileHash:         { type: String, required: true },
+    blurPlaceholder:  { type: String, default: '' },
   },
   { timestamps: true }
 );

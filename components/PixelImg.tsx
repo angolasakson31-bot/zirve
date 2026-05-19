@@ -6,9 +6,10 @@ interface Props {
   src: string;
   alt: string;
   className?: string;
+  blurPlaceholder?: string;
 }
 
-export default function PixelImg({ src, alt, className = 'w-full h-full object-cover' }: Props) {
+export default function PixelImg({ src, alt, className = 'w-full h-full object-cover', blurPlaceholder }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [ready,  setReady]  = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -52,9 +53,15 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
         className="absolute inset-0 w-full h-full"
         style={{ display: uploaded === false && ready ? 'block' : 'none', imageRendering: 'pixelated' }}
       />
-      {/* null veya henüz hazır değilse skeleton göster */}
       {(uploaded !== true || !loaded) && !(uploaded === false && ready) && (
-        <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
+        blurPlaceholder ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={blurPlaceholder} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(8px)', transform: 'scale(1.1)' }} />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
+        )
       )}
     </div>
   );

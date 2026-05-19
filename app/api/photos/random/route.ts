@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const skip = Math.floor(Math.random() * count);
     const photo = await Photo.findOne(match)
       .skip(skip)
-      .select('_id url albumUrls average voteCount createdAt')
+      .select('_id url albumUrls average voteCount createdAt blurPlaceholder')
       .lean<{ _id: mongoose.Types.ObjectId; url: string; albumUrls?: string[]; average: number; voteCount: number; createdAt: Date }>();
 
     if (!photo) return NextResponse.json({ photo: null });

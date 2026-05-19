@@ -11,9 +11,10 @@ interface Props {
   maxHeight?: number;
   dimmed?: boolean;
   bottomOverlay?: ReactNode;
+  blurPlaceholder?: string;
 }
 
-export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: Props) {
+export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, blurPlaceholder }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const uploaded = useUploadGate();
@@ -26,7 +27,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay }: 
         onClick={() => uploaded && setLightbox(urls[active])}
       >
         <div className="relative">
-          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} />
+          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} blurPlaceholder={active === 0 ? blurPlaceholder : undefined} />
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}

@@ -5,7 +5,7 @@ import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey, getOwnPhotoIds, getDeviceToken } from '@/hooks/useUploadGate';
 
-interface Photo { _id: string; url: string; albumUrls?: string[]; }
+interface Photo { _id: string; url: string; albumUrls?: string[]; blurPlaceholder?: string; }
 
 const SEEN_STORAGE_PREFIX = 'zirve_seen_';
 
@@ -287,7 +287,7 @@ function Inner() {
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
       </div>
 
-      <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} />
+      <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} blurPlaceholder={photo.blurPlaceholder} />
 
       <div className="p-4 space-y-3">
         <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>

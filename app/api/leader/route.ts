@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
     const startOfToday = turkishStartOfDay();
 
     const leader = await Photo.findOne({ isChampion: true })
-      .select('url albumUrls average voteCount createdAt contactInfo comments');
+      .select('url albumUrls average voteCount createdAt contactInfo comments blurPlaceholder');
     const yesterday = await Photo.findOne({ championDate: getYesterdayStr() })
-      .select('url albumUrls average voteCount championDate contactInfo comments');
+      .select('url albumUrls average voteCount championDate contactInfo comments blurPlaceholder');
 
     const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfToday } })
       .select('_id url average totalScore voteCount isChampion').lean();
