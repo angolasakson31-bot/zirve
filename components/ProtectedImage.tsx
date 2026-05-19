@@ -20,6 +20,13 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   const uploaded  = useUploadGate();
 
   useEffect(() => {
+    setLoaded(false);
+    setPixelReady(false);
+    setUseFallback(false);
+    setFailed(false);
+  }, [src]);
+
+  useEffect(() => {
     if (uploaded || !loaded) return;
     const img = imgRef.current;
     const cv  = canvasRef.current;
