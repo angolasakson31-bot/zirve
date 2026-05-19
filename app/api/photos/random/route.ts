@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
       .split(',')
-      .slice(0, 200)
+      .slice(0, 1000)
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 
@@ -40,11 +40,14 @@ export async function GET(req: NextRequest) {
       match._id = { $nin: excludeObjectIds };
     }
 
-    const [photo] = await Photo.aggregate([
-      { $match: match },
-      { $sample: { size: 1 } },
-      { $project: { _id: 1, url: 1, albumUrls: 1, average: 1, voteCount: 1, createdAt: 1 } },
-    ]);
+    const count = await Photo.countDocuments(match);
+    if (!count) return NextResponse.json({ photo: null });
+
+    const skip = Math.floor(Math.random() * count);
+    const photo = await Photo.findOne(match)
+      .skip(skip)
+      .select('_id url albumUrls average voteCount createdAt')
+      .lean<{ _id: mongoose.Types.ObjectId; url: string; albumUrls?: string[]; average: number; voteCount: number; createdAt: Date }>();
 
     if (!photo) return NextResponse.json({ photo: null });
     return NextResponse.json({ photo: { ...photo, albumUrls: photo.albumUrls ?? [] } });

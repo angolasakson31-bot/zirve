@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
-import { turkishStartOfDay } from '@/lib/daily-reset';
+import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
 import { hashIp } from '@/lib/hash-ip';
 
 export const runtime = 'nodejs';
@@ -17,12 +17,13 @@ export async function GET(req: NextRequest) {
 
   try {
     await connectDB();
+    await maybeRunDailyReset();
 
     const ip = hashIp(rawIp);
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
       .split(',')
-      .slice(0, 200)
+      .slice(0, 1000)
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 
