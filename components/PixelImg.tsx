@@ -22,7 +22,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
     const img = imgRef.current;
     const cv  = cvRef.current;
     if (!img || !cv) return;
-    const size = 28;
+    const size = 32;
     cv.width  = size;
     cv.height = size;
     const ctx = cv.getContext('2d');

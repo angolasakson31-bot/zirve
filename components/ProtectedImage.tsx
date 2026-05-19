@@ -32,8 +32,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     const img = imgRef.current;
     const cv  = canvasRef.current;
     if (!img || !cv) return;
-    const w = Math.max(1, Math.floor(img.naturalWidth / 20));
-    const h = Math.max(1, Math.floor(img.naturalHeight / 20));
+    const w = Math.max(1, Math.floor(img.naturalWidth / 16));
+    const h = Math.max(1, Math.floor(img.naturalHeight / 16));
     cv.width = w;
     cv.height = h;
     const ctx = cv.getContext('2d');
