@@ -3,7 +3,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import { ChevronRight } from 'lucide-react';
-import { useUploadGate, markVoted, todayKey, getOwnPhotoIds } from '@/hooks/useUploadGate';
+import { useUploadGate, markVoted, todayKey, getOwnPhotoIds, getDeviceToken } from '@/hooks/useUploadGate';
 
 interface Photo { _id: string; url: string; albumUrls?: string[]; }
 
@@ -68,10 +68,25 @@ function Inner() {
       const ownIds = getOwnPhotoIds();
       const allExclude = [...new Set([...ownIds, ...Array.from(seenIds.current)])].slice(-1000);
       const exc = allExclude.join(',');
+      const dt  = getDeviceToken();
+      const randomUrl = (e: string) => {
+        const p = new URLSearchParams();
+        if (e) p.set('exclude', e);
+        if (dt) p.set('dt', dt);
+        const qs = p.toString();
+        return '/api/photos/random' + (qs ? `?${qs}` : '');
+      };
+      const hasNewUrl = (e: string) => {
+        const p = new URLSearchParams();
+        if (e) p.set('exclude', e);
+        if (dt) p.set('dt', dt);
+        const qs = p.toString();
+        return '/api/photos/has-new' + (qs ? `?${qs}` : '');
+      };
       let fetchOk = false;
       let nextPhoto: Photo | null = null;
       try {
-        const res = await fetch('/api/photos/random' + (exc ? `?exclude=${exc}` : ''));
+        const res = await fetch(randomUrl(exc));
         if (res.ok) {
           fetchOk = true;
           const data = await res.json();
@@ -95,7 +110,7 @@ function Inner() {
 
           // Sonraki fotoğrafı arka planda prefetch et
           const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
-          fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
+          fetch(randomUrl(exc2))
             .then(r => r.ok ? r.json() : null)
             .then(d => {
               if (d?.photo && prefetchGen.current === myGen) {
@@ -111,7 +126,7 @@ function Inner() {
           // $sample null döndürdü — has-new kontrolü ile bir kez retry yap
           if (!_retrying) {
             try {
-              const hnRes = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
+              const hnRes = await fetch(hasNewUrl(exc));
               const hnData = await hnRes.json();
               if (hnData.available > 0) {
                 // Fotoğraf var ama $sample kaçırdı — 500ms sonra bir kez daha dene
@@ -149,35 +164,38 @@ function Inner() {
 
   useEffect(() => {
     if (!noMore) return;
-    const getExc = () => [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
+    const dt = getDeviceToken();
+    const getHnUrl = () => {
+      const exc = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
+      const p = new URLSearchParams();
+      if (exc) p.set('exclude', exc);
+      if (dt) p.set('dt', dt);
+      const qs = p.toString();
+      return '/api/photos/has-new' + (qs ? `?${qs}` : '');
+    };
     const check = async () => {
       try {
-        const res = await fetch(`/api/photos/has-new?exclude=${getExc()}`);
-        const data = await res.json();
+        const data = await fetch(getHnUrl()).then(r => r.json());
         if (data.available > 0) load(true);
       } catch {}
     };
-    check(); // Hemen kontrol et — yeni fotoğraf yeni yüklenmiş olabilir
+    check();
     const interval = setInterval(check, 3_000);
     return () => clearInterval(interval);
   }, [noMore, load]);
 
-  // Evrensel arka plan poll'u (20s) — noMore durumundan bağımsız çalışır.
-  // noMore=false + photo=null: race condition edge case — sessizce yeniden yükle.
-  // noMore=false + photo var: yeni fotoğraflar $sample ile zaten karşılaşılacak.
-  // noMore=true: birincil poll zaten 3s'de yakalıyor; bu yedek güvencedir.
   useEffect(() => {
-    const getExc = () => [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
+    const dt = getDeviceToken();
     const universalCheck = async () => {
       try {
-        const exc = getExc();
-        const res = await fetch(`/api/photos/has-new` + (exc ? `?exclude=${exc}` : ''));
-        const data = await res.json();
-        if (data.available > 0 && !noMore && !photo) {
-          // photo=null ama noMore=false: oy akışı içinde race condition —
-          // yeni fotoğraf algılandı, sessizce yükle
-          load(true);
-        }
+        const exc = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
+        const p = new URLSearchParams();
+        if (exc) p.set('exclude', exc);
+        if (dt) p.set('dt', dt);
+        const qs = p.toString();
+        const url = '/api/photos/has-new' + (qs ? `?${qs}` : '');
+        const data = await fetch(url).then(r => r.json());
+        if (data.available > 0 && !noMore && !photo) load(true);
       } catch {}
     };
     const interval = setInterval(universalCheck, 20_000);
@@ -193,7 +211,7 @@ function Inner() {
     fetch('/api/photos/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photoId, score }),
+      body: JSON.stringify({ photoId, score, dt: getDeviceToken() }),
     }).then(r => r.json()).then(data => {
       markVoted();
       if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
@@ -223,7 +241,12 @@ function Inner() {
       setNoMore(false);
       // Bir sonrakini arka planda getir
       const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
-      fetch('/api/photos/random' + (exc2 ? `?exclude=${exc2}` : ''))
+      const dt2  = getDeviceToken();
+      const p2   = new URLSearchParams();
+      if (exc2) p2.set('exclude', exc2);
+      if (dt2)  p2.set('dt', dt2);
+      const qs2  = p2.toString();
+      fetch('/api/photos/random' + (qs2 ? `?${qs2}` : ''))
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d?.photo && prefetchGen.current === myGen) { prefetchedPhoto.current = d.photo; new window.Image().src = d.photo.url; } })
         .catch(() => {});

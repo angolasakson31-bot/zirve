@@ -20,6 +20,9 @@ export async function GET(req: NextRequest) {
     await maybeRunDailyReset();
 
     const ip = hashIp(rawIp);
+    const rawDt = req.nextUrl.searchParams.get('dt') ?? '';
+    const dt = /^[0-9a-f]{32}$/.test(rawDt) ? rawDt : '';
+
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
       .split(',')
@@ -33,6 +36,11 @@ export async function GET(req: NextRequest) {
       isArchived: false,
       createdAt:  { $gte: turkishStartOfDay() },
     };
+
+    if (dt) {
+      match.deviceVoters   = { $nin: [dt] };
+      match.uploaderDevice = { $ne: dt };
+    }
 
     if (excludeObjectIds.length > 0) {
       match._id = { $nin: excludeObjectIds };

@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const rawContact = (formData.get('contactInfo') as string | null) ?? '';
     const contactInfo = sanitizeContactInfo(rawContact);
+    const rawDt = (formData.get('deviceToken') as string | null) ?? '';
+    const uploaderDevice = /^[0-9a-f]{32}$/.test(rawDt) ? rawDt : '';
     if (!contactInfo) return NextResponse.json({ error: 'İletişim bilgisi zorunludur.' }, { status: 400 });
 
     const rawFiles = formData.getAll('files') as File[];
@@ -101,6 +103,7 @@ export async function POST(req: NextRequest) {
       url: mainResult.secure_url,
       albumUrls: albumResults,
       uploaderIp: ip,
+      uploaderDevice,
       contactInfo,
       trackingCode,
       fileHash,

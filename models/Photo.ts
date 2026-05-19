@@ -11,6 +11,7 @@ export interface IPhoto extends Document {
   url: string;
   albumUrls: string[];
   uploaderIp: string;
+  uploaderDevice: string;
   contactInfo?: string;
   totalScore: number;
   voteCount: number;
@@ -18,6 +19,7 @@ export interface IPhoto extends Document {
   likeCount: number;
   dislikeCount: number;
   voters: string[];
+  deviceVoters: string[];
   isChampion: boolean;
   championDate: string | null;
   isArchived: boolean;
@@ -32,14 +34,16 @@ const PhotoSchema = new Schema<IPhoto>(
     cloudinaryId:  { type: String, required: true },
     url:           { type: String, required: true },
     albumUrls:     { type: [String], default: [] },
-    uploaderIp:    { type: String, required: true },
-    contactInfo:   { type: String, default: '' },
+    uploaderIp:     { type: String, required: true },
+    uploaderDevice: { type: String, default: '' },
+    contactInfo:    { type: String, default: '' },
     totalScore:    { type: Number, default: 0 },
     voteCount:     { type: Number, default: 0 },
     average:       { type: Number, default: 0 },
     likeCount:     { type: Number, default: 0 },
     dislikeCount:  { type: Number, default: 0 },
     voters:        { type: [String], default: [] },
+    deviceVoters:  { type: [String], default: [] },
     comments:      {
       type: [{
         text:      { type: String, required: true, maxlength: 60 },

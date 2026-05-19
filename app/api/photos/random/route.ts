@@ -29,12 +29,20 @@ export async function GET(req: NextRequest) {
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 
+    const rawDt = req.nextUrl.searchParams.get('dt') ?? '';
+    const dt = /^[0-9a-f]{32}$/.test(rawDt) ? rawDt : '';
+
     const match: Record<string, unknown> = {
       voters: { $nin: [ip] },
       uploaderIp: { $ne: ip },
       isArchived: false,
       createdAt: { $gte: startOfDay },
     };
+
+    if (dt) {
+      match.deviceVoters  = { $nin: [dt] };
+      match.uploaderDevice = { $ne: dt };
+    }
 
     if (excludeObjectIds.length > 0) {
       match._id = { $nin: excludeObjectIds };

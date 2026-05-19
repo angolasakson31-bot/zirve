@@ -15,9 +15,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
 
   try {
-    const { photoId, score } = await req.json();
+    const { photoId, score, dt: rawDt } = await req.json();
     if (!photoId || typeof score !== 'number' || score < 1 || score > 10)
       return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
+
+    const dt = typeof rawDt === 'string' && /^[0-9a-f]{32}$/.test(rawDt) ? rawDt : '';
 
     await connectDB();
 
@@ -25,9 +27,15 @@ export async function POST(req: NextRequest) {
     if (score >= 6) incFields.likeCount = 1;
     else incFields.dislikeCount = 1;
 
+    const voteFilter: Record<string, unknown> = { _id: photoId, voters: { $ne: ip }, isArchived: false };
+    if (dt) voteFilter.deviceVoters = { $ne: dt };
+
+    const pushFields: Record<string, unknown> = { voters: ip };
+    if (dt) pushFields.deviceVoters = dt;
+
     const photo = await Photo.findOneAndUpdate(
-      { _id: photoId, voters: { $ne: ip }, isArchived: false },
-      { $inc: incFields, $push: { voters: ip } },
+      voteFilter,
+      { $inc: incFields, $push: pushFields },
       { new: true }
     );
 
@@ -35,7 +43,8 @@ export async function POST(req: NextRequest) {
       const existing = await Photo.findById(photoId);
       if (!existing) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
       if (existing.isArchived) return NextResponse.json({ error: 'Arşivlenmiş fotoğrafa oy verilemez.' }, { status: 403 });
-      if (existing.voters.includes(ip)) return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
+      if (existing.voters.includes(ip) || (dt && existing.deviceVoters?.includes(dt)))
+        return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
       return NextResponse.json({ error: 'Oy verilemedi.' }, { status: 400 });
     }
 

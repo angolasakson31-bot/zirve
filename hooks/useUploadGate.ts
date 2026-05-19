@@ -6,10 +6,27 @@ const UPLOAD_EVENT = 'zirve_uploaded_change';
 const VOTE_KEY = 'zirve_voted_date';
 const VOTE_EVENT = 'zirve_voted_change';
 const OWN_PHOTOS_KEY = 'zirve_own_photos';
+const DEVICE_KEY = 'zirve_device';
 
 function todayStr() {
   const TZ_OFFSET_MS = 3 * 60 * 60 * 1000;
   return new Date(Date.now() + TZ_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+export function getDeviceToken(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    let token = localStorage.getItem(DEVICE_KEY);
+    if (!token) {
+      const arr = new Uint8Array(16);
+      crypto.getRandomValues(arr);
+      token = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+      localStorage.setItem(DEVICE_KEY, token);
+    }
+    return token;
+  } catch {
+    return '';
+  }
 }
 
 export function saveOwnPhotoId(id: string) {

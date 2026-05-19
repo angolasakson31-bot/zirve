@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles, Share2, X, Images } from 'lucide-react';
-import { markUploaded, saveOwnPhotoId } from '@/hooks/useUploadGate';
+import { markUploaded, saveOwnPhotoId, getDeviceToken } from '@/hooks/useUploadGate';
 
 const MAX_FILES = 3;
 
@@ -106,6 +106,7 @@ export default function UploadForm() {
     const form = new FormData();
     files.forEach(f => form.append('files', f));
     form.append('contactInfo', `${contactPlatform}: ${contactValue.trim()}`);
+    form.append('deviceToken', getDeviceToken());
 
     try {
       const res = await fetch('/api/photos/upload', { method: 'POST', body: form });
