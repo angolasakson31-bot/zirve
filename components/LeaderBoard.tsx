@@ -107,43 +107,44 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
   );
 }
 
+const COMMENT_COLORS = [
+  'text-amber-400', 'text-sky-400', 'text-green-400',
+  'text-pink-400', 'text-violet-400', 'text-orange-400',
+];
+
+function commentColor(hash: string) {
+  return COMMENT_COLORS[parseInt(hash.slice(0, 2), 16) % COMMENT_COLORS.length];
+}
+
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef       = useRef<number>(0);
+  const shouldScroll = comments.length > 2;
+  const displayed    = shouldScroll ? [...comments, ...comments] : comments;
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
+    const el = containerRef.current;
+    if (!el || !shouldScroll) return;
     let pos = 0;
     const tick = () => {
-      if (el.scrollHeight > el.clientHeight) {
-        pos += 0.4;
-        if (pos >= el.scrollHeight - el.clientHeight) pos = 0;
-        el.scrollTop = pos;
-      }
+      pos += 0.35;
+      const half = el.scrollHeight / 2;
+      if (pos >= half) pos -= half;
+      el.scrollTop = pos;
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [comments]);
+  }, [comments, shouldScroll]);
 
   if (!comments || comments.length === 0) return null;
-
-  const COLORS = [
-    'text-amber-400', 'text-sky-400', 'text-green-400',
-    'text-pink-400', 'text-violet-400', 'text-orange-400',
-  ];
-
-  function color(hash: string) {
-    return COLORS[parseInt(hash.slice(0, 2), 16) % COLORS.length];
-  }
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 pt-1.5 pb-1.5">
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
-      <div ref={scrollRef} className="max-h-[100px] overflow-hidden space-y-0.5">
-        {comments.map((c, i) => (
-          <p key={i} className={`text-xs leading-snug ${color(c.userHash)}`}>{c.text}</p>
+      <div ref={containerRef} className="overflow-hidden space-y-0.5" style={{ maxHeight: '100px' }}>
+        {displayed.map((c, i) => (
+          <p key={i} className={`text-xs leading-snug ${commentColor(c.userHash)}`}>{c.text}</p>
         ))}
       </div>
     </div>

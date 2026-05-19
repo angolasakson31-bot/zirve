@@ -14,6 +14,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   const [loaded, setLoaded]         = useState(false);
   const [pixelReady, setPixelReady] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
+  const [failed, setFailed]         = useState(false);
   const imgRef    = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const uploaded  = useUploadGate();
@@ -35,17 +36,15 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
 
   const handleError = () => {
     if (!useFallback) {
-      // Watermark URL başarısız — orijinal URL'e dön
       setUseFallback(true);
     } else {
-      // Orijinal da başarısız
-      setLoaded(true);
+      setFailed(true);
     }
   };
 
   const showImg   = loaded && uploaded;
   const showPixel = loaded && !uploaded && pixelReady;
-  const showSkel  = !showImg && !showPixel;
+  const showSkel  = !showImg && !showPixel && !failed;
 
   return (
     <div
@@ -54,6 +53,20 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
     >
+      {failed && (
+        <div
+          className="w-full flex flex-col items-center justify-center bg-zinc-900 text-zinc-500 text-xs gap-1"
+          style={{ height: Math.min(maxHeight, 400) }}
+        >
+          <span>Fotoğraf yüklenemedi</span>
+          <button
+            className="text-amber-500 hover:underline"
+            onClick={() => { setFailed(false); setUseFallback(false); setLoaded(false); setPixelReady(false); }}
+          >
+            Tekrar dene
+          </button>
+        </div>
+      )}
       {showSkel && (
         <div className="w-full animate-pulse bg-zinc-800" style={{ height: Math.min(maxHeight, 400) }} />
       )}
