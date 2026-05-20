@@ -4,7 +4,7 @@ import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
 import PixelImg from '@/components/PixelImg';
-import { useUploadGate } from '@/hooks/useUploadGate';
+import { useUploadGate, getDeviceToken } from '@/hooks/useUploadGate';
 
 function useMidnightCountdown() {
   const calc = () => {
@@ -177,10 +177,25 @@ function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
   );
 }
 
+async function fetchContactInfo(id: string): Promise<string | null> {
+  const dt = getDeviceToken();
+  if (!dt) return null;
+  try {
+    const res = await fetch(`/api/photos/contact?id=${id}&dt=${dt}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.contactInfo ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function LeaderBoard() {
   const [leader, setLeader] = useState<LeaderPhoto | null>(null);
   const [yesterday, setYesterday] = useState<LeaderPhoto | null>(null);
   const [allPhotos, setAllPhotos] = useState<RankedPhoto[]>([]);
+  const [leaderContact, setLeaderContact] = useState<string | null>(null);
+  const [yesterdayContact, setYesterdayContact] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const uploaded = useUploadGate();
 
@@ -193,6 +208,12 @@ export default function LeaderBoard() {
     setAllPhotos(data.allPhotos ?? []);
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (uploaded !== true) return;
+    if (leader?._id) fetchContactInfo(leader._id).then(setLeaderContact);
+    if (yesterday?._id) fetchContactInfo(yesterday._id).then(setYesterdayContact);
+  }, [uploaded, leader?._id, yesterday?._id]);
 
   useEffect(() => {
     fetchLeader();
@@ -242,7 +263,7 @@ export default function LeaderBoard() {
                   }
                 />
               </UploadGate>
-              {uploaded && leader.contactInfo && <ContactBadge info={leader.contactInfo} gold />}
+              {uploaded && leaderContact && <ContactBadge info={leaderContact} gold />}
               {uploaded && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
@@ -279,7 +300,7 @@ export default function LeaderBoard() {
                 }
               />
             </UploadGate>
-            {uploaded && yesterday.contactInfo && <ContactBadge info={yesterday.contactInfo} />}
+            {uploaded && yesterdayContact && <ContactBadge info={yesterdayContact} />}
             {uploaded && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />
             )}

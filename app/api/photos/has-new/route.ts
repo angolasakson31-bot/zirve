@@ -8,10 +8,10 @@ import { hashIp } from '@/lib/hash-ip';
 
 export const runtime = 'nodejs';
 
-const checkLimit = rateLimit(120);
+const checkLimit = rateLimit(30);
 
 export async function GET(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || '0.0.0.0';
   if (!checkLimit(rawIp))
     return NextResponse.json({ available: 0 }, { status: 429 });
 

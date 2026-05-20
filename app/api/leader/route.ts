@@ -14,7 +14,7 @@ let leaderCache: LeaderCache | null = null;
 const CACHE_TTL = 15_000; // 15 saniye
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || '0.0.0.0';
   if (!checkLimit(ip))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
 
@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
     const startOfToday = turkishStartOfDay();
 
     const leader = await Photo.findOne({ isChampion: true })
-      .select('url albumUrls average voteCount createdAt contactInfo comments blurPlaceholder');
+      .select('url albumUrls average voteCount createdAt comments blurPlaceholder');
     const yesterday = await Photo.findOne({ championDate: getYesterdayStr() })
-      .select('url albumUrls average voteCount championDate contactInfo comments blurPlaceholder');
+      .select('url albumUrls average voteCount championDate comments blurPlaceholder');
 
     const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfToday } })
       .select('_id url average totalScore voteCount isChampion').lean();

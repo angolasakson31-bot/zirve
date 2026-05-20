@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
@@ -7,9 +8,10 @@ export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(30);
 const LEADER_THRESHOLD = 3;
+const MAX_VOTERS = 10_000;
 
 export async function POST(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || '0.0.0.0';
   const ip = hashIp(rawIp);
   if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
@@ -17,6 +19,8 @@ export async function POST(req: NextRequest) {
   try {
     const { photoId, score, dt: rawDt } = await req.json();
     if (!photoId || typeof score !== 'number' || score < 1 || score > 10)
+      return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
+    if (!mongoose.Types.ObjectId.isValid(photoId))
       return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
 
     const dt = typeof rawDt === 'string' && /^[0-9a-f]{32}$/.test(rawDt) ? rawDt : '';
@@ -27,7 +31,12 @@ export async function POST(req: NextRequest) {
     if (score >= 6) incFields.likeCount = 1;
     else incFields.dislikeCount = 1;
 
-    const voteFilter: Record<string, unknown> = { _id: photoId, voters: { $ne: ip }, isArchived: false };
+    const voteFilter: Record<string, unknown> = {
+      _id: photoId,
+      voters: { $ne: ip },
+      isArchived: false,
+      $expr: { $lt: [{ $size: '$voters' }, MAX_VOTERS] },
+    };
     if (dt) voteFilter.deviceVoters = { $ne: dt };
 
     const pushFields: Record<string, unknown> = { voters: ip };
