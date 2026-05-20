@@ -15,15 +15,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
 
   try {
     const { code } = await params;
+    if (!/^ZRV-[A-Z2-9]{5}$/.test(code.toUpperCase()))
+      return NextResponse.json({ error: 'Geçersiz kod.' }, { status: 400 });
+
     await connectDB();
 
     const photo = await Photo.findOne({ trackingCode: code.toUpperCase() })
-      .select('url voteCount average likeCount dislikeCount isChampion createdAt isArchived comments');
+      .select('url voteCount average likeCount dislikeCount isChampion createdAt isArchived comments')
+      .lean<{
+        _id: unknown; url: string; voteCount: number; average: number;
+        likeCount: number; dislikeCount: number; isChampion: boolean;
+        createdAt: Date; isArchived: boolean;
+        comments: { text: string; createdAt: Date }[];
+      }>();
 
     if (!photo) return NextResponse.json({ error: 'Kod bulunamadı.' }, { status: 404 });
 
     const TZ = 3 * 60 * 60 * 1000;
-    const trDate = toTurkishDateStr(photo.createdAt as Date);
+    const trDate = toTurkishDateStr(photo.createdAt);
     const [y, m, d] = trDate.split('-').map(Number);
     const startOfDay = new Date(Date.UTC(y, m - 1, d) - TZ);
     const endOfDay   = new Date(Date.UTC(y, m - 1, d + 1) - TZ);
@@ -38,7 +47,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
 
     const rank = betterCount + 1;
 
-    return NextResponse.json({ photo, rank, totalToday });
+    // userHash sızdırılmıyor
+    const safeComments = (photo.comments ?? []).map((c) => ({
+      text: c.text,
+      createdAt: c.createdAt,
+    }));
+
+    return NextResponse.json({ photo: { ...photo, comments: safeComments }, rank, totalToday });
   } catch {
     return NextResponse.json({ error: 'Hata oluştu.' }, { status: 500 });
   }

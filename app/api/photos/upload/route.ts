@@ -71,11 +71,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `En fazla ${MAX_ALBUM_SIZE} fotoğraf yükleyebilirsiniz.` }, { status: 400 });
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    const allowedFormats = new Set(['jpeg', 'png', 'webp']);
     for (const f of rawFiles) {
       if (f.size > 10 * 1024 * 1024)
         return NextResponse.json({ error: 'Her fotoğraf en fazla 10MB olabilir.' }, { status: 400 });
       if (!allowedTypes.includes(f.type))
         return NextResponse.json({ error: 'Sadece JPEG, PNG veya WebP yükleyebilirsiniz.' }, { status: 400 });
+    }
+
+    // Gerçek dosya içeriğini doğrula (MIME spoofing engelleyen)
+    for (const f of rawFiles) {
+      try {
+        const buf = Buffer.from(await f.slice(0, 64 * 1024).arrayBuffer()); // ilk 64KB yeterli
+        const meta = await sharp(buf).metadata();
+        if (!meta.format || !allowedFormats.has(meta.format))
+          return NextResponse.json({ error: 'Geçersiz dosya içeriği. Sadece gerçek resim dosyaları kabul edilir.' }, { status: 400 });
+      } catch {
+        return NextResponse.json({ error: 'Dosya okunamadı veya geçersiz resim.' }, { status: 400 });
+      }
     }
 
     await connectDB();
@@ -124,7 +137,10 @@ export async function POST(req: NextRequest) {
       blurPlaceholder,
     });
 
-    return NextResponse.json({ photo, trackingCode }, { status: 201 });
+    return NextResponse.json({
+      photo: { _id: photo._id, url: photo.url },
+      trackingCode,
+    }, { status: 201 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: 'Yükleme başarısız.' }, { status: 500 });

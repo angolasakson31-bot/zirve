@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 const checkLimit = rateLimit(30);
 
 export async function GET(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || '0.0.0.0';
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
   if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
 
@@ -23,10 +23,19 @@ export async function GET(req: NextRequest) {
 
   await connectDB();
 
+  // Sadece fotoğraf yüklemiş cihazlar görebilir
   const hasUploaded = await Photo.exists({ uploaderDevice: dt });
   if (!hasUploaded)
     return NextResponse.json({ contactInfo: null }, { status: 403 });
 
-  const photo = await Photo.findById(id).select('contactInfo').lean<{ contactInfo?: string }>();
-  return NextResponse.json({ contactInfo: photo?.contactInfo ?? null });
+  // Sadece şampiyon veya dünkü şampiyon fotoğrafların iletişim bilgisi açılabilir
+  const photo = await Photo.findOne({
+    _id: id,
+    $or: [{ isChampion: true }, { championDate: { $exists: true, $ne: null } }],
+  }).select('contactInfo').lean<{ contactInfo?: string }>();
+
+  if (!photo)
+    return NextResponse.json({ contactInfo: null }, { status: 403 });
+
+  return NextResponse.json({ contactInfo: photo.contactInfo ?? null });
 }

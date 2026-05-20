@@ -66,10 +66,12 @@ const PhotoSchema = new Schema<IPhoto>(
 PhotoSchema.index({ average: -1, voteCount: -1 });
 PhotoSchema.index({ trackingCode: 1 });
 PhotoSchema.index({ uploaderIp: 1 });
+PhotoSchema.index({ uploaderDevice: 1 });
 PhotoSchema.index({ fileHash: 1 });
 PhotoSchema.index({ isArchived: 1, createdAt: -1 });
 PhotoSchema.index({ isChampion: 1 });
 PhotoSchema.index({ championDate: 1 });
+PhotoSchema.index({ deviceVoters: 1 });
 // random/has-new sorgularının hızlanması için compound index
 PhotoSchema.index({ isArchived: 1, createdAt: -1, uploaderIp: 1 });
 

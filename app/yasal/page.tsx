@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 const CONTACT_EMAIL = 'angolasakson34@gmail.com';
 const CONTACT_TELEGRAM = '@KasapTRTR';
-const UPDATE_DATE = 'Mayıs 2025';
+const UPDATE_DATE = 'Mayıs 2026';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -180,8 +180,24 @@ export default function YasalPage() {
             </p>
           </Section>
 
+          {/* Veri Sorumlusu */}
+          <Section title="11. Veri Sorumlusu Kimliği">
+            <p>
+              <strong className="text-zinc-400">Veri Sorumlusu:</strong> ZİRVE X platform yönetimi
+            </p>
+            <p>
+              <strong className="text-zinc-400">İletişim:</strong>{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-amber-500 hover:text-amber-400 underline underline-offset-2">{CONTACT_EMAIL}</a>
+              {' '}· Telegram: <strong className="text-zinc-400">{CONTACT_TELEGRAM}</strong>
+            </p>
+            <p className="text-zinc-600 text-[10px]">
+              Not: Platform bireysel yönetimde olup tüzel kişilik statüsünde değildir.
+              KVKK kapsamındaki başvurular yukarıdaki iletişim kanallarından yapılabilir.
+            </p>
+          </Section>
+
           {/* KVKK */}
-          <Section title="11. Kişisel Verilerin Korunması (KVKK — 6698 Sayılı Kanun)">
+          <Section title="12. Kişisel Verilerin Korunması (KVKK — 6698 Sayılı Kanun)">
             <p>
               Kişisel verileriniz <strong className="text-zinc-400">6698 Sayılı KVKK</strong>{' '}
               kapsamında işlenmektedir. Veri sorumlusu platform yönetimidir.
@@ -218,8 +234,10 @@ export default function YasalPage() {
             </p>
             <p className="font-semibold text-zinc-400 mt-1">Saklama süresi:</p>
             <p>
-              Veriler, içerik platforma yüklendiği tarihten itibaren içerik kaldırılana veya
-              platform kapatılana kadar saklanır. IP tabanlı ban kayıtları süresiz tutulabilir.
+              Yüklenen fotoğraflar ve iletişim bilgileri, içerik kaldırılana veya platform
+              kapatılana kadar saklanır. IP adresi kayıtları spam ve oy manipülasyonunun
+              önlenmesi amacıyla en fazla <strong className="text-zinc-400">2 yıl</strong>{' '}
+              süreyle saklanır; bu süre sonunda silinir veya anonimleştirilir.
             </p>
             <p className="font-semibold text-zinc-400 mt-1">Veri ihlali bildirimi (KVKK Madde 12):</p>
             <p>

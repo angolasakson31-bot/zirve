@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 const checkLimit = rateLimit(60);
 
 export async function GET(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || '0.0.0.0';
+  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
   if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
       .split(',')
-      .slice(0, 1000)
+      .slice(0, 100)
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 
@@ -48,15 +48,13 @@ export async function GET(req: NextRequest) {
       match._id = { $nin: excludeObjectIds };
     }
 
-    const count = await Photo.countDocuments(match);
-    if (!count) return NextResponse.json({ photo: null });
+    const results = await Photo.aggregate([
+      { $match: match },
+      { $sample: { size: 1 } },
+      { $project: { _id: 1, url: 1, albumUrls: 1, average: 1, voteCount: 1, createdAt: 1, blurPlaceholder: 1 } },
+    ]);
 
-    const skip = Math.floor(Math.random() * count);
-    const photo = await Photo.findOne(match)
-      .skip(skip)
-      .select('_id url albumUrls average voteCount createdAt blurPlaceholder')
-      .lean<{ _id: mongoose.Types.ObjectId; url: string; albumUrls?: string[]; average: number; voteCount: number; createdAt: Date }>();
-
+    const photo = results[0] ?? null;
     if (!photo) return NextResponse.json({ photo: null });
     return NextResponse.json({ photo: { ...photo, albumUrls: photo.albumUrls ?? [] } });
   } catch (err) {

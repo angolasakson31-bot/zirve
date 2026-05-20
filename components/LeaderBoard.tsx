@@ -28,7 +28,6 @@ function useMidnightCountdown() {
 
 interface PhotoComment {
   text: string;
-  userHash: string;
   createdAt: string;
 }
 
@@ -112,8 +111,8 @@ const COMMENT_COLORS = [
   'text-pink-400', 'text-violet-400', 'text-orange-400',
 ];
 
-function commentColor(hash: string) {
-  return COMMENT_COLORS[parseInt(hash.slice(0, 2), 16) % COMMENT_COLORS.length];
+function commentColor(index: number) {
+  return COMMENT_COLORS[index % COMMENT_COLORS.length];
 }
 
 function CommentFeed({ comments }: { comments: PhotoComment[] }) {
@@ -144,7 +143,7 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
       <p className="text-zinc-600 text-[9px] font-semibold uppercase tracking-wide mb-1">Yorumlar</p>
       <div ref={containerRef} className="overflow-hidden space-y-0.5" style={{ maxHeight: '100px' }}>
         {displayed.map((c, i) => (
-          <p key={i} className={`text-xs leading-snug ${commentColor(c.userHash)}`}>{c.text}</p>
+          <p key={i} className={`text-xs leading-snug ${commentColor(i)}`}>{c.text}</p>
         ))}
       </div>
     </div>

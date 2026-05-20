@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
 import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
+import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,7 @@ let leaderCache: LeaderCache | null = null;
 const CACHE_TTL = 15_000; // 15 saniye
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() || '0.0.0.0';
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
   if (!checkLimit(ip))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
 
@@ -38,16 +39,16 @@ export async function GET(req: NextRequest) {
       .select('_id url average totalScore voteCount isChampion').lean();
 
     const allPhotos = allToday
-      .map(p => ({ ...p, _avg: p.voteCount > 0 ? p.totalScore / p.voteCount : 0 }))
+      .map(p => ({ ...p, _score: bayesianScore(p.totalScore, p.voteCount, DEFAULT_MEAN) }))
       .sort((a, b) => {
         if (a.isChampion && !b.isChampion) return -1;
         if (!a.isChampion && b.isChampion) return 1;
-        return b._avg - a._avg || b.voteCount - a.voteCount;
+        return b._score - a._score || b.voteCount - a.voteCount;
       })
       .map((p, i) => ({
         _id: p._id.toString(),
         url: p.url,
-        average: parseFloat(p._avg.toFixed(1)),
+        average: parseFloat((p.voteCount > 0 ? p.totalScore / p.voteCount : 0).toFixed(1)),
         voteCount: p.voteCount,
         rank: i + 1,
       }));

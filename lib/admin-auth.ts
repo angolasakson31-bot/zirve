@@ -10,6 +10,7 @@ export function checkAdmin(req: NextRequest): number | null {
 
   const provided = req.headers.get('x-admin-password') ?? '';
   const expected = process.env.ADMIN_PASSWORD ?? '';
+  if (!expected) return 401;
   if (
     provided.length !== expected.length ||
     !timingSafeEqual(Buffer.from(provided), Buffer.from(expected))

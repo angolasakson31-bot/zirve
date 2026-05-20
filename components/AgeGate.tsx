@@ -12,7 +12,7 @@ export default function AgeGate() {
     try {
       setConfirmed(localStorage.getItem(AGE_KEY) === '1');
     } catch {
-      setConfirmed(true);
+      setConfirmed(false);
     }
   }, []);
 

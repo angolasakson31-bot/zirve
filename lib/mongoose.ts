@@ -15,7 +15,11 @@ export async function connectDB() {
       minPoolSize: 2,
       connectTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-    }).then(m => m);
+      serverSelectionTimeoutMS: 5000,
+    }).then(m => m).catch(err => {
+      cached.promise = null;
+      throw err;
+    });
   }
   cached.conn = await cached.promise;
   return cached.conn;
