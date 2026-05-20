@@ -21,7 +21,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>
       {!loaded && (
         blurPlaceholder ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -40,6 +40,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
           style={{ display: loaded ? undefined : 'none' }}
           onLoad={() => setLoaded(true)}
           onError={() => setLoaded(true)}
+          onContextMenu={e => e.preventDefault()}
           draggable={false}
         />
       )}
@@ -53,6 +54,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
           style={{ display: loaded ? undefined : 'none', imageRendering: 'pixelated' }}
           onLoad={() => setLoaded(true)}
           onError={() => setLoaded(true)}
+          onContextMenu={e => e.preventDefault()}
           draggable={false}
         />
       )}

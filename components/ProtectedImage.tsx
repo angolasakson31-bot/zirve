@@ -72,6 +72,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
           style={{ maxHeight, display: imgLoaded ? 'block' : 'none', opacity: dimmed ? 0.7 : 1 }}
           onLoad={() => setImgLoaded(true)}
           onError={handleError}
+          onContextMenu={e => e.preventDefault()}
           draggable={false}
         />
       )}
@@ -84,6 +85,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
           className="w-full object-contain"
           style={{ maxHeight, display: imgLoaded ? 'block' : 'none', imageRendering: 'pixelated', opacity: dimmed ? 0.7 : 1 }}
           onLoad={() => setImgLoaded(true)}
+          onContextMenu={e => e.preventDefault()}
           draggable={false}
         />
       )}
