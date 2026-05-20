@@ -79,7 +79,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       {uploaded === false && (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
-          src={pixelateUrl(src, 40)}
+          src={pixelateUrl(src, 35)}
           alt={alt}
           className="w-full object-contain"
           style={{ maxHeight, display: imgLoaded ? 'block' : 'none', imageRendering: 'pixelated', opacity: dimmed ? 0.7 : 1 }}
