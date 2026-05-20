@@ -5,20 +5,21 @@ export default function MediaGuard() {
   const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
-    // Sağ tık engeli (global)
+    // Sağ tık engeli — capture phase ile en erken yakalanır
     const noCtx = (e: MouseEvent) => e.preventDefault();
-    document.addEventListener('contextmenu', noCtx);
+    document.addEventListener('contextmenu', noCtx, true);
 
-    // Klavye kısayolları engeli: PrintScreen, F12, Ctrl+S, Ctrl+U, Ctrl+Shift+I
+    // Klavye kısayolları engeli: PrintScreen, F12, Ctrl/Cmd+S/U/P, DevTools
     const noKeys = (e: KeyboardEvent) => {
-      const { key, ctrlKey, shiftKey } = e;
+      const { key, ctrlKey, metaKey, shiftKey } = e;
+      const mod = ctrlKey || metaKey;
       if (key === 'PrintScreen') {
         e.preventDefault();
         setBlocked(true);
         setTimeout(() => setBlocked(false), 2000);
       }
-      if (ctrlKey && ['s', 'u', 'p'].includes(key.toLowerCase())) e.preventDefault();
-      if (ctrlKey && shiftKey && ['i', 'j', 'c'].includes(key.toLowerCase())) e.preventDefault();
+      if (mod && ['s', 'u', 'p'].includes(key.toLowerCase())) e.preventDefault();
+      if (mod && shiftKey && ['i', 'j', 'c'].includes(key.toLowerCase())) e.preventDefault();
       if (key === 'F12') e.preventDefault();
     };
     document.addEventListener('keydown', noKeys);
@@ -34,7 +35,7 @@ export default function MediaGuard() {
     document.addEventListener('leavepictureinpicture', offPiP);
 
     return () => {
-      document.removeEventListener('contextmenu', noCtx);
+      document.removeEventListener('contextmenu', noCtx, true);
       document.removeEventListener('keydown', noKeys);
       document.removeEventListener('dragstart', noDrag);
       document.removeEventListener('enterpictureinpicture', onPiP);

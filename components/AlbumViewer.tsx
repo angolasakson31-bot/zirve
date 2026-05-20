@@ -65,6 +65,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
               src={addWatermark(lightbox)}
               alt="Tam boyut"
               className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl select-none"
+              onContextMenu={e => e.preventDefault()}
               draggable={false}
             />
           </div>

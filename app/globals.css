@@ -33,3 +33,11 @@ body {
   from { transform: translateY(0); }
   to   { transform: translateY(-50%); }
 }
+
+/* Fotoğraf koruma — iOS uzun basma, Android sağ tık, tüm tarayıcı sürükleme */
+img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
