@@ -278,6 +278,12 @@ function Inner() {
       <div className="rounded-2xl border border-zinc-700 bg-zinc-900 p-8 flex flex-col items-center gap-3">
         <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
         <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-1 text-xs text-amber-400/80 border border-amber-400/25 bg-amber-400/5 rounded-lg px-3 py-1.5 hover:bg-amber-400/10 transition-colors"
+        >
+          Fotoğraf gelmiyorsa sayfayı yenile →
+        </button>
       </div>
     );
   }
