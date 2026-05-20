@@ -292,6 +292,12 @@ function Inner() {
 
       <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} blurPlaceholder={photo.blurPlaceholder} />
 
+      <div className="px-4 pt-3">
+        <p className="text-center text-amber-400/80 text-xs font-medium bg-amber-400/5 border border-amber-400/20 rounded-lg py-2 px-3">
+          ⚠️ Fotoğraf açılmadıysa sayfayı yenileyin.
+        </p>
+      </div>
+
       <div className="p-4 space-y-3">
         <p className="text-zinc-500 text-xs text-center">1 = Çok kötü &nbsp;·&nbsp; 10 = Mükemmel</p>
         <div className="bg-zinc-800 rounded-xl px-3 py-2.5 flex items-center gap-3">
@@ -336,9 +342,6 @@ function Inner() {
             : <>Puan Ver <ChevronRight className="w-4 h-4" /></>
           }
         </button>
-        <p className="text-center text-amber-400/80 text-xs font-medium bg-amber-400/5 border border-amber-400/20 rounded-lg py-2 px-3">
-          ⚠️ Fotoğraf açılmadıysa sayfayı yenileyin.
-        </p>
       </div>
     </div>
   );
