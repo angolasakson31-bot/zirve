@@ -11,7 +11,6 @@ export default function UploadForm() {
   const [contactPlatform, setContactPlatform] = useState('Telegram');
   const [contactValue, setContactValue] = useState('');
   const [consent, setConsent] = useState(false);
-  const [consentData, setConsentData] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
@@ -83,7 +82,7 @@ export default function UploadForm() {
   const reset = () => {
     setFiles([]); setPreviews([]);
     setContactPlatform('Telegram'); setContactValue('');
-    setTrackingCode(''); setError(''); setConsent(false); setConsentData(false);
+    setTrackingCode(''); setError(''); setConsent(false);
   };
 
   const submit = async () => {
@@ -282,25 +281,9 @@ export default function UploadForm() {
           />
           <span className="text-zinc-500 text-xs leading-relaxed group-hover:text-zinc-400 transition">
             Yüklediğim fotoğraftaki tüm kişilerin <strong className="text-zinc-400">açık rızasını</strong> aldığımı,
-            içeriğin 18+ olduğunu ve{' '}
+            içeriğin 18+ olduğunu; kişisel verilerimin KVKK kapsamında işlenmesini ve Cloudinary (ABD) altyapısına aktarılmasını kabul ettiğimi ve{' '}
             <a href="/yasal" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">yasal koşulları</a>{' '}
-            kabul ettiğimi onaylıyorum.
-          </span>
-        </label>
-
-        {/* Onay 2 — KVKK / Cloudinary veri transferi */}
-        <label className="flex items-start gap-2.5 cursor-pointer group">
-          <input
-            type="checkbox"
-            checked={consentData}
-            onChange={e => setConsentData(e.target.checked)}
-            className="mt-0.5 w-4 h-4 shrink-0 accent-amber-400 cursor-pointer"
-          />
-          <span className="text-zinc-500 text-xs leading-relaxed group-hover:text-zinc-400 transition">
-            İletişim bilgilerimin ve fotoğraflarımın{' '}
-            <strong className="text-zinc-400">KVKK kapsamında işlenmesine</strong> ve{' '}
-            <strong className="text-zinc-400">Cloudinary (ABD) altyapısına aktarılmasına</strong>{' '}
-            açık rıza veriyorum.
+            okuduğumu onaylıyorum.
           </span>
         </label>
 
@@ -310,7 +293,7 @@ export default function UploadForm() {
           </div>
         )}
 
-        <button onClick={submit} disabled={!files.length || !contactValue.trim() || !consent || !consentData || uploading}
+        <button onClick={submit} disabled={!files.length || !contactValue.trim() || !consent || uploading}
           className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
           {uploading
             ? <><span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full inline-block" /> Yükleniyor...</>
