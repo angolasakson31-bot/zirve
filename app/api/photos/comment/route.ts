@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (!mongoose.Types.ObjectId.isValid(photoId))
       return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
 
-    const trimmed = text.trim().slice(0, 60);
+    const trimmed = text.trim().replace(/<[^>]*>/g, '').slice(0, 60);
     if (!trimmed)
       return NextResponse.json({ error: 'Yorum boş olamaz.' }, { status: 400 });
 

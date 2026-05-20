@@ -127,6 +127,7 @@ function Inner() {
           if (!_retrying) {
             try {
               const hnRes = await fetch(hasNewUrl(exc));
+              if (hnRes.status === 429) return; // rate limit — sessizce bekle, timer yeniden dener
               const hnData = await hnRes.json();
               if (hnData.available > 0) {
                 // Fotoğraf var ama $sample kaçırdı — 500ms sonra bir kez daha dene
@@ -134,7 +135,9 @@ function Inner() {
                 setTimeout(() => { load(silent, true); }, 500);
                 return;
               }
-            } catch {}
+            } catch {
+              return; // network hatası — sessizce bekle, 20s timer yeniden dener
+            }
           }
           setNoMore(true);
           setPhoto(null);

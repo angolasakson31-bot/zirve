@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { toTurkishDateStr } from '@/lib/daily-reset';
@@ -6,8 +7,13 @@ import { toTurkishDateStr } from '@/lib/daily-reset';
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get('x-cron-secret');
-  if (secret !== process.env.CRON_SECRET) {
+  const secret = req.headers.get('x-cron-secret') ?? '';
+  const expected = process.env.CRON_SECRET ?? '';
+  const secretBuf = Buffer.from(secret);
+  const expectedBuf = Buffer.from(expected);
+  const valid = secretBuf.length === expectedBuf.length &&
+    timingSafeEqual(secretBuf, expectedBuf);
+  if (!valid) {
     return NextResponse.json({ error: 'Yetkisiz.' }, { status: 401 });
   }
 

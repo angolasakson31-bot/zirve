@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { photoId, score } = await req.json();
-    if (!photoId || typeof score !== 'number' || score < 1 || score > 10)
+    if (!photoId || typeof score !== 'number' || !Number.isInteger(score) || score < 1 || score > 10)
       return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
 
     await connectDB();
