@@ -25,10 +25,6 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     setPixelReady(false);
     setUseFallback(false);
     setFailed(false);
-    // Cached images fire onLoad before effects run, resetting loaded=false.
-    // Re-check immediately so the canvas still draws.
-    const img = imgRef.current;
-    if (img?.complete && img.naturalWidth > 0) setLoaded(true);
   }, [src]);
 
   useEffect(() => {
@@ -36,8 +32,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
     const img = imgRef.current;
     const cv  = canvasRef.current;
     if (!img || !cv) return;
-    const w = Math.max(1, Math.floor(img.naturalWidth / 24));
-    const h = Math.max(1, Math.floor(img.naturalHeight / 24));
+    const w = Math.max(1, Math.floor(img.naturalWidth / 18));
+    const h = Math.max(1, Math.floor(img.naturalHeight / 18));
     cv.width = w;
     cv.height = h;
     const ctx = cv.getContext('2d');
