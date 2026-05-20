@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!photo) return NextResponse.json({ photo: null });
-    const p = photo as Record<string, unknown>;
+    const p = photo as unknown as Record<string, unknown>;
     return NextResponse.json({ photo: { ...p, albumUrls: (p.albumUrls as string[]) ?? [] } });
   } catch (err) {
     console.error('random route error:', err);
