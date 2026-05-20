@@ -96,8 +96,6 @@ function Inner() {
 
       if (fetchOk) {
         if (nextPhoto) {
-          seenIds.current.add(String(nextPhoto._id));
-          saveSeenToStorage(seenIds.current);
           if (silent) {
             setScore(5);
             setHover(0);
@@ -108,8 +106,8 @@ function Inner() {
           setPhoto(nextPhoto);
           setNoMore(false);
 
-          // Sonraki fotoğrafı arka planda prefetch et
-          const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
+          // Sonraki fotoğrafı arka planda prefetch et — mevcut fotoğrafı da hariç tut
+          const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current), String(nextPhoto._id)])].slice(-1000).join(',');
           fetch(randomUrl(exc2))
             .then(r => r.ok ? r.json() : null)
             .then(d => {
@@ -210,6 +208,10 @@ function Inner() {
     const photoId = photo._id;
     const commentText = comment.trim();
 
+    // Sadece oy verince seenIds'e ekle — sayfa yenilenmeden önce fotoğraf görünmeden giderse geri gelsin
+    seenIds.current.add(String(photoId));
+    saveSeenToStorage(seenIds.current);
+
     // Oy gönder (sonucu beklemeden devam et)
     fetch('/api/photos/vote', {
       method: 'POST',
@@ -237,13 +239,11 @@ function Inner() {
     prefetchedPhoto.current = null;
     const myGen = ++prefetchGen.current;
     if (pre) {
-      seenIds.current.add(String(pre._id));
-      saveSeenToStorage(seenIds.current);
       setScore(5); setHover(0); setComment('');
       setPhoto(pre);
       setNoMore(false);
-      // Bir sonrakini arka planda getir
-      const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current)])].slice(-1000).join(',');
+      // Bir sonrakini arka planda getir — mevcut (pre) fotoğrafı da hariç tut
+      const exc2 = [...new Set([...getOwnPhotoIds(), ...Array.from(seenIds.current), String(pre._id)])].slice(-1000).join(',');
       const dt2  = getDeviceToken();
       const p2   = new URLSearchParams();
       if (exc2) p2.set('exclude', exc2);
@@ -336,6 +336,7 @@ function Inner() {
             : <>Puan Ver <ChevronRight className="w-4 h-4" /></>
           }
         </button>
+        <p className="text-center text-zinc-600 text-xs">Fotoğraf açılmadıysa sayfayı yenileyin.</p>
       </div>
     </div>
   );
