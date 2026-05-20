@@ -1,6 +1,6 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import { addWatermark } from '@/lib/cloudinaryWatermark';
+import { useState } from 'react';
+import { addWatermark, pixelateUrl } from '@/lib/cloudinaryWatermark';
 import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface Props {
@@ -12,47 +12,23 @@ interface Props {
 }
 
 export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, blurPlaceholder }: Props) {
-  const [loaded, setLoaded]         = useState(false);
-  const [pixelReady, setPixelReady] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
-  const [failed, setFailed]         = useState(false);
-  const imgRef    = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const uploaded  = useUploadGate();
+  const [failed, setFailed]       = useState(false);
+  const [prevSrc, setPrevSrc]     = useState(src);
+  const uploaded = useUploadGate();
 
-  useEffect(() => {
-    setLoaded(false);
-    setPixelReady(false);
+  // Derived state reset — no useEffect race condition
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    setImgLoaded(false);
     setUseFallback(false);
     setFailed(false);
-  }, [src]);
+  }
 
-  useEffect(() => {
-    if (uploaded || !loaded) return;
-    const img = imgRef.current;
-    const cv  = canvasRef.current;
-    if (!img || !cv) return;
-    const w = Math.max(1, Math.floor(img.naturalWidth / 16));
-    const h = Math.max(1, Math.floor(img.naturalHeight / 16));
-    cv.width = w;
-    cv.height = h;
-    const ctx = cv.getContext('2d');
-    if (ctx) { ctx.drawImage(img, 0, 0, w, h); setPixelReady(true); }
-  }, [loaded, uploaded]);
-
-  const imgSrc = useFallback ? src : addWatermark(src);
-
-  const handleError = () => {
-    if (!useFallback) {
-      setUseFallback(true);
-    } else {
-      setFailed(true);
-    }
-  };
-
-  const showImg   = loaded && uploaded;
-  const showPixel = loaded && !uploaded && pixelReady;
-  const showSkel  = !showImg && !showPixel && !failed;
+  const fullSrc    = useFallback ? src : addWatermark(src);
+  const handleError = () => { if (!useFallback) setUseFallback(true); else setFailed(true); };
+  const showSkel   = !imgLoaded && !failed;
 
   return (
     <div
@@ -69,12 +45,13 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
           <span>Fotoğraf yüklenemedi</span>
           <button
             className="text-amber-500 hover:underline"
-            onClick={() => { setFailed(false); setUseFallback(false); setLoaded(false); setPixelReady(false); }}
+            onClick={() => { setFailed(false); setUseFallback(false); setImgLoaded(false); }}
           >
             Tekrar dene
           </button>
         </div>
       )}
+
       {showSkel && (
         blurPlaceholder ? (
           <div className="relative w-full overflow-hidden" style={{ height: Math.min(maxHeight, 400) }}>
@@ -86,27 +63,28 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         )
       )}
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgRef}
-        src={imgSrc}
-        alt={alt}
-        className="w-full object-contain"
-        style={{ maxHeight, display: showImg ? 'block' : 'none', opacity: dimmed ? 0.7 : 1 }}
-        onLoad={() => setLoaded(true)}
-        onError={handleError}
-        draggable={false}
-      />
+      {uploaded === true && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={fullSrc}
+          alt={alt}
+          className="w-full object-contain"
+          style={{ maxHeight, display: imgLoaded ? 'block' : 'none', opacity: dimmed ? 0.7 : 1 }}
+          onLoad={() => setImgLoaded(true)}
+          onError={handleError}
+          draggable={false}
+        />
+      )}
 
-      {!uploaded && (
-        <canvas
-          ref={canvasRef}
-          style={{
-            width: '100%',
-            display: showPixel ? 'block' : 'none',
-            imageRendering: 'pixelated',
-            opacity: dimmed ? 0.7 : 1,
-          }}
+      {uploaded === false && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={pixelateUrl(src, 40)}
+          alt={alt}
+          className="w-full object-contain"
+          style={{ maxHeight, display: imgLoaded ? 'block' : 'none', imageRendering: 'pixelated', opacity: dimmed ? 0.7 : 1 }}
+          onLoad={() => setImgLoaded(true)}
+          draggable={false}
         />
       )}
 
