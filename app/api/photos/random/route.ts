@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const excludeParam = req.nextUrl.searchParams.get('exclude') ?? '';
     const excludeObjectIds = excludeParam
       .split(',')
-      .slice(0, 100)
+      .slice(0, 500)
       .filter(id => mongoose.Types.ObjectId.isValid(id))
       .map(id => new mongoose.Types.ObjectId(id));
 
@@ -48,15 +48,26 @@ export async function GET(req: NextRequest) {
       match._id = { $nin: excludeObjectIds };
     }
 
-    const results = await Photo.aggregate([
-      { $match: match },
-      { $sample: { size: 1 } },
-      { $project: { _id: 1, url: 1, albumUrls: 1, average: 1, voteCount: 1, createdAt: 1, blurPlaceholder: 1 } },
-    ]);
+    // $sample küçük koleksiyonlarda güvenilmez — countDocuments + skip kullan
+    const count = await Photo.countDocuments(match);
+    if (count === 0) return NextResponse.json({ photo: null });
 
-    const photo = results[0] ?? null;
+    const skip = Math.floor(Math.random() * count);
+    let photo = await Photo.findOne(match)
+      .skip(skip)
+      .select('_id url albumUrls average voteCount createdAt blurPlaceholder')
+      .lean();
+
+    // Eş zamanlı silme olursa skip aşabilir — ilk eşleşeni al
+    if (!photo) {
+      photo = await Photo.findOne(match)
+        .select('_id url albumUrls average voteCount createdAt blurPlaceholder')
+        .lean();
+    }
+
     if (!photo) return NextResponse.json({ photo: null });
-    return NextResponse.json({ photo: { ...photo, albumUrls: photo.albumUrls ?? [] } });
+    const p = photo as Record<string, unknown>;
+    return NextResponse.json({ photo: { ...p, albumUrls: (p.albumUrls as string[]) ?? [] } });
   } catch (err) {
     console.error('random route error:', err);
     return NextResponse.json({ error: 'Fotoğraf alınamadı.' }, { status: 500 });
