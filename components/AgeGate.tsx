@@ -3,17 +3,33 @@ import { useEffect, useState } from 'react';
 import { Mountain, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
-const AGE_KEY = 'zirve_age_ok';
+const LS_KEY     = 'zirve_age_ok';
+const COOKIE_NAME = 'zirve_age';
+const ONE_YEAR   = 365 * 24 * 60 * 60;
+
+function readConfirmed(): boolean {
+  try {
+    if (localStorage.getItem(LS_KEY) === '1') return true;
+  } catch {}
+  try {
+    if (document.cookie.split(';').some(c => c.trim().startsWith(COOKIE_NAME + '=1'))) return true;
+  } catch {}
+  return false;
+}
+
+function writeConfirmed() {
+  try { localStorage.setItem(LS_KEY, '1'); } catch {}
+  try {
+    const exp = new Date(Date.now() + ONE_YEAR * 1000).toUTCString();
+    document.cookie = `${COOKIE_NAME}=1; expires=${exp}; path=/; SameSite=Lax`;
+  } catch {}
+}
 
 export default function AgeGate() {
   const [confirmed, setConfirmed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    try {
-      setConfirmed(localStorage.getItem(AGE_KEY) === '1');
-    } catch {
-      setConfirmed(false);
-    }
+    setConfirmed(readConfirmed());
   }, []);
 
   if (confirmed !== false) return null;
@@ -46,7 +62,7 @@ export default function AgeGate() {
         <button
           className="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold py-3 rounded-xl text-sm transition-colors"
           onClick={() => {
-            try { localStorage.setItem(AGE_KEY, '1'); } catch {}
+            writeConfirmed();
             setConfirmed(true);
           }}
         >
