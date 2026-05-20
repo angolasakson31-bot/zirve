@@ -81,7 +81,7 @@ export default function Home() {
             </p>
             <p className="text-zinc-400 text-xs leading-relaxed">
               Kendi Telegram grubuna veya kanalına eklemek, iş birliği ya da özel kurulum için{' '}
-              <span className="text-sky-400 font-bold">@KasapTRTR</span> yazın.
+              <span className="text-sky-400 font-bold">@ZIRVENAMUS</span> yazın.
             </p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function Home() {
             >
               angolasakson34@gmail.com
             </a>
-            {' '}· Telegram: <strong className="text-zinc-500">@KasapTRTR</strong>
+            {' '}· Telegram: <strong className="text-zinc-500">@ZIRVENAMUS</strong>
             {' '}·{' '}
             <Link
               href="/yasal"

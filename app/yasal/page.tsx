@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_EMAIL = 'angolasakson34@gmail.com';
-const CONTACT_TELEGRAM = '@KasapTRTR';
+const CONTACT_TELEGRAM = '@ZIRVENAMUS';
 const UPDATE_DATE = 'Mayıs 2026';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
