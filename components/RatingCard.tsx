@@ -336,7 +336,9 @@ function Inner() {
             : <>Puan Ver <ChevronRight className="w-4 h-4" /></>
           }
         </button>
-        <p className="text-center text-zinc-600 text-xs">Fotoğraf açılmadıysa sayfayı yenileyin.</p>
+        <p className="text-center text-amber-400/80 text-xs font-medium bg-amber-400/5 border border-amber-400/20 rounded-lg py-2 px-3">
+          ⚠️ Fotoğraf açılmadıysa sayfayı yenileyin.
+        </p>
       </div>
     </div>
   );
