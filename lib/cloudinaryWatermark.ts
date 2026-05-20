@@ -15,3 +15,15 @@ export function optimizeUrl(url: string): string {
   if (!url || !url.includes('res.cloudinary.com')) return url;
   return url.replace('/upload/', '/upload/f_auto,q_80/');
 }
+
+// Küçük thumbnail alıp CSS ile büyütünce pixellenmiş görünür (canvas yok)
+export function pixelateUrl(url: string, width = 40): string {
+  if (!url || !url.includes('res.cloudinary.com')) return url;
+  return url.replace('/upload/', `/upload/w_${width},c_scale/`);
+}
+
+// Kare thumbnail (albüm şeridi, liderlik kartları için)
+export function pixelateUrlSquare(url: string, size = 8): string {
+  if (!url || !url.includes('res.cloudinary.com')) return url;
+  return url.replace('/upload/', `/upload/w_${size},h_${size},c_fill/`);
+}
