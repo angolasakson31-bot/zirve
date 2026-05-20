@@ -281,9 +281,9 @@ export default function UploadForm() {
           />
           <span className="text-zinc-500 text-xs leading-relaxed group-hover:text-zinc-400 transition">
             Yüklediğim fotoğraftaki tüm kişilerin <strong className="text-zinc-400">açık rızasını</strong> aldığımı,
-            içeriğin 18+ olduğunu; kişisel verilerimin KVKK kapsamında işlenmesini ve Cloudinary (ABD) altyapısına aktarılmasını kabul ettiğimi ve{' '}
+            içeriğin 18+ olduğunu ve{' '}
             <a href="/yasal" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">yasal koşulları</a>{' '}
-            okuduğumu onaylıyorum.
+            kabul ettiğimi onaylıyorum.
           </span>
         </label>
 
