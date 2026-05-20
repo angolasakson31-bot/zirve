@@ -58,17 +58,22 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}
+          onContextMenu={e => e.preventDefault()}
         >
-          <div className="relative max-w-full max-h-full" onContextMenu={e => e.preventDefault()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={addWatermark(lightbox)}
-              alt="Tam boyut"
-              className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl select-none"
-              onContextMenu={e => e.preventDefault()}
-              draggable={false}
-            />
-          </div>
+          {/* background-image div — <img> yok, "Save Image" seçeneği çıkmaz */}
+          <div
+            role="img"
+            aria-label="Tam boyut"
+            style={{
+              backgroundImage: `url(${addWatermark(lightbox)})`,
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              width: '90vw',
+              height: '90vh',
+              borderRadius: '0.75rem',
+            }}
+          />
         </div>
       )}
     </>
