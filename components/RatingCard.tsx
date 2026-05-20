@@ -152,8 +152,10 @@ function Inner() {
 
   useEffect(() => {
     const handler = () => {
+      seenIds.current = new Set();
+      saveSeenToStorage(seenIds.current);
+      initialized.current = false;
       prefetchedPhoto.current = null;
-      prefetchGen.current++;
       load();
     };
     window.addEventListener('zirve:photoUploaded', handler);
