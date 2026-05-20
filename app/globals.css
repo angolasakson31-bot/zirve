@@ -36,10 +36,13 @@ body {
   to   { transform: translateY(-50%); }
 }
 
-/* Fotoğraf koruma — iOS uzun basma, Android sağ tık, tüm tarayıcı sürükleme */
+/* Fotoğraf koruma — iOS uzun basma, Android sağ tık, tüm tarayıcı sürükleme.
+   pointer-events:none → tarayıcı hit-test'te img değil üstündeki div'i görür,
+   "Save Image" seçeneği hiç sunulmaz. onLoad/onError etkilenmez. */
 img {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
+  pointer-events: none;
 }
