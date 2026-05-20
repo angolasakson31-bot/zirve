@@ -4,13 +4,13 @@ import { addWatermark, pixelateUrlSquare } from '@/lib/cloudinaryWatermark';
 import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface Props {
-  src: string;         // orijinal URL (watermark eklenmemiş)
+  src: string;
   alt: string;
   className?: string;
   blurPlaceholder?: string;
 }
 
-export default function PixelImg({ src, alt, className = 'w-full h-full object-cover', blurPlaceholder }: Props) {
+export default function PixelImg({ src, alt, blurPlaceholder }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
   const uploaded = useUploadGate();
@@ -20,42 +20,49 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
     setLoaded(false);
   }
 
+  const displaySrc = uploaded === true ? addWatermark(src) : pixelateUrlSquare(src, 22);
+
   return (
     <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>
+      {/* Gizli img — sadece yükleme takibi için; display:none render ağacından çıkarır */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={displaySrc}
+        alt=""
+        aria-hidden
+        style={{ display: 'none' }}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+      />
+
       {!loaded && (
         blurPlaceholder ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={blurPlaceholder} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(8px)', transform: 'scale(1.1)' }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${blurPlaceholder})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(8px)',
+              transform: 'scale(1.1)',
+            }}
+          />
         ) : (
           <div className="absolute inset-0 bg-zinc-800 animate-pulse" />
         )
       )}
 
-      {uploaded === true && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={addWatermark(src)}
-          alt={alt}
-          className={className}
-          style={{ display: loaded ? undefined : 'none' }}
-          onLoad={() => setLoaded(true)}
-          onError={() => setLoaded(true)}
-          onContextMenu={e => e.preventDefault()}
-          draggable={false}
-        />
-      )}
-
-      {(uploaded === false || uploaded === null) && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={pixelateUrlSquare(src, 22)}
-          alt={alt}
-          className={className}
-          style={{ display: loaded ? undefined : 'none', imageRendering: 'pixelated' }}
-          onLoad={() => setLoaded(true)}
-          onError={() => setLoaded(true)}
-          onContextMenu={e => e.preventDefault()}
-          draggable={false}
+      {loaded && (
+        <div
+          className="absolute inset-0"
+          role="img"
+          aria-label={alt}
+          style={{
+            backgroundImage: `url(${displaySrc})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            imageRendering: uploaded !== true ? 'pixelated' : undefined,
+          }}
         />
       )}
     </div>
