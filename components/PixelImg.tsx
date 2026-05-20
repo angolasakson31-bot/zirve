@@ -47,7 +47,7 @@ export default function PixelImg({ src, alt, className = 'w-full h-full object-c
       {(uploaded === false || uploaded === null) && (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img
-          src={pixelateUrlSquare(src, 17)}
+          src={pixelateUrlSquare(src, 20)}
           alt={alt}
           className={className}
           style={{ display: loaded ? undefined : 'none', imageRendering: 'pixelated' }}
