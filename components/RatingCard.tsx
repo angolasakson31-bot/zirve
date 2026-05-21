@@ -25,6 +25,8 @@ function saveSeenToStorage(ids: Set<string>) {
   } catch {}
 }
 
+const SCROLL_KEY = 'zirve_scroll_rating';
+
 function Inner() {
   const [photo, setPhoto]       = useState<Photo | null>(null);
   const [loading, setLoading]   = useState(false);
@@ -39,6 +41,22 @@ function Inner() {
   const loadInProgress = useRef(false);
   const prefetchedPhoto = useRef<Photo | null>(null);
   const prefetchGen    = useRef(0);
+  const containerRef   = useRef<HTMLDivElement>(null);
+
+  // Yenile butonuna basıldıktan sonra sayfaya geri döndüğünde puanlama kısmına scroll et
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SCROLL_KEY)) {
+        localStorage.removeItem(SCROLL_KEY);
+        setTimeout(() => containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+      }
+    } catch {}
+  }, []);
+
+  const handleReload = () => {
+    try { localStorage.setItem(SCROLL_KEY, '1'); } catch {}
+    window.location.reload();
+  };
 
   const load = useCallback(async (silent = false, _retrying = false) => {
     if (loadInProgress.current) return;
@@ -279,7 +297,7 @@ function Inner() {
         <p className="text-zinc-300 font-semibold">Bugünkü tüm fotoğrafları oyladınız!</p>
         <p className="text-zinc-500 text-sm">Yeni fotoğraflar yüklenince tekrar gel.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleReload}
           className="mt-1 text-xs text-amber-400/80 border border-amber-400/25 bg-amber-400/5 rounded-lg px-3 py-1.5 hover:bg-amber-400/10 transition-colors"
         >
           Fotoğraf gelmiyorsa sayfayı yenile →
@@ -291,7 +309,7 @@ function Inner() {
   if (!photo) return null;
 
   return (
-    <div className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
+    <div ref={containerRef} className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
       <div className="px-5 py-3 border-b border-zinc-800">
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
       </div>
@@ -299,9 +317,12 @@ function Inner() {
       <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} blurPlaceholder={photo.blurPlaceholder} />
 
       <div className="px-4 pt-3">
-        <p className="text-center text-amber-400/80 text-xs font-medium bg-amber-400/5 border border-amber-400/20 rounded-lg py-2 px-3">
+        <button
+          onClick={handleReload}
+          className="w-full text-center text-amber-400/80 text-xs font-medium bg-amber-400/5 border border-amber-400/20 rounded-lg py-2 px-3 hover:bg-amber-400/10 transition-colors cursor-pointer"
+        >
           ⚠️ Fotoğraf açılmadıysa sayfayı yenileyin.
-        </p>
+        </button>
       </div>
 
       <div className="p-4 space-y-3">
