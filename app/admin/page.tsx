@@ -332,7 +332,7 @@ export default function AdminPage() {
                 <div key={photo._id} className={`flex items-center gap-3 px-4 py-3 ${photo.isChampion ? 'bg-amber-500/5' : ''}`}>
                   <span className={`text-lg font-black w-7 text-center flex-shrink-0 ${i === 0 ? 'text-amber-400' : 'text-zinc-500'}`}>{i + 1}.</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.url} alt={photo.trackingCode} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 cursor-zoom-in" onClick={() => setLightbox(photo.url)} />
+                  <img src={photo.url} alt={photo.trackingCode} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 cursor-zoom-in" style={{ pointerEvents: 'auto' }} onClick={() => setLightbox(photo.url)} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-white font-bold">{photo.average.toFixed(2)}</span>
@@ -463,6 +463,7 @@ export default function AdminPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img key={i} src={url} alt={`Albüm ${i + 1}`}
                           onClick={() => setLightbox(url)}
+                          style={{ pointerEvents: 'auto' }}
                           className="w-12 h-12 object-cover rounded cursor-zoom-in flex-shrink-0 opacity-70 hover:opacity-100 transition"
                         />
                       ))}
