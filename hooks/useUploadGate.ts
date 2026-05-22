@@ -59,30 +59,9 @@ export function markUploaded() {
   } catch {}
 }
 
-// null = henüz kontrol edilmedi (SSR veya ilk render)
-// true = bugün fotoğraf yüklendi
-// false = yüklenmedi
+// Sansür kaldırıldı — herkes tam görüntü görür
 export function useUploadGate(): boolean | null {
-  const [uploaded, setUploaded] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const check = () => {
-      try {
-        setUploaded(localStorage.getItem(UPLOAD_KEY) === todayStr());
-      } catch {
-        setUploaded(false);
-      }
-    };
-    check();
-    window.addEventListener(UPLOAD_EVENT, check);
-    window.addEventListener('storage', check);
-    return () => {
-      window.removeEventListener(UPLOAD_EVENT, check);
-      window.removeEventListener('storage', check);
-    };
-  }, []);
-
-  return uploaded;
+  return true;
 }
 
 export function markVoted() {
