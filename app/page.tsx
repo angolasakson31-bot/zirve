@@ -27,9 +27,11 @@ export default function Home() {
             <span className="text-zinc-400 text-xs">Zirveye tırman, X ol</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <VisitorCount />
             <AddToHomeScreen />
-            <ShareButton />
+            <div className="flex flex-col items-center gap-0.5">
+              <ShareButton />
+              <VisitorCount />
+            </div>
           </div>
         </div>
       </header>
