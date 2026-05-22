@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { addWatermark, pixelateUrl } from '@/lib/cloudinaryWatermark';
-import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface Props {
   src: string;
@@ -9,14 +8,14 @@ interface Props {
   maxHeight?: number;
   dimmed?: boolean;
   blurPlaceholder?: string;
+  pixelate?: boolean;
 }
 
-export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, blurPlaceholder }: Props) {
+export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = false, blurPlaceholder, pixelate }: Props) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const [failed, setFailed]       = useState(false);
   const [prevSrc, setPrevSrc]     = useState(src);
-  const uploaded = useUploadGate();
 
   if (src !== prevSrc) {
     setPrevSrc(src);
@@ -26,7 +25,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   }
 
   const watermarkedSrc = useFallback ? src : addWatermark(src);
-  const displaySrc     = uploaded === true ? watermarkedSrc : pixelateUrl(src, 37);
+  const displaySrc     = pixelate ? pixelateUrl(src, 37) : watermarkedSrc;
   const handleError    = () => { if (!useFallback) setUseFallback(true); else setFailed(true); };
   const showSkel       = !imgLoaded && !failed;
   const skelH          = Math.min(maxHeight, 400);
@@ -38,16 +37,14 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       onContextMenu={e => e.preventDefault()}
       onDragStart={e => e.preventDefault()}
     >
-      {/* Gizli img'ler — yalnızca yükleme/hata takibi; DOM'da görsel öğe değil */}
-      {uploaded === true && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={watermarkedSrc} alt="" aria-hidden style={{ display: 'none' }}
-          onLoad={() => setImgLoaded(true)} onError={handleError} />
-      )}
-      {uploaded === false && (
-        // eslint-disable-next-line @next/next/no-img-element
+      {/* Gizli img — yalnızca yükleme/hata takibi */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {pixelate ? (
         <img src={pixelateUrl(src, 37)} alt="" aria-hidden style={{ display: 'none' }}
           onLoad={() => setImgLoaded(true)} />
+      ) : (
+        <img src={watermarkedSrc} alt="" aria-hidden style={{ display: 'none' }}
+          onLoad={() => setImgLoaded(true)} onError={handleError} />
       )}
 
       {failed && (
@@ -83,7 +80,6 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
         )
       )}
 
-      {/* Görsel — <img> yok, sağ tık / uzun basma menüsünde "Save Image" çıkmaz */}
       {imgLoaded && !failed && (
         <div
           role="img"
@@ -96,7 +92,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
             width: '100%',
             height: skelH,
             opacity: dimmed ? 0.7 : 1,
-            imageRendering: uploaded === false ? 'pixelated' : undefined,
+            imageRendering: pixelate ? 'pixelated' : undefined,
           }}
         />
       )}

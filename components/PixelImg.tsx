@@ -1,30 +1,28 @@
 'use client';
 import { useState } from 'react';
 import { addWatermark, pixelateUrlSquare } from '@/lib/cloudinaryWatermark';
-import { useUploadGate } from '@/hooks/useUploadGate';
 
 interface Props {
   src: string;
   alt: string;
   className?: string;
   blurPlaceholder?: string;
+  pixelate?: boolean;
 }
 
-export default function PixelImg({ src, alt, blurPlaceholder }: Props) {
+export default function PixelImg({ src, alt, blurPlaceholder, pixelate }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
-  const uploaded = useUploadGate();
 
   if (src !== prevSrc) {
     setPrevSrc(src);
     setLoaded(false);
   }
 
-  const displaySrc = uploaded === true ? addWatermark(src) : pixelateUrlSquare(src, 22);
+  const displaySrc = pixelate ? pixelateUrlSquare(src, 22) : addWatermark(src);
 
   return (
     <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>
-      {/* Gizli img — sadece yükleme takibi için; display:none render ağacından çıkarır */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={displaySrc}
@@ -61,7 +59,7 @@ export default function PixelImg({ src, alt, blurPlaceholder }: Props) {
             backgroundImage: `url(${displaySrc})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            imageRendering: uploaded !== true ? 'pixelated' : undefined,
+            imageRendering: pixelate ? 'pixelated' : undefined,
           }}
         />
       )}

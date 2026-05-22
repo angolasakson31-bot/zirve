@@ -3,7 +3,6 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import PixelImg from '@/components/PixelImg';
-import { useUploadGate } from '@/hooks/useUploadGate';
 import { addWatermark } from '@/lib/cloudinaryWatermark';
 
 interface Props {
@@ -12,22 +11,23 @@ interface Props {
   dimmed?: boolean;
   bottomOverlay?: ReactNode;
   blurPlaceholder?: string;
+  pixelate?: boolean;
 }
 
-export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, blurPlaceholder }: Props) {
+export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, blurPlaceholder, pixelate }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const uploaded = useUploadGate();
   const isAlbum = urls.length > 1;
+  const lightboxAllowed = !pixelate;
 
   return (
     <>
       <div
-        className={uploaded ? 'cursor-zoom-in' : undefined}
-        onClick={() => uploaded && setLightbox(urls[active])}
+        className={lightboxAllowed ? 'cursor-zoom-in' : undefined}
+        onClick={() => lightboxAllowed && setLightbox(urls[active])}
       >
         <div className="relative">
-          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} blurPlaceholder={active === 0 ? blurPlaceholder : undefined} />
+          <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} blurPlaceholder={active === 0 ? blurPlaceholder : undefined} pixelate={pixelate} />
           {bottomOverlay && (
             <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
               {bottomOverlay}
@@ -48,13 +48,13 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              <PixelImg src={url} alt={`Foto ${i + 1}`} />
+              <PixelImg src={url} alt={`Foto ${i + 1}`} pixelate={pixelate} />
             </button>
           ))}
         </div>
       )}
 
-      {lightbox && uploaded && (
+      {lightbox && lightboxAllowed && (
         <div
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
           onClick={() => setLightbox(null)}

@@ -45,23 +45,26 @@ function Inner() {
   const wasNoMoreRef       = useRef(false);  // noMore olduktan sonra yeni fotoğraf gelince scroll için
   const initialScrolledRef = useRef(false);  // ilk yüklemede bir kez scroll için
 
-  // noMore durumuna girildiğini işaretle
+  // noMore olunca gate'i aç
   useEffect(() => {
-    if (noMore) wasNoMoreRef.current = true;
+    if (noMore) {
+      wasNoMoreRef.current = true;
+      window.dispatchEvent(new Event('zirve:allRated'));
+    }
   }, [noMore]);
 
-  // Fotoğraf yüklenince scroll et:
-  // — ilk açılışta (puanlanacak fotoğraf varsa)
-  // — noMore'dan çıkılıp yeni fotoğraf gelince
+  // Fotoğraf yüklenince scroll et + gate'i kapat
   useEffect(() => {
     if (!photo) return;
     if (!initialScrolledRef.current) {
       initialScrolledRef.current = true;
+      window.dispatchEvent(new Event('zirve:newPhotoArrived'));
       setTimeout(() => containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
       return;
     }
     if (wasNoMoreRef.current) {
       wasNoMoreRef.current = false;
+      window.dispatchEvent(new Event('zirve:newPhotoArrived'));
       setTimeout(() => containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     }
   }, [photo]);
