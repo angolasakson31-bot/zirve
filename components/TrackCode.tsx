@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Search, ThumbsUp, ThumbsDown, Star, Trophy, BarChart2 } from 'lucide-react';
+import { Search, ThumbsUp, ThumbsDown, Star, Trophy, BarChart2, Share2, Check } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
 
 interface TrackResult {
@@ -21,6 +21,18 @@ export default function TrackCode() {
   const [totalToday, setTotalToday] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [shared, setShared] = useState(false);
+
+  const sharePhoto = async () => {
+    const url = window.location.origin;
+    const text = `Fotoğrafımı oyla, beni zirveye taşı! 🏆`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'ZİRVE X', text, url }); return; } catch {}
+    }
+    await navigator.clipboard.writeText(`${text} ${url}`);
+    setShared(true);
+    setTimeout(() => setShared(false), 2000);
+  };
 
   const search = async () => {
     const clean = code.trim().toUpperCase();
@@ -80,7 +92,7 @@ export default function TrackCode() {
         {result && (
           <div className="space-y-3 pt-1">
             {rank !== null && totalToday !== null && (
-              <div className={`rounded-xl px-4 py-3 text-center ${result.isChampion ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-zinc-800'}`}>
+              <div className={`rounded-xl px-4 py-3 text-center space-y-2 ${result.isChampion ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-zinc-800'}`}>
                 {result.isChampion ? (
                   <p className="text-amber-400 font-black text-base flex items-center justify-center gap-2">
                     <Trophy className="w-4 h-4" /> Günün Liderisin!
@@ -91,8 +103,17 @@ export default function TrackCode() {
                     <span className="text-amber-400 font-black text-base">{rank}. sıradasın</span>
                   </p>
                 )}
+                <button
+                  onClick={sharePhoto}
+                  className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold text-xs px-4 py-2 rounded-lg transition-colors"
+                >
+                  {shared
+                    ? <><Check className="w-3.5 h-3.5" /> Kopyalandı!</>
+                    : <><Share2 className="w-3.5 h-3.5" /> Fotoğrafımı Paylaş</>
+                  }
+                </button>
                 {result.voteCount === 0 && (
-                  <p className="text-zinc-500 text-xs mt-1">Henüz oy almadın, siteyi paylaş!</p>
+                  <p className="text-zinc-500 text-xs">Henüz oy almadın — paylaş, oy topla!</p>
                 )}
               </div>
             )}
