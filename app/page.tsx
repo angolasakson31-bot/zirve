@@ -6,6 +6,7 @@ import { Mountain, Zap } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
 import HeaderFlash from '@/components/HeaderFlash';
+import VisitorCount from '@/components/VisitorCount';
 import Link from 'next/link';
 
 export default function Home() {
@@ -26,6 +27,7 @@ export default function Home() {
             <span className="text-zinc-400 text-xs">Zirveye tırman, X ol</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <VisitorCount />
             <AddToHomeScreen />
             <ShareButton />
           </div>
