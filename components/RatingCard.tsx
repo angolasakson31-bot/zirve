@@ -41,17 +41,26 @@ function Inner() {
   const loadInProgress = useRef(false);
   const prefetchedPhoto = useRef<Photo | null>(null);
   const prefetchGen    = useRef(0);
-  const containerRef   = useRef<HTMLDivElement>(null);
-  const wasNoMoreRef   = useRef(false);  // noMore olduktan sonra yeni fotoğraf gelince scroll için
+  const containerRef       = useRef<HTMLDivElement>(null);
+  const wasNoMoreRef       = useRef(false);  // noMore olduktan sonra yeni fotoğraf gelince scroll için
+  const initialScrolledRef = useRef(false);  // ilk yüklemede bir kez scroll için
 
   // noMore durumuna girildiğini işaretle
   useEffect(() => {
     if (noMore) wasNoMoreRef.current = true;
   }, [noMore]);
 
-  // noMore'dan çıkılıp yeni fotoğraf yüklenince puanlama kısmına scroll et
+  // Fotoğraf yüklenince scroll et:
+  // — ilk açılışta (puanlanacak fotoğraf varsa)
+  // — noMore'dan çıkılıp yeni fotoğraf gelince
   useEffect(() => {
-    if (photo && wasNoMoreRef.current) {
+    if (!photo) return;
+    if (!initialScrolledRef.current) {
+      initialScrolledRef.current = true;
+      setTimeout(() => containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 600);
+      return;
+    }
+    if (wasNoMoreRef.current) {
       wasNoMoreRef.current = false;
       setTimeout(() => containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     }
