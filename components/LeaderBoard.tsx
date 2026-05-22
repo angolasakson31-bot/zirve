@@ -2,9 +2,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
-import UploadGate from '@/components/UploadGate';
 import PixelImg from '@/components/PixelImg';
-import { useUploadGate, getDeviceToken } from '@/hooks/useUploadGate';
+import { getDeviceToken } from '@/hooks/useUploadGate';
+import { useRatingGate } from '@/hooks/useRatingGate';
 
 function useMidnightCountdown() {
   const calc = () => {
@@ -53,7 +53,7 @@ interface RankedPhoto {
 
 const CONTACT_LABEL = 'Sana ulaşmak için iletişim bilgisi';
 
-function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
+function RankingStrip({ photos, pixelate }: { photos: RankedPhoto[], pixelate?: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef    = useRef<number>(0);
   const doubled   = [...photos, ...photos];
@@ -88,7 +88,7 @@ function RankingStrip({ photos }: { photos: RankedPhoto[] }) {
         {doubled.map((photo, i) => (
           <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
             <div className="relative" style={{ aspectRatio: '1' }}>
-              <PixelImg src={photo.url} alt={`${photo.rank}. sıra`} />
+              <PixelImg src={photo.url} alt={`${photo.rank}. sıra`} pixelate={pixelate} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
                 photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>
@@ -196,7 +196,9 @@ export default function LeaderBoard() {
   const [leaderContact, setLeaderContact] = useState<string | null>(null);
   const [yesterdayContact, setYesterdayContact] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const uploaded = useUploadGate();
+  const [hasNewPhoto, setHasNewPhoto] = useState(false);
+  const gateOpen = useRatingGate();
+  const pixelate = gateOpen !== true;
 
   const fetchLeader = useCallback(async () => {
     const res = await fetch('/api/leader', { cache: 'no-store' });
@@ -209,10 +211,16 @@ export default function LeaderBoard() {
   }, []);
 
   useEffect(() => {
-    if (uploaded !== true) return;
+    const handler = () => setHasNewPhoto(true);
+    window.addEventListener('zirve:newPhotoArrived', handler);
+    return () => window.removeEventListener('zirve:newPhotoArrived', handler);
+  }, []);
+
+  useEffect(() => {
+    if (gateOpen !== true) return;
     if (leader?._id) fetchContactInfo(leader._id).then(setLeaderContact);
     if (yesterday?._id) fetchContactInfo(yesterday._id).then(setYesterdayContact);
-  }, [uploaded, leader?._id, yesterday?._id]);
+  }, [gateOpen, leader?._id, yesterday?._id]);
 
   useEffect(() => {
     fetchLeader();
@@ -244,11 +252,12 @@ export default function LeaderBoard() {
           </div>
           {leader ? (
             <div>
-              <UploadGate mini>
+              <div className="relative">
                 <AlbumViewer
                   urls={[leader.url, ...(leader.albumUrls ?? [])]}
                   maxHeight={280}
                   blurPlaceholder={leader.blurPlaceholder}
+                  pixelate={pixelate}
                   bottomOverlay={
                     <div className="flex items-center gap-1">
                       <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
@@ -261,9 +270,16 @@ export default function LeaderBoard() {
                     </div>
                   }
                 />
-              </UploadGate>
-              {uploaded && leaderContact && <ContactBadge info={leaderContact} gold />}
-              {uploaded && leader.comments && leader.comments.length > 0 && (
+                {pixelate && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950/95 to-transparent py-3 px-2 pointer-events-none z-20 text-center">
+                    <p className="text-amber-400 text-[10px] font-bold leading-snug drop-shadow">
+                      {hasNewPhoto ? 'Yeni fotoğraf var — önce puanla ↑' : 'Tüm fotoğrafları puanla, lideri gör ↑'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {!pixelate && leaderContact && <ContactBadge info={leaderContact} gold />}
+              {!pixelate && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
             </div>
@@ -282,12 +298,13 @@ export default function LeaderBoard() {
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
               <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Zirvesi</h2>
             </div>
-            <UploadGate mini>
+            <div className="relative">
               <AlbumViewer
                 urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
                 maxHeight={280}
                 blurPlaceholder={yesterday.blurPlaceholder}
                 dimmed
+                pixelate={pixelate}
                 bottomOverlay={
                   <div className="flex items-center gap-1">
                     <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
@@ -298,9 +315,16 @@ export default function LeaderBoard() {
                   </div>
                 }
               />
-            </UploadGate>
-            {uploaded && yesterdayContact && <ContactBadge info={yesterdayContact} />}
-            {uploaded && yesterday.comments && yesterday.comments.length > 0 && (
+              {pixelate && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950/95 to-transparent py-3 px-2 pointer-events-none z-20 text-center">
+                  <p className="text-zinc-400 text-[10px] font-bold leading-snug drop-shadow">
+                    {hasNewPhoto ? 'Yeni fotoğraf var — önce puanla ↑' : 'Tüm fotoğrafları puanla, dünü gör ↑'}
+                  </p>
+                </div>
+              )}
+            </div>
+            {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
+            {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
               <CommentFeed comments={yesterday.comments} />
             )}
           </div>
@@ -312,15 +336,15 @@ export default function LeaderBoard() {
         )}
       </div>
 
-      {/* Fotoğraf yükle notu (kilitli için) */}
-      {!uploaded && (
-        <p className="text-center text-zinc-600 text-xs">
-          Günün ve dünün liderini görmek için{' '}
-          <a href="#upload-form" className="text-amber-500 font-medium hover:underline">fotoğraf yükle</a>
+      {pixelate && (
+        <p className="text-center text-amber-500/70 text-xs font-medium">
+          {hasNewPhoto
+            ? 'Yeni fotoğraf var — puanla ve liderleri görmeye devam et ↑'
+            : 'Tüm fotoğrafları puanla, günün ve dünün liderini gör ↑'}
         </p>
       )}
 
-      <RankingStrip photos={allPhotos.filter(p => p.rank !== 1)} />
+      <RankingStrip photos={allPhotos.filter(p => p.rank !== 1)} pixelate={pixelate} />
 
       {/* Reset saati */}
       <div className="flex items-center gap-1.5 px-1">
