@@ -36,9 +36,23 @@ export default function VisitorCount() {
       } catch {}
     };
 
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/visitors');
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.count === 'number') setCount(data.count);
+        }
+      } catch {}
+    };
+
     ping();
-    const interval = setInterval(ping, 60_000); // her dakika ping
-    return () => clearInterval(interval);
+    const pingInterval = setInterval(ping, 60_000);  // session kaydı — dakikada bir
+    const pollInterval = setInterval(poll, 10_000);  // sayı tazeleme — 10 saniyede bir
+    return () => {
+      clearInterval(pingInterval);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   if (count === null) return null;
