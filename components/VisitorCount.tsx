@@ -46,6 +46,7 @@ export default function VisitorCount() {
   return (
     <div className="flex items-center gap-1.5 bg-zinc-800/60 rounded-full px-2.5 py-1">
       <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+      <span className="text-zinc-500 text-xs">Ziyaretçi</span>
       <span className="text-zinc-300 text-xs tabular-nums font-medium">{count}</span>
     </div>
   );
