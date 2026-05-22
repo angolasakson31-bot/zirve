@@ -67,8 +67,8 @@ export default function Home() {
 
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        <LeaderBoard />
         <RatingCard />
+        <LeaderBoard />
         <TrackCode />
         <div id="upload-form"><UploadForm /></div>
 
