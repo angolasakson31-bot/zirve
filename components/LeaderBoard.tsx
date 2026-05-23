@@ -88,7 +88,7 @@ function RankingStrip({ photos, pixelate }: { photos: RankedPhoto[], pixelate?: 
         {doubled.map((photo, i) => (
           <div key={i} className="flex-none w-16 flex flex-col rounded-xl overflow-hidden">
             <div className="relative" style={{ aspectRatio: '1' }}>
-              <PixelImg src={photo.url} alt={`${photo.rank}. sıra`} pixelate={pixelate} />
+              <PixelImg src={photo.url} alt={`${photo.rank}. sıra`} pixelate={pixelate} pixelSize={20} />
               <div className={`absolute top-1 left-1 text-white text-[10px] font-black px-1 py-0.5 rounded leading-none z-10 ${
                 photo.rank === 1 ? 'bg-amber-500' : 'bg-black/80'
               }`}>
@@ -267,25 +267,37 @@ export default function LeaderBoard() {
           </div>
           {leader ? (
             <div>
-              <AlbumViewer
-                urls={[leader.url, ...(leader.albumUrls ?? [])]}
-                maxHeight={280}
-                blurPlaceholder={leader.blurPlaceholder}
-                pixelate={pixelate}
-                bottomOverlay={
-                  !pixelate ? (
-                    <div className="flex items-center gap-1">
-                      <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
-                        <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
-                        <span className="text-white font-bold text-xs">{leader.average.toFixed(1)}</span>
+              <div className="relative">
+                <AlbumViewer
+                  urls={[leader.url, ...(leader.albumUrls ?? [])]}
+                  maxHeight={280}
+                  blurPlaceholder={leader.blurPlaceholder}
+                  pixelate={pixelate}
+                  bottomOverlay={
+                    !pixelate ? (
+                      <div className="flex items-center gap-1">
+                        <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                          <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                          <span className="text-white font-bold text-xs">{leader.average.toFixed(1)}</span>
+                        </div>
+                        <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 text-zinc-300 text-[10px]">
+                          {leader.voteCount} oy
+                        </div>
                       </div>
-                      <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 text-zinc-300 text-[10px]">
-                        {leader.voteCount} oy
-                      </div>
-                    </div>
-                  ) : undefined
-                }
-              />
+                    ) : undefined
+                  }
+                />
+                {pixelate && (
+                  <div
+                    className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer px-3"
+                    onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  >
+                    <p className="text-white/30 text-[10px] font-bold text-center leading-snug select-none drop-shadow-md">
+                      Tüm fotoğrafları puanlamadan göremezsiniz
+                    </p>
+                  </div>
+                )}
+              </div>
               {!pixelate && leaderContact && <ContactBadge info={leaderContact} gold />}
               {!pixelate && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
@@ -306,24 +318,36 @@ export default function LeaderBoard() {
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
               <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Zirvesi</h2>
             </div>
-              <AlbumViewer
-                urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
-                maxHeight={280}
-                blurPlaceholder={yesterday.blurPlaceholder}
-                dimmed
-                pixelate={pixelate}
-                bottomOverlay={
-                  !pixelate ? (
-                    <div className="flex items-center gap-1">
-                      <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
-                        <Star className="w-2.5 h-2.5 text-zinc-300 fill-zinc-300" />
-                        <span className="text-white font-bold text-xs">{yesterday.average.toFixed(1)}</span>
+              <div className="relative">
+                <AlbumViewer
+                  urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
+                  maxHeight={280}
+                  blurPlaceholder={yesterday.blurPlaceholder}
+                  dimmed
+                  pixelate={pixelate}
+                  bottomOverlay={
+                    !pixelate ? (
+                      <div className="flex items-center gap-1">
+                        <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                          <Star className="w-2.5 h-2.5 text-zinc-300 fill-zinc-300" />
+                          <span className="text-white font-bold text-xs">{yesterday.average.toFixed(1)}</span>
+                        </div>
+                        <span className="text-zinc-400 text-[10px] bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5">{yesterday.voteCount} oy</span>
                       </div>
-                      <span className="text-zinc-400 text-[10px] bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5">{yesterday.voteCount} oy</span>
-                    </div>
-                  ) : undefined
-                }
-              />
+                    ) : undefined
+                  }
+                />
+                {pixelate && (
+                  <div
+                    className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer px-3"
+                    onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  >
+                    <p className="text-white/30 text-[10px] font-bold text-center leading-snug select-none drop-shadow-md">
+                      Tüm fotoğrafları puanlamadan göremezsiniz
+                    </p>
+                  </div>
+                )}
+              </div>
               {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
               {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
                 <CommentFeed comments={yesterday.comments} />

@@ -8,9 +8,10 @@ interface Props {
   className?: string;
   blurPlaceholder?: string;
   pixelate?: boolean;
+  pixelSize?: number;
 }
 
-export default function PixelImg({ src, alt, blurPlaceholder, pixelate }: Props) {
+export default function PixelImg({ src, alt, blurPlaceholder, pixelate, pixelSize = 8 }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [prevSrc, setPrevSrc] = useState(src);
 
@@ -19,7 +20,7 @@ export default function PixelImg({ src, alt, blurPlaceholder, pixelate }: Props)
     setLoaded(false);
   }
 
-  const displaySrc = pixelate ? pixelateUrlSquare(src, 6) : addWatermark(src);
+  const displaySrc = pixelate ? pixelateUrlSquare(src, pixelSize) : addWatermark(src);
 
   return (
     <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>

@@ -48,7 +48,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
                   : 'border-zinc-700 opacity-50 hover:opacity-80'
               }`}
             >
-              <PixelImg src={url} alt={`Foto ${i + 1}`} pixelate={pixelate} />
+              <PixelImg src={url} alt={`Foto ${i + 1}`} pixelate={pixelate} pixelSize={10} />
             </button>
           ))}
         </div>
