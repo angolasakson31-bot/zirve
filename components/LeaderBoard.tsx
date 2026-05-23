@@ -245,7 +245,7 @@ export default function LeaderBoard() {
           className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-center hover:bg-amber-500/10 transition-colors"
         >
           <p className="text-zinc-400 text-xs leading-snug">
-            Tüm fotoğrafları puanlamadan liderleri ve iletişim bilgilerini göremezsiniz
+            Her an yeni fotoğraf paylaşılabilir — liderler ve iletişim için tüm fotoğrafları puanla
           </p>
           {hasNewPhoto && (
             <p className="text-amber-400 text-xs font-bold mt-0.5">Yeni fotoğraf var — puanla ve görmeye devam et ↑</p>
@@ -293,8 +293,8 @@ export default function LeaderBoard() {
                     onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   >
                     <p
-                      className="text-white/20 text-[9px] font-bold text-center leading-snug select-none"
-                      style={{ textShadow: '0 0 3px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.7), -1px -1px 0 rgba(0,0,0,0.7)' }}
+                      className="text-white/25 text-[9px] font-bold text-center leading-snug select-none"
+                      style={{ WebkitTextStroke: '0.8px rgba(0,0,0,0.75)' }}
                     >
                       Tüm fotoğrafları puanlamadan göremezsiniz
                     </p>
@@ -346,8 +346,8 @@ export default function LeaderBoard() {
                     onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   >
                     <p
-                      className="text-white/20 text-[9px] font-bold text-center leading-snug select-none"
-                      style={{ textShadow: '0 0 3px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.7), -1px -1px 0 rgba(0,0,0,0.7)' }}
+                      className="text-white/25 text-[9px] font-bold text-center leading-snug select-none"
+                      style={{ WebkitTextStroke: '0.8px rgba(0,0,0,0.75)' }}
                     >
                       Tüm fotoğrafları puanlamadan göremezsiniz
                     </p>
