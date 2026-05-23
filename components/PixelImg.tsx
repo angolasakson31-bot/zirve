@@ -19,7 +19,7 @@ export default function PixelImg({ src, alt, blurPlaceholder, pixelate }: Props)
     setLoaded(false);
   }
 
-  const displaySrc = pixelate ? pixelateUrlSquare(src, 22) : addWatermark(src);
+  const displaySrc = pixelate ? pixelateUrlSquare(src, 55) : addWatermark(src);
 
   return (
     <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>

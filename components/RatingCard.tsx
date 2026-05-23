@@ -335,7 +335,7 @@ function Inner() {
   if (!photo) return null;
 
   return (
-    <div ref={containerRef} className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
+    <div id="rating-card" ref={containerRef} className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
       <div className="px-5 py-3 border-b border-zinc-800">
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
       </div>
@@ -392,7 +392,7 @@ function Inner() {
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition bg-white text-black hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed">
           {nextBusy
             ? <span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full" />
-            : <>Puan Ver <ChevronRight className="w-4 h-4" /></>
+            : <>Puan Ver ve Sonraki Fotoğrafı Puanla <ChevronRight className="w-4 h-4" /></>
           }
         </button>
       </div>
@@ -433,7 +433,7 @@ function Preview() {
           ))}
         </div>
         <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-zinc-800 text-zinc-600 cursor-not-allowed">
-          Puan Ver <ChevronRight className="w-4 h-4" />
+          Puan Ver ve Sonraki Fotoğrafı Puanla <ChevronRight className="w-4 h-4" />
         </div>
       </div>
     </div>
