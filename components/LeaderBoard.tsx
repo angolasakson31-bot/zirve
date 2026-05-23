@@ -238,6 +238,21 @@ export default function LeaderBoard() {
 
   return (
     <div className="space-y-3">
+      {/* Sansür bilgi kartı */}
+      {pixelate && (
+        <button
+          onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-center hover:bg-amber-500/10 transition-colors"
+        >
+          <p className="text-zinc-400 text-xs leading-snug">
+            Tüm fotoğrafları puanlamadan liderleri ve iletişim bilgilerini göremezsiniz
+          </p>
+          {hasNewPhoto && (
+            <p className="text-amber-400 text-xs font-bold mt-0.5">Yeni fotoğraf var — puanla ve görmeye devam et ↑</p>
+          )}
+        </button>
+      )}
+
       {/* Günün + Dünün yanyana */}
       <div className="grid grid-cols-2 gap-3">
 
@@ -271,17 +286,6 @@ export default function LeaderBoard() {
                   ) : undefined
                 }
               />
-              {pixelate && (
-                <button
-                  onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="w-full text-left px-3 py-2 border-t border-zinc-800 bg-zinc-950/60 hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                >
-                  <p className="text-zinc-500 text-[10px] leading-snug">Tüm fotoğrafları puanlamadan liderler gösterilmez</p>
-                  <p className="text-amber-400 text-[10px] font-bold mt-0.5">
-                    {hasNewPhoto ? 'Yeni fotoğraf var — puanla ve görmeye devam et ↑' : 'Puanlamaya git ↑'}
-                  </p>
-                </button>
-              )}
               {!pixelate && leaderContact && <ContactBadge info={leaderContact} gold />}
               {!pixelate && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
@@ -320,17 +324,6 @@ export default function LeaderBoard() {
                   ) : undefined
                 }
               />
-              {pixelate && (
-                <button
-                  onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="w-full text-left px-3 py-2 border-t border-zinc-800 bg-zinc-950/60 hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                >
-                  <p className="text-zinc-500 text-[10px] leading-snug">Tüm fotoğrafları puanlamadan liderler gösterilmez</p>
-                  <p className="text-amber-400 text-[10px] font-bold mt-0.5">
-                    {hasNewPhoto ? 'Yeni fotoğraf var — puanla ve görmeye devam et ↑' : 'Puanlamaya git ↑'}
-                  </p>
-                </button>
-              )}
               {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
               {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
                 <CommentFeed comments={yesterday.comments} />
