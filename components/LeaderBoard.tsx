@@ -252,13 +252,13 @@ export default function LeaderBoard() {
           </div>
           {leader ? (
             <div>
-              <div className="relative">
-                <AlbumViewer
-                  urls={[leader.url, ...(leader.albumUrls ?? [])]}
-                  maxHeight={280}
-                  blurPlaceholder={leader.blurPlaceholder}
-                  pixelate={pixelate}
-                  bottomOverlay={
+              <AlbumViewer
+                urls={[leader.url, ...(leader.albumUrls ?? [])]}
+                maxHeight={280}
+                blurPlaceholder={leader.blurPlaceholder}
+                pixelate={pixelate}
+                bottomOverlay={
+                  !pixelate ? (
                     <div className="flex items-center gap-1">
                       <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
                         <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
@@ -268,16 +268,20 @@ export default function LeaderBoard() {
                         {leader.voteCount} oy
                       </div>
                     </div>
-                  }
-                />
-                {pixelate && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950/95 to-transparent py-3 px-2 pointer-events-none z-20 text-center">
-                    <p className="text-amber-400 text-[10px] font-bold leading-snug drop-shadow">
-                      {hasNewPhoto ? 'Yeni fotoğraf var — önce puanla ↑' : 'Tüm fotoğrafları puanla, lideri gör ↑'}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  ) : undefined
+                }
+              />
+              {pixelate && (
+                <button
+                  onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="w-full text-left px-3 py-2 border-t border-zinc-800 bg-zinc-950/60 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                >
+                  <p className="text-zinc-500 text-[10px] leading-snug">Tüm fotoğrafları puanlamadan liderler gösterilmez</p>
+                  <p className="text-amber-400 text-[10px] font-bold mt-0.5">
+                    {hasNewPhoto ? 'Yeni fotoğraf var — puanla ve görmeye devam et ↑' : 'Puanlamaya git ↑'}
+                  </p>
+                </button>
+              )}
               {!pixelate && leaderContact && <ContactBadge info={leaderContact} gold />}
               {!pixelate && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
@@ -298,7 +302,6 @@ export default function LeaderBoard() {
               <Trophy className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
               <h2 className="font-semibold text-zinc-400 text-[10px] uppercase whitespace-nowrap overflow-hidden text-ellipsis">Dünün Zirvesi</h2>
             </div>
-            <div className="relative">
               <AlbumViewer
                 urls={[yesterday.url, ...(yesterday.albumUrls ?? [])]}
                 maxHeight={280}
@@ -306,27 +309,32 @@ export default function LeaderBoard() {
                 dimmed
                 pixelate={pixelate}
                 bottomOverlay={
-                  <div className="flex items-center gap-1">
-                    <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
-                      <Star className="w-2.5 h-2.5 text-zinc-300 fill-zinc-300" />
-                      <span className="text-white font-bold text-xs">{yesterday.average.toFixed(1)}</span>
+                  !pixelate ? (
+                    <div className="flex items-center gap-1">
+                      <div className="bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                        <Star className="w-2.5 h-2.5 text-zinc-300 fill-zinc-300" />
+                        <span className="text-white font-bold text-xs">{yesterday.average.toFixed(1)}</span>
+                      </div>
+                      <span className="text-zinc-400 text-[10px] bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5">{yesterday.voteCount} oy</span>
                     </div>
-                    <span className="text-zinc-400 text-[10px] bg-black/70 backdrop-blur rounded-md px-1.5 py-0.5">{yesterday.voteCount} oy</span>
-                  </div>
+                  ) : undefined
                 }
               />
               {pixelate && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-950/95 to-transparent py-3 px-2 pointer-events-none z-20 text-center">
-                  <p className="text-zinc-400 text-[10px] font-bold leading-snug drop-shadow">
-                    {hasNewPhoto ? 'Yeni fotoğraf var — önce puanla ↑' : 'Tüm fotoğrafları puanla, dünü gör ↑'}
+                <button
+                  onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="w-full text-left px-3 py-2 border-t border-zinc-800 bg-zinc-950/60 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                >
+                  <p className="text-zinc-500 text-[10px] leading-snug">Tüm fotoğrafları puanlamadan liderler gösterilmez</p>
+                  <p className="text-amber-400 text-[10px] font-bold mt-0.5">
+                    {hasNewPhoto ? 'Yeni fotoğraf var — puanla ve görmeye devam et ↑' : 'Puanlamaya git ↑'}
                   </p>
-                </div>
+                </button>
               )}
-            </div>
-            {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
-            {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
-              <CommentFeed comments={yesterday.comments} />
-            )}
+              {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
+              {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
+                <CommentFeed comments={yesterday.comments} />
+              )}
           </div>
         ) : (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 flex flex-col items-center justify-center py-10 text-zinc-600">
@@ -335,14 +343,6 @@ export default function LeaderBoard() {
           </div>
         )}
       </div>
-
-      {pixelate && (
-        <p className="text-center text-amber-500/70 text-xs font-medium">
-          {hasNewPhoto
-            ? 'Yeni fotoğraf var — puanla ve liderleri görmeye devam et ↑'
-            : 'Tüm fotoğrafları puanla, günün ve dünün liderini gör ↑'}
-        </p>
-      )}
 
       <RankingStrip photos={allPhotos.filter(p => p.rank !== 1)} pixelate={pixelate} />
 
