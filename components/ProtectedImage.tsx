@@ -25,7 +25,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   }
 
   const watermarkedSrc = useFallback ? src : addWatermark(src);
-  const displaySrc     = pixelate ? pixelateUrl(src, 70) : watermarkedSrc;
+  const displaySrc     = pixelate ? pixelateUrl(src, 12) : watermarkedSrc;
   const handleError    = () => { if (!useFallback) setUseFallback(true); else setFailed(true); };
   const showSkel       = !imgLoaded && !failed;
   const skelH          = Math.min(maxHeight, 400);
@@ -40,7 +40,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       {/* Gizli img — yalnızca yükleme/hata takibi */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {pixelate ? (
-        <img src={pixelateUrl(src, 70)} alt="" aria-hidden style={{ display: 'none' }}
+        <img src={pixelateUrl(src, 12)} alt="" aria-hidden style={{ display: 'none' }}
           onLoad={() => setImgLoaded(true)} />
       ) : (
         <img src={watermarkedSrc} alt="" aria-hidden style={{ display: 'none' }}
