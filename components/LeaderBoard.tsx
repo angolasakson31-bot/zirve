@@ -293,8 +293,8 @@ export default function LeaderBoard() {
                     onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   >
                     <p
-                      className="text-white/60 text-[10px] font-bold text-center leading-snug select-none"
-                      style={{ textShadow: '0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8)' }}
+                      className="text-white/20 text-[9px] font-bold text-center leading-snug select-none"
+                      style={{ textShadow: '0 0 3px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.7), -1px -1px 0 rgba(0,0,0,0.7)' }}
                     >
                       Tüm fotoğrafları puanlamadan göremezsiniz
                     </p>
@@ -346,8 +346,8 @@ export default function LeaderBoard() {
                     onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   >
                     <p
-                      className="text-white/60 text-[10px] font-bold text-center leading-snug select-none"
-                      style={{ textShadow: '0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8)' }}
+                      className="text-white/20 text-[9px] font-bold text-center leading-snug select-none"
+                      style={{ textShadow: '0 0 3px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.7), -1px -1px 0 rgba(0,0,0,0.7)' }}
                     >
                       Tüm fotoğrafları puanlamadan göremezsiniz
                     </p>
