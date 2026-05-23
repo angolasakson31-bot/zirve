@@ -292,7 +292,10 @@ export default function LeaderBoard() {
                     className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer px-3"
                     onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   >
-                    <p className="text-white/30 text-[10px] font-bold text-center leading-snug select-none drop-shadow-md">
+                    <p
+                      className="text-white/60 text-[10px] font-bold text-center leading-snug select-none"
+                      style={{ textShadow: '0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8)' }}
+                    >
                       Tüm fotoğrafları puanlamadan göremezsiniz
                     </p>
                   </div>
@@ -342,7 +345,10 @@ export default function LeaderBoard() {
                     className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer px-3"
                     onClick={() => document.getElementById('rating-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                   >
-                    <p className="text-white/30 text-[10px] font-bold text-center leading-snug select-none drop-shadow-md">
+                    <p
+                      className="text-white/60 text-[10px] font-bold text-center leading-snug select-none"
+                      style={{ textShadow: '0 0 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9), 1px 1px 0 rgba(0,0,0,0.8), -1px -1px 0 rgba(0,0,0,0.8)' }}
+                    >
                       Tüm fotoğrafları puanlamadan göremezsiniz
                     </p>
                   </div>
