@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/mongoose';
 import SiteSettings from '@/models/SiteSettings';
 import BannedIP from '@/models/BannedIP';
+import { hashIp } from '@/lib/hash-ip';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -29,7 +30,8 @@ export function resetMaintenanceCache() {
   global.__maintenanceCache = undefined;
 }
 
-export async function isBannedIp(ip: string): Promise<boolean> {
+export async function isBannedIp(rawIp: string): Promise<boolean> {
+  const ip = hashIp(rawIp);
   const now = Date.now();
   if (!global.__banCache) {
     global.__banCache = new Map();

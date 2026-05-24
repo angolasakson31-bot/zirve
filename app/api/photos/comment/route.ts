@@ -29,12 +29,13 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const banned = await BannedIP.exists({ ip: rawIp });
+    const ip = hashIp(rawIp);
+    const banned = await BannedIP.exists({ ip });
     if (banned) return NextResponse.json({ error: 'Erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
     const photo = await Photo.findOneAndUpdate(
       { _id: photoId, isArchived: false, $expr: { $lt: [{ $size: '$comments' }, MAX_COMMENTS] } },
-      { $push: { comments: { text: trimmed, userHash: hashIp(rawIp), createdAt: new Date() } } },
+      { $push: { comments: { text: trimmed, userHash: ip, createdAt: new Date() } } },
       { new: true }
     ).select('comments');
 
