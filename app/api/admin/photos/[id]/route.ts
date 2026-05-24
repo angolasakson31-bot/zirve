@@ -3,6 +3,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
+import DeletedPhoto from '@/models/DeletedPhoto';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,26 @@ export async function DELETE(
   await connectDB();
   const photo = await Photo.findById(id);
   if (!photo) return NextResponse.json({ error: 'Bulunamadı.' }, { status: 404 });
+
+  let reason = 'Uygunsuz fotoğraf';
+  try {
+    const body = await req.json();
+    if (body?.reason && typeof body.reason === 'string') {
+      reason = body.reason;
+    }
+  } catch {
+    // no body or invalid JSON — use default reason
+  }
+
+  // Create tombstone
+  try {
+    await DeletedPhoto.create({
+      trackingCode: photo.trackingCode,
+      reason,
+    });
+  } catch {
+    // If tombstone already exists (duplicate), ignore
+  }
 
   const wasChampion = photo.isChampion;
 

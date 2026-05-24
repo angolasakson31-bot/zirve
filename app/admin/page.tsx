@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download, ImagePlus, X } from 'lucide-react';
+import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download, ImagePlus, X, ShieldOff } from 'lucide-react';
 import Image from 'next/image';
 
 interface AdminComment {
@@ -26,6 +26,15 @@ interface AdminPhoto {
   championDate?: string;
   comments?: AdminComment[];
 }
+
+interface BannedEntry {
+  ip: string;
+  reason: string;
+  createdAt: string;
+}
+
+const REASONS = ['Uygunsuz fotoğraf', 'Yanlış iletişim bilgisi'] as const;
+type Reason = typeof REASONS[number];
 
 const LEADER_THRESHOLD = 3;
 
@@ -102,6 +111,9 @@ export default function AdminPage() {
   const [uploadContact, setUploadContact] = useState('');
   const [uploading, setUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
+  const [bannedIps, setBannedIps] = useState<BannedEntry[]>([]);
+  const [actionModal, setActionModal] = useState<{ type: 'delete' | 'ban'; photo: AdminPhoto; reason: Reason } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -123,6 +135,14 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
+  const fetchBannedIps = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/ban', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      setBannedIps(data.bans ?? []);
+    }
+  }, []);
+
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/photos', { headers: { 'x-admin-password': password } });
@@ -130,23 +150,44 @@ export default function AdminPage() {
     setAuthed(true);
     const data = await res.json();
     setPhotos(data.photos ?? []);
+    fetchBannedIps(password);
   };
 
   useEffect(() => {
     // Şifre artık sessionStorage'a kaydedilmiyor — XSS koruması
   }, [fetchPhotos]);
 
-  const deletePhoto = async (photo: AdminPhoto) => {
-    if (!confirm('Bu fotoğrafı silmek istiyor musun?')) return;
-    setDeletingIds(s => new Set(s).add(photo._id));
-    const res = await fetch(`/api/admin/photos/${photo._id}`, {
-      method: 'DELETE', headers: headers(password),
+  const confirmAction = async () => {
+    if (!actionModal) return;
+    setActionLoading(true);
+    const { type, photo, reason } = actionModal;
+    if (type === 'delete') {
+      setDeletingIds(s => new Set(s).add(photo._id));
+      const res = await fetch(`/api/admin/photos/${photo._id}`, {
+        method: 'DELETE', headers: headers(password), body: JSON.stringify({ reason }),
+      });
+      if (res.ok) { setPhotos(p => p.filter(x => x._id !== photo._id)); showToast('Fotoğraf silindi.'); }
+      else showToast('Silme başarısız.');
+      setDeletingIds(s => { const n = new Set(s); n.delete(photo._id); return n; });
+    } else {
+      setBanningIps(s => new Set(s).add(photo.uploaderIp));
+      const res = await fetch('/api/admin/ban', {
+        method: 'POST', headers: headers(password), body: JSON.stringify({ ip: photo.uploaderIp, reason }),
+      });
+      if (res.ok) { showToast(`${photo.uploaderIp} engellendi.`); fetchBannedIps(password); }
+      else showToast('Engelleme başarısız.');
+      setBanningIps(s => { const n = new Set(s); n.delete(photo.uploaderIp); return n; });
+    }
+    setActionModal(null);
+    setActionLoading(false);
+  };
+
+  const unbanIp = async (ip: string) => {
+    const res = await fetch('/api/admin/ban', {
+      method: 'DELETE', headers: headers(password), body: JSON.stringify({ ip }),
     });
-    if (res.ok) {
-      setPhotos(p => p.filter(x => x._id !== photo._id));
-      showToast('Fotoğraf silindi.');
-    } else showToast('Silme başarısız.');
-    setDeletingIds(s => { const n = new Set(s); n.delete(photo._id); return n; });
+    if (res.ok) { setBannedIps(prev => prev.filter(b => b.ip !== ip)); showToast('Engel kaldırıldı.'); }
+    else showToast('Engel kaldırılamadı.');
   };
 
   const adminUpload = async () => {
@@ -209,16 +250,6 @@ export default function AdminPage() {
     a.click();
   };
 
-  const banIp = async (ip: string) => {
-    if (!confirm(`${ip} adresini engellemek istiyor musun?`)) return;
-    setBanningIps(s => new Set(s).add(ip));
-    const res = await fetch('/api/admin/ban', {
-      method: 'POST', headers: headers(password), body: JSON.stringify({ ip }),
-    });
-    if (res.ok) showToast(`${ip} engellendi.`);
-    else showToast('Engelleme başarısız.');
-    setBanningIps(s => { const n = new Set(s); n.delete(ip); return n; });
-  };
 
   const addComment = async (photoId: string) => {
     const text = (commentTexts[photoId] ?? '').trim();
@@ -344,6 +375,33 @@ export default function AdminPage() {
                   {photo.contactInfo && (
                     <span className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-2 py-1 max-w-[120px] truncate flex-shrink-0">{photo.contactInfo}</span>
                   )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Engellenen IP Listesi */}
+        {bannedIps.length > 0 && (
+          <div className="mb-8 bg-zinc-900 border border-red-900/30 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 bg-red-500/5 border-b border-red-900/30">
+              <Ban className="w-4 h-4 text-red-400" />
+              <span className="text-sm font-bold text-red-400 uppercase tracking-wide">Engellenenler</span>
+              <span className="text-zinc-600 text-xs ml-auto">{bannedIps.length} IP</span>
+            </div>
+            <div className="divide-y divide-zinc-800/50">
+              {bannedIps.map(b => (
+                <div key={b.ip} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-zinc-300 text-xs font-mono">{b.ip}</span>
+                    {b.reason && <span className="ml-2 text-zinc-500 text-xs">— {b.reason}</span>}
+                  </div>
+                  <button
+                    onClick={() => unbanIp(b.ip)}
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-green-400 transition px-2 py-1 rounded-lg hover:bg-green-500/10"
+                  >
+                    <ShieldOff className="w-3.5 h-3.5" /> Kaldır
+                  </button>
                 </div>
               ))}
             </div>
@@ -540,14 +598,14 @@ export default function AdminPage() {
                         <Download className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => deletePhoto(photo)}
+                        onClick={() => setActionModal({ type: 'delete', photo, reason: 'Uygunsuz fotoğraf' })}
                         disabled={deletingIds.has(photo._id)}
                         className="flex-1 flex items-center justify-center gap-1 bg-red-950/50 hover:bg-red-900/60 border border-red-900/50 rounded-lg py-1.5 text-red-400 text-xs transition disabled:opacity-40"
                       >
                         <Trash2 className="w-3 h-3" /> Sil
                       </button>
                       <button
-                        onClick={() => banIp(photo.uploaderIp)}
+                        onClick={() => setActionModal({ type: 'ban', photo, reason: 'Uygunsuz fotoğraf' })}
                         disabled={banningIps.has(photo.uploaderIp)}
                         className="flex-1 flex items-center justify-center gap-1 bg-orange-950/50 hover:bg-orange-900/60 border border-orange-900/50 rounded-lg py-1.5 text-orange-400 text-xs transition disabled:opacity-40"
                       >
@@ -567,6 +625,47 @@ export default function AdminPage() {
           <p className="text-center text-zinc-600 py-20">Henüz fotoğraf yok.</p>
         )}
       </div>
+
+      {/* Sebep seçici modal */}
+      {actionModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => !actionLoading && setActionModal(null)}>
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-xs space-y-4" onClick={e => e.stopPropagation()}>
+            <p className="text-white font-semibold text-sm">
+              {actionModal.type === 'delete' ? 'Fotoğrafı Sil' : 'IP Engelle'}
+            </p>
+            <p className="text-zinc-400 text-xs">Sebep seç:</p>
+            <div className="flex flex-col gap-2">
+              {REASONS.map(r => (
+                <button
+                  key={r}
+                  onClick={() => setActionModal(m => m ? { ...m, reason: r } : m)}
+                  className={`px-3 py-2 rounded-xl text-sm text-left transition border ${
+                    actionModal.reason === r
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-300'
+                      : 'border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-500'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setActionModal(null)} disabled={actionLoading}
+                className="flex-1 py-2 rounded-xl border border-zinc-700 text-zinc-400 text-sm hover:text-white transition disabled:opacity-40">
+                İptal
+              </button>
+              <button onClick={confirmAction} disabled={actionLoading}
+                className={`flex-1 py-2 rounded-xl text-sm font-bold transition disabled:opacity-40 ${
+                  actionModal.type === 'delete'
+                    ? 'bg-red-600 hover:bg-red-500 text-white'
+                    : 'bg-orange-600 hover:bg-orange-500 text-white'
+                }`}>
+                {actionLoading ? '...' : actionModal.type === 'delete' ? 'Sil' : 'Engelle'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {lightbox && (
         <div

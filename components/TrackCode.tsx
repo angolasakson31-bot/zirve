@@ -22,6 +22,7 @@ export default function TrackCode() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [shared, setShared] = useState(false);
+  const [deleted, setDeleted] = useState<{ reason: string } | null>(null);
 
   const sharePhoto = async () => {
     const url = window.location.origin;
@@ -40,11 +41,15 @@ export default function TrackCode() {
     setLoading(true);
     setError('');
     setResult(null);
+    setDeleted(null);
     try {
       const res = await fetch(`/api/photos/track/${encodeURIComponent(clean)}`);
       const data = await res.json();
-      if (!res.ok) setError(data.error || 'Kod bulunamadı.');
-      else {
+      if (data.deleted) {
+        setDeleted({ reason: data.reason });
+      } else if (!res.ok) {
+        setError(data.error || 'Kod bulunamadı.');
+      } else {
         setResult(data.photo);
         setRank(data.rank ?? null);
         setTotalToday(data.totalToday ?? null);
@@ -88,6 +93,13 @@ export default function TrackCode() {
         </div>
 
         {error && <p className="text-red-400 text-xs px-1">{error}</p>}
+
+        {deleted && (
+          <div className="rounded-xl bg-red-950/40 border border-red-900/50 px-4 py-3 space-y-1">
+            <p className="text-red-400 text-sm font-semibold">Fotoğraf Kaldırıldı</p>
+            <p className="text-zinc-400 text-xs">Neden: {deleted.reason}</p>
+          </div>
+        )}
 
         {result && (
           <div className="space-y-3 pt-1">

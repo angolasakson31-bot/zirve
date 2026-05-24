@@ -2,11 +2,15 @@ import mongoose, { Schema, Model } from 'mongoose';
 
 interface IBannedIP {
   ip: string;
+  reason: string;
   createdAt: Date;
 }
 
 const BannedIPSchema = new Schema<IBannedIP>(
-  { ip: { type: String, required: true, unique: true } },
+  {
+    ip: { type: String, required: true, unique: true },
+    reason: { type: String, default: '' },
+  },
   { timestamps: true }
 );
 

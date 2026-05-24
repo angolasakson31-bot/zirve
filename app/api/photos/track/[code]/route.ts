@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import DeletedPhoto from '@/models/DeletedPhoto';
+import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 import { toTurkishDateStr } from '@/lib/daily-reset';
 
@@ -21,15 +23,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
     await connectDB();
 
     const photo = await Photo.findOne({ trackingCode: code.toUpperCase() })
-      .select('url voteCount average likeCount dislikeCount isChampion createdAt isArchived comments')
+      .select('url voteCount average likeCount dislikeCount isChampion createdAt isArchived comments uploaderIp')
       .lean<{
         _id: unknown; url: string; voteCount: number; average: number;
         likeCount: number; dislikeCount: number; isChampion: boolean;
-        createdAt: Date; isArchived: boolean;
+        createdAt: Date; isArchived: boolean; uploaderIp: string;
         comments: { text: string; createdAt: Date }[];
       }>();
 
-    if (!photo) return NextResponse.json({ error: 'Kod bulunamadı.' }, { status: 404 });
+    if (!photo) {
+      // Check tombstone
+      const deleted = await DeletedPhoto.findOne({ trackingCode: code.toUpperCase() }).lean();
+      if (deleted) {
+        return NextResponse.json({ deleted: true, reason: (deleted as any).reason });
+      }
+      return NextResponse.json({ error: 'Kod bulunamadı.' }, { status: 404 });
+    }
 
     const TZ = 3 * 60 * 60 * 1000;
     const trDate = toTurkishDateStr(photo.createdAt);
@@ -37,12 +46,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
     const startOfDay = new Date(Date.UTC(y, m - 1, d) - TZ);
     const endOfDay   = new Date(Date.UTC(y, m - 1, d + 1) - TZ);
 
-    const [totalToday, betterCount] = await Promise.all([
+    const [totalToday, betterCount, ban] = await Promise.all([
       Photo.countDocuments({ createdAt: { $gte: startOfDay, $lt: endOfDay } }),
       Photo.countDocuments({
         createdAt: { $gte: startOfDay, $lt: endOfDay },
         average: { $gt: photo.average },
       }),
+      BannedIP.findOne({ ip: photo.uploaderIp }).lean(),
     ]);
 
     const rank = betterCount + 1;
@@ -53,7 +63,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
       createdAt: c.createdAt,
     }));
 
-    return NextResponse.json({ photo: { ...photo, comments: safeComments }, rank, totalToday });
+    // Don't leak uploaderIp in the response
+    const { uploaderIp: _uploaderIp, ...safePhoto } = photo;
+
+    return NextResponse.json({
+      photo: { ...safePhoto, comments: safeComments },
+      rank,
+      totalToday,
+      ...(ban ? { isBanned: true, banReason: (ban as any).reason } : {}),
+    });
   } catch {
     return NextResponse.json({ error: 'Hata oluştu.' }, { status: 500 });
   }
