@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import './globals.css';
 import MediaGuard from '@/components/MediaGuard';
 import AgeGate from '@/components/AgeGate';
-import { isMaintenanceOn } from '@/lib/maintenanceMode';
+import { isMaintenanceOn, isBannedIp } from '@/lib/maintenanceMode';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,6 +31,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   if (!skip && await isMaintenanceOn()) {
     redirect('/kapali');
+  }
+
+  const banSkip = skip || pathname.startsWith('/engellendi');
+  if (!banSkip) {
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim() ?? '';
+    if (ip && await isBannedIp(ip)) {
+      redirect('/engellendi');
+    }
   }
 
   return (

@@ -6,14 +6,26 @@ import BannedIP from '@/models/BannedIP';
 
 export const runtime = 'nodejs';
 
+export async function GET(req: NextRequest) {
+  const authErr = checkAdmin(req);
+  if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
+  await connectDB();
+  const bans = await BannedIP.find({}).select('ip reason createdAt').lean();
+  return NextResponse.json({ bans });
+}
+
 export async function POST(req: NextRequest) {
   const authErr = checkAdmin(req);
   if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
-  const { ip } = await req.json();
+  const { ip, reason } = await req.json();
   if (!ip || typeof ip !== 'string') return NextResponse.json({ error: 'IP gerekli.' }, { status: 400 });
   if (!isIP(ip.trim())) return NextResponse.json({ error: 'Geçersiz IP formatı.' }, { status: 400 });
   await connectDB();
-  await BannedIP.updateOne({ ip: ip.trim() }, { ip: ip.trim() }, { upsert: true });
+  await BannedIP.updateOne(
+    { ip: ip.trim() },
+    { ip: ip.trim(), reason: reason ?? '' },
+    { upsert: true }
+  );
   return NextResponse.json({ ok: true });
 }
 
