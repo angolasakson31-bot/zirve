@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import SiteSettings from '@/models/SiteSettings';
+import { resetMaintenanceCache } from '@/lib/maintenanceMode';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +31,8 @@ export async function GET(
     { value: mode === 'on' },
     { upsert: true },
   );
+
+  resetMaintenanceCache();
 
   return NextResponse.json({
     maintenance: mode === 'on',
