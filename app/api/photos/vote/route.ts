@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const banned = await BannedIP.exists({ ip: rawIp });
+    const banned = await BannedIP.exists({ ip });
     if (banned) return NextResponse.json({ error: 'Erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
     const incFields: Record<string, number> = { totalScore: score, voteCount: 1 };
