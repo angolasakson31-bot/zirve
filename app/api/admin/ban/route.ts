@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import BannedIP from '@/models/BannedIP';
+import Photo from '@/models/Photo';
 
 export const runtime = 'nodejs';
 
@@ -10,7 +11,11 @@ export async function GET(req: NextRequest) {
   if (authErr !== null) return NextResponse.json({ error: authErr === 429 ? 'Çok fazla istek.' : 'Yetkisiz.' }, { status: authErr });
   await connectDB();
   const bans = await BannedIP.find({}).select('ip reason createdAt').lean();
-  return NextResponse.json({ bans });
+  const hashes = bans.map((b: any) => b.ip);
+  const photos = await Photo.find({ uploaderIp: { $in: hashes } }).select('uploaderIp url').lean();
+  const photoByIp = new Map(photos.map((p: any) => [p.uploaderIp, p.url]));
+  const result = bans.map((b: any) => ({ ...b, photoUrl: photoByIp.get(b.ip) ?? null }));
+  return NextResponse.json({ bans: result });
 }
 
 export async function POST(req: NextRequest) {
