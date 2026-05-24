@@ -269,6 +269,9 @@ export default function UploadForm() {
             }
             className="w-full bg-zinc-800 border border-zinc-700 focus:border-amber-500/70 outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 transition"
           />
+          <p className="text-red-500/70 text-[11px] leading-snug">
+            Yanlış iletişim bilgisi verenler IP ban yiyecektir.
+          </p>
         </div>
 
         {/* Onay 1 — içerik rızası */}
