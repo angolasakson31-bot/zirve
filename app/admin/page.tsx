@@ -31,6 +31,7 @@ interface BannedEntry {
   ip: string;
   reason: string;
   createdAt: string;
+  photoUrl?: string | null;
 }
 
 const REASONS = ['Uygunsuz fotoğraf', 'Yanlış iletişim bilgisi'] as const;
@@ -392,8 +393,12 @@ export default function AdminPage() {
             <div className="divide-y divide-zinc-800/50">
               {bannedIps.map(b => (
                 <div key={b.ip} className="flex items-center gap-3 px-4 py-2.5">
+                  {b.photoUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.photoUrl} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 opacity-70" />
+                  )}
                   <div className="flex-1 min-w-0">
-                    <span className="text-zinc-300 text-xs font-mono">{b.ip}</span>
+                    <span className="text-zinc-300 text-xs font-mono">{b.ip.slice(0, 12)}…</span>
                     {b.reason && <span className="ml-2 text-zinc-500 text-xs">— {b.reason}</span>}
                   </div>
                   <button
