@@ -229,7 +229,7 @@ export default function UploadForm() {
 
         {isAlbum && (
           <p className="text-xs text-amber-400/70 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
-            Albümdeki tüm fotoğraflar aynı kişiye ait olmalıdır — farklı kişileri ayrı ayrı yükleyin.
+            Albümdeki tüm fotoğraflar aynı konuya ait olmalıdır — farklı konuları ayrı ayrı yükleyin.
           </p>
         )}
 
@@ -283,8 +283,8 @@ export default function UploadForm() {
             className="mt-0.5 w-4 h-4 shrink-0 accent-amber-400 cursor-pointer"
           />
           <span className="text-zinc-500 text-xs leading-relaxed group-hover:text-zinc-400 transition">
-            Yüklediğim fotoğraftaki tüm kişilerin <strong className="text-zinc-400">açık rızasını</strong> aldığımı,
-            içeriğin 18+ olduğunu ve{' '}
+            Yüklediğim fotoğrafın <strong className="text-zinc-400">telif, özel hayat ve kişilik haklarına</strong>{' '}
+            aykırı olmadığını, başkasının kişisel verisini içermediğini ve{' '}
             <a href="/yasal" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">yasal koşulları</a>{' '}
             kabul ettiğimi onaylıyorum.
           </span>

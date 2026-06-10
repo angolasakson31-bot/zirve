@@ -51,7 +51,6 @@ export default function AgeGate() {
           <ShieldAlert className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <p className="text-amber-300 text-sm leading-snug font-medium">
             Bu platform <strong>yalnızca 18 yaş ve üzeri</strong> kullanıcılara yöneliktir.
-            Yetişkin içerik barındırmaktadır.
           </p>
         </div>
 

@@ -60,7 +60,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <p className="text-zinc-500 text-xs">
             Zirveye tırman, X ol — fotoğrafını yükle, puanlansın, size ulaşsınlar —{' '}
-            <span className="text-amber-400">kimi zirveye çıkarmak istiyorsan yükle ve insanlara sun...</span>
+            <span className="text-amber-400">hangi fotoğrafı zirveye çıkarmak istiyorsan yükle ve insanlara sun...</span>
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function Home() {
             </p>
             <p className="text-zinc-400 text-xs leading-relaxed">
               Kendi Telegram grubuna veya kanalına eklemek, iş birliği ya da özel kurulum için{' '}
-              <span className="text-sky-400 font-bold">@ZIRVENAMUS</span> yazın.
+              <span className="text-sky-400 font-bold">@zirvex_destek</span> yazın.
             </p>
           </div>
         </div>
@@ -93,11 +93,11 @@ export default function Home() {
         {/* Yasal bilgiler — kompakt */}
         <div className="border-t border-zinc-800 pt-5 space-y-1.5 text-zinc-600 text-xs leading-relaxed">
           <p>
-            <strong className="text-zinc-500">18+ platformdur.</strong>{' '}
             Siteyi kullanarak tüm yasal koşulları okuduğunuzu ve kabul ettiğinizi beyan etmiş olursunuz.
-            İçerik yükleyerek fotoğraftaki kişilerin açık rızasını aldığınızı taahhüt etmiş olursunuz.
-            Rıza dışı içerik, küçüklere ait materyal ve hakaret içeren yorumlar kesinlikle yasaktır;
-            sorumluluk kullanıcıya aittir. Yüklenen fotoğraflar Cloudinary (ABD) altyapısında saklanır.
+            İçerik yükleyerek paylaştığınız fotoğrafın telif, özel hayat ve kişilik haklarına aykırı
+            olmadığını taahhüt etmiş olursunuz. Hakaret, telif ihlali, kişisel veri ifşası ve hukuka
+            aykırı içerik kesinlikle yasaktır; sorumluluk kullanıcıya aittir. Yüklenen fotoğraflar
+            Cloudinary (ABD) altyapısında saklanır.
           </p>
           <p>
             İçerik kaldırma ve KVKK başvuruları:{' '}
@@ -107,7 +107,7 @@ export default function Home() {
             >
               angolasakson34@gmail.com
             </a>
-            {' '}· Telegram: <strong className="text-zinc-500">@ZIRVENAMUS</strong>
+            {' '}· Telegram: <strong className="text-zinc-500">@zirvex_destek</strong>
             {' '}·{' '}
             <Link
               href="/yasal"

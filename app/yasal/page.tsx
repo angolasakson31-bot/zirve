@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_EMAIL = 'angolasakson34@gmail.com';
-const CONTACT_TELEGRAM = '@ZIRVENAMUS';
+const CONTACT_TELEGRAM = '@zirvex_destek';
 const UPDATE_DATE = 'Mayıs 2026';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -260,7 +260,7 @@ export default function YasalPage() {
           </Section>
 
           {/* Çerez */}
-          <Section title="12. Çerez Politikası">
+          <Section title="13. Çerez Politikası">
             <p>
               Platform, oturum yönetimi ve takip kodu işlevleri için teknik çerezler kullanmaktadır.
               Bu çerezler kişisel veri içermez ve yalnızca platformun düzgün çalışması amacıyla
@@ -271,7 +271,7 @@ export default function YasalPage() {
           </Section>
 
           {/* Sorumluluk reddi */}
-          <Section title="13. Sorumluluk Reddi">
+          <Section title="14. Sorumluluk Reddi">
             <p>
               Platform yönetimi; kullanıcılar tarafından yüklenen içeriklerin doğruluğundan,
               hukuka uygunluğundan veya üçüncü taraflara verdiği zarardan sorumlu tutulamaz.
@@ -282,7 +282,7 @@ export default function YasalPage() {
           </Section>
 
           {/* Erişim engeli */}
-          <Section title="14. Erişimi Engelleme ve Hizmet Durdurma Hakkı">
+          <Section title="15. Erişimi Engelleme ve Hizmet Durdurma Hakkı">
             <p>
               Platform yönetimi; kurallara aykırı davranan kullanıcıların IP adresini önceden
               bildirim gerekmeksizin kalıcı olarak engelleyebilir. Platform, herhangi bir zamanda
@@ -292,7 +292,7 @@ export default function YasalPage() {
           </Section>
 
           {/* Yetkili mahkeme */}
-          <Section title="15. Uygulanacak Hukuk ve Yetkili Mahkeme">
+          <Section title="16. Uygulanacak Hukuk ve Yetkili Mahkeme">
             <p>
               Bu platformun kullanımından doğabilecek her türlü uyuşmazlıkta{' '}
               <strong className="text-zinc-400">Türkiye Cumhuriyeti hukuku</strong> uygulanır.
@@ -303,7 +303,7 @@ export default function YasalPage() {
           </Section>
 
           {/* Değişiklik hakkı */}
-          <Section title="16. Koşulların Güncellenmesi">
+          <Section title="17. Koşulların Güncellenmesi">
             <p>
               Platform yönetimi, yasal düzenlemeler veya platform politikalarındaki değişiklikler
               doğrultusunda bu koşulları önceden bildirmeksizin güncelleme hakkını saklı tutar.
