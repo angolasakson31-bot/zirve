@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react';
 import { Mountain, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
-const LS_KEY     = 'zirve_age_ok';
+const LS_KEY      = 'zirve_age_ok';
 const COOKIE_NAME = 'zirve_age';
-const ONE_YEAR   = 365 * 24 * 60 * 60;
+const SYNC_KEY    = 'zirve_age_synced_v1';
+const ONE_YEAR    = 365 * 24 * 60 * 60;
+const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 1 gün
 
 function readConfirmed(): boolean {
   try {
@@ -26,7 +28,29 @@ async function writeConfirmed() {
   } catch {}
   // Sunucu zorlamalı yaş kapısı: HMAC imzalı HttpOnly cookie yazdır
   try {
-    await fetch('/api/age/confirm', { method: 'POST' });
+    const res = await fetch('/api/age/confirm', { method: 'POST' });
+    if (res.ok) {
+      try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch {}
+    }
+  } catch {}
+}
+
+// Daha önce onay verip de henüz sunucu cookie'si almamış kullanıcılar için
+// (middleware zorlaması bu özellikten önce gelen kullanıcıları kilitler).
+// İlk sync'de sayfayı bir kez yeniler; sonrası sessiz.
+async function ensureServerCookie() {
+  let lastSync = 0;
+  try { lastSync = parseInt(localStorage.getItem(SYNC_KEY) ?? '0', 10) || 0; } catch {}
+  if (lastSync && Date.now() - lastSync < SYNC_INTERVAL_MS) return;
+  try {
+    const res = await fetch('/api/age/confirm', { method: 'POST' });
+    if (!res.ok) return;
+    try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch {}
+    // Eğer bu ilk sync ise (eski kullanıcı), cookie yeni geldi — içerik
+    // fetchlerinin tekrar denenmesi için sayfayı yenile.
+    if (!lastSync) {
+      window.location.reload();
+    }
   } catch {}
 }
 
@@ -35,7 +59,11 @@ export default function AgeGate() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setConfirmed(readConfirmed());
+    const c = readConfirmed();
+    setConfirmed(c);
+    // Daha önce onay vermiş ama sunucu cookie'si olmayan kullanıcılar için
+    // arka planda backfill yap (middleware 403'lerini önler).
+    if (c) ensureServerCookie();
   }, []);
 
   if (confirmed !== false) return null;
