@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import './globals.css';
 import MediaGuard from '@/components/MediaGuard';
 import AgeGate from '@/components/AgeGate';
+import CookieConsent from '@/components/CookieConsent';
 import { isMaintenanceOn, isBannedIp } from '@/lib/maintenanceMode';
 import { getClientIpFromHeaders } from '@/lib/get-ip';
 
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AgeGate />
         <MediaGuard />
         {children}
+        <CookieConsent />
       </body>
     </html>
   );

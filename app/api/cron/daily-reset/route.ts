@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { toTurkishDateStr, turkishStartOfDay } from '@/lib/daily-reset';
+import { anonymizeOldPersonalData } from '@/lib/kvkk-retention';
 
 export const runtime = 'nodejs';
 
@@ -39,10 +40,21 @@ export async function POST(req: NextRequest) {
       { $set: { isArchived: true } }
     );
 
+    // KVKK: 2 yıldan eski kişisel verileri anonimleştir (sessizce, hata olursa
+    // ana akış etkilenmesin).
+    let anonymized = 0;
+    try {
+      const r = await anonymizeOldPersonalData();
+      anonymized = r.anonymized;
+    } catch (err) {
+      console.error('kvkk anonymize error:', err);
+    }
+
     return NextResponse.json({
       ok: true,
       champion: leader?._id ?? null,
       archived: result.modifiedCount,
+      anonymized,
     });
   } catch {
     return NextResponse.json({ error: 'Sıfırlama başarısız.' }, { status: 500 });

@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Trophy, Star, Clock } from 'lucide-react';
 import AlbumViewer from '@/components/AlbumViewer';
 import PixelImg from '@/components/PixelImg';
+import ReportButton from '@/components/ReportButton';
 import { getDeviceToken } from '@/hooks/useUploadGate';
 import { useRatingGate } from '@/hooks/useRatingGate';
 
@@ -305,6 +306,11 @@ export default function LeaderBoard() {
               {!pixelate && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
+              {!pixelate && (
+                <div className="px-3 py-1.5 border-t border-amber-500/20 bg-amber-500/5 flex justify-end">
+                  <ReportButton photoId={leader._id} compact />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-zinc-500">
@@ -357,6 +363,11 @@ export default function LeaderBoard() {
               {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
               {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
                 <CommentFeed comments={yesterday.comments} />
+              )}
+              {!pixelate && (
+                <div className="px-3 py-1.5 border-t border-zinc-700 bg-zinc-800/40 flex justify-end">
+                  <ReportButton photoId={yesterday._id} compact />
+                </div>
               )}
           </div>
         ) : (

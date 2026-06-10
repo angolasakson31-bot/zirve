@@ -249,6 +249,10 @@ export default function YasalPage() {
             <p>
               Kişisel verilerinize ilişkin bilgi alma, düzeltme, silme, işlemeyi kısıtlama ve
               işlemeye itiraz hakları için{' '}
+              <Link href="/kvkk" className="text-amber-500 hover:text-amber-400 underline underline-offset-2">
+                KVKK Başvuru Formu
+              </Link>{' '}
+              üzerinden veya{' '}
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
                 className="text-amber-500 hover:text-amber-400 underline underline-offset-2"

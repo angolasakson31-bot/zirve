@@ -27,6 +27,11 @@ export interface IPhoto extends Document {
   fileHash: string;
   blurPlaceholder: string;
   comments: IComment[];
+  // Şikâyet ve moderasyon
+  reportCount: number;
+  isHidden: boolean;
+  moderationStatus: 'pending' | 'approved' | 'rejected';
+  moderationLabels: string[];
   createdAt: Date;
 }
 
@@ -59,6 +64,10 @@ const PhotoSchema = new Schema<IPhoto>(
     trackingCode:     { type: String, required: true, unique: true },
     fileHash:         { type: String, required: true },
     blurPlaceholder:  { type: String, default: '' },
+    reportCount:      { type: Number, default: 0 },
+    isHidden:         { type: Boolean, default: false },
+    moderationStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
+    moderationLabels: { type: [String], default: [] },
   },
   { timestamps: true }
 );
@@ -72,6 +81,8 @@ PhotoSchema.index({ isArchived: 1, createdAt: -1 });
 PhotoSchema.index({ isChampion: 1 });
 PhotoSchema.index({ championDate: 1 });
 PhotoSchema.index({ deviceVoters: 1 });
+PhotoSchema.index({ isHidden: 1 });
+PhotoSchema.index({ moderationStatus: 1 });
 // random/has-new sorgularının hızlanması için compound index
 PhotoSchema.index({ isArchived: 1, createdAt: -1, uploaderIp: 1 });
 

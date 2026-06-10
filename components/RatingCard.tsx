@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import AlbumViewer from '@/components/AlbumViewer';
 import UploadGate from '@/components/UploadGate';
+import ReportButton from '@/components/ReportButton';
 import { ChevronRight } from 'lucide-react';
 import { useUploadGate, markVoted, todayKey, getOwnPhotoIds, getDeviceToken } from '@/hooks/useUploadGate';
 
@@ -336,8 +337,9 @@ function Inner() {
 
   return (
     <div id="rating-card" ref={containerRef} className="rounded-2xl border border-zinc-700 bg-zinc-900 overflow-hidden">
-      <div className="px-5 py-3 border-b border-zinc-800">
+      <div className="px-5 py-3 border-b border-zinc-800 flex items-center justify-between">
         <span className="text-zinc-400 text-sm font-medium">Körlemesine Puan Ver</span>
+        <ReportButton photoId={String(photo._id)} compact />
       </div>
 
       <AlbumViewer urls={[photo.url, ...(photo.albumUrls ?? [])]} maxHeight={680} blurPlaceholder={photo.blurPlaceholder} />

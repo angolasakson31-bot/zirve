@@ -40,16 +40,64 @@ async function generateBlurPlaceholder(buf: Buffer): Promise<string> {
   }
 }
 
-async function uploadToCloudinary(buffer: Buffer): Promise<{ public_id: string; secure_url: string }> {
+interface CloudinaryModerationEntry {
+  status?: 'approved' | 'rejected' | 'pending';
+  kind?: string;
+  response?: { moderation_labels?: { Name: string; Confidence: number }[] };
+}
+
+interface CloudinaryUploadResult {
+  public_id: string;
+  secure_url: string;
+  moderation?: CloudinaryModerationEntry[];
+}
+
+// Cloudinary moderation add-on (aws_rek, webpurify, vb.). CLOUDINARY_MODERATION
+// env değişkeni boşsa moderation kapalı kalır; istemci dashboard'dan add-on'u
+// etkinleştirip env değişkenini set edince devreye girer.
+const MODERATION = process.env.CLOUDINARY_MODERATION || '';
+
+async function uploadToCloudinary(buffer: Buffer): Promise<CloudinaryUploadResult> {
   return new Promise((resolve, reject) => {
+    const options: Record<string, unknown> = { folder: 'zirve', resource_type: 'image' };
+    if (MODERATION) options.moderation = MODERATION;
     cloudinary.uploader.upload_stream(
-      { folder: 'zirve', resource_type: 'image' },
+      options,
       (err, result) => {
         if (err || !result) return reject(err);
-        resolve(result as { public_id: string; secure_url: string });
+        resolve(result as CloudinaryUploadResult);
       }
     ).end(buffer);
   });
+}
+
+function evaluateModeration(result: CloudinaryUploadResult): {
+  status: 'pending' | 'approved' | 'rejected';
+  labels: string[];
+} {
+  const entries = result.moderation ?? [];
+  if (entries.length === 0) {
+    return { status: 'approved', labels: [] };
+  }
+  const labels: string[] = [];
+  let status: 'pending' | 'approved' | 'rejected' = 'approved';
+  for (const e of entries) {
+    if (e.status === 'rejected') status = 'rejected';
+    else if (e.status === 'pending' && status !== 'rejected') status = 'pending';
+    const mLabels = e.response?.moderation_labels;
+    if (Array.isArray(mLabels)) {
+      for (const l of mLabels) if (l?.Name) labels.push(l.Name);
+    }
+  }
+  return { status, labels };
+}
+
+async function deleteFromCloudinary(publicId: string): Promise<void> {
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+  } catch {
+    // Sessizce yoksay — yine de DB'ye kaydedilmedi.
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -109,11 +157,26 @@ export async function POST(req: NextRequest) {
     const blurPlaceholder = await generateBlurPlaceholder(mainBuffer);
 
     const mainResult = await uploadToCloudinary(mainBuffer);
+    const moderation = evaluateModeration(mainResult);
+
+    // Eğer Cloudinary açıkça reddetmişse, fotoğrafı yayına alma ve Cloudinary'den sil.
+    if (moderation.status === 'rejected') {
+      await deleteFromCloudinary(mainResult.public_id);
+      return NextResponse.json({
+        error: 'Yüklenen içerik kurallarımıza aykırı bulundu ve kabul edilmedi.',
+      }, { status: 422 });
+    }
+
     const albumResults: string[] = [];
     for (const f of rawFiles.slice(1)) {
       try {
         const buf = Buffer.from(await f.arrayBuffer());
         const result = await uploadToCloudinary(buf);
+        const m = evaluateModeration(result);
+        if (m.status === 'rejected') {
+          await deleteFromCloudinary(result.public_id);
+          continue;
+        }
         albumResults.push(result.secure_url);
       } catch {
         // Hata olan albüm fotoğrafını atla
@@ -136,6 +199,10 @@ export async function POST(req: NextRequest) {
       trackingCode,
       fileHash,
       blurPlaceholder,
+      moderationStatus: moderation.status,
+      moderationLabels: moderation.labels,
+      // Eğer manuel moderasyon "pending" döndüyse otomatik gizle — admin onaylar.
+      isHidden: moderation.status === 'pending',
     });
 
     return NextResponse.json({

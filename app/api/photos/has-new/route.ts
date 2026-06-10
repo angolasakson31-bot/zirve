@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
       voters:     { $nin: [ip] },
       uploaderIp: { $ne: ip },
       isArchived: false,
+      isHidden:   { $ne: true },
+      moderationStatus: { $ne: 'rejected' },
       createdAt:  { $gte: turkishStartOfDay() },
     };
 

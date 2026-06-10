@@ -17,17 +17,22 @@ function readConfirmed(): boolean {
   return false;
 }
 
-function writeConfirmed() {
+async function writeConfirmed() {
   try { localStorage.setItem(LS_KEY, '1'); } catch {}
   try {
     const exp = new Date(Date.now() + ONE_YEAR * 1000).toUTCString();
     const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${COOKIE_NAME}=1; expires=${exp}; path=/; SameSite=Lax${secure}`;
   } catch {}
+  // Sunucu zorlamalı yaş kapısı: HMAC imzalı HttpOnly cookie yazdır
+  try {
+    await fetch('/api/age/confirm', { method: 'POST' });
+  } catch {}
 }
 
 export default function AgeGate() {
   const [confirmed, setConfirmed] = useState<boolean | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setConfirmed(readConfirmed());
@@ -60,13 +65,16 @@ export default function AgeGate() {
         </p>
 
         <button
-          className="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold py-3 rounded-xl text-sm transition-colors"
-          onClick={() => {
-            writeConfirmed();
-            setConfirmed(true);
+          disabled={submitting}
+          className="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold py-3 rounded-xl text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          onClick={async () => {
+            setSubmitting(true);
+            await writeConfirmed();
+            // Sunucu cookie'sinin aktif olması için içerik fetchlerini sıfırdan başlat.
+            window.location.reload();
           }}
         >
-          18 Yaşında veya Üzerindeyim — Devam Et
+          {submitting ? 'Doğrulanıyor…' : '18 Yaşında veya Üzerindeyim — Devam Et'}
         </button>
 
         <p className="text-zinc-600 text-xs text-center leading-relaxed">

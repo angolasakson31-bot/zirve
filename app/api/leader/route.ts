@@ -31,12 +31,21 @@ export async function GET(req: NextRequest) {
 
     const startOfToday = turkishStartOfDay();
 
-    const leader = await Photo.findOne({ isChampion: true })
+    const visibilityFilter = {
+      isHidden: { $ne: true },
+      moderationStatus: { $ne: 'rejected' },
+    };
+
+    const leader = await Photo.findOne({ isChampion: true, ...visibilityFilter })
       .select('url albumUrls average voteCount createdAt comments blurPlaceholder');
-    const yesterday = await Photo.findOne({ championDate: getYesterdayStr() })
+    const yesterday = await Photo.findOne({ championDate: getYesterdayStr(), ...visibilityFilter })
       .select('url albumUrls average voteCount championDate comments blurPlaceholder');
 
-    const allToday = await Photo.find({ isArchived: false, createdAt: { $gte: startOfToday } })
+    const allToday = await Photo.find({
+      isArchived: false,
+      createdAt: { $gte: startOfToday },
+      ...visibilityFilter,
+    })
       .select('_id url average totalScore voteCount isChampion').lean();
 
     const allPhotos = allToday
