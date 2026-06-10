@@ -8,6 +8,7 @@ import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 import { turkishStartOfDay } from '@/lib/daily-reset';
 import { hashIp } from '@/lib/hash-ip';
+import { getClientIp } from '@/lib/get-ip';
 
 export const runtime = 'nodejs';
 
@@ -52,7 +53,7 @@ async function uploadToCloudinary(buffer: Buffer): Promise<{ public_id: string; 
 }
 
 export async function POST(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const rawIp = getClientIp(req);
   const ip = hashIp(rawIp);
   if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });

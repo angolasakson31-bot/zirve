@@ -4,6 +4,7 @@ import Photo from '@/models/Photo';
 import { rateLimit } from '@/lib/rate-limit';
 import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
 import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
+import { getClientIp } from '@/lib/get-ip';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ let leaderCache: LeaderCache | null = null;
 const CACHE_TTL = 15_000; // 15 saniye
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const ip = getClientIp(req);
   if (!checkLimit(ip))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
 

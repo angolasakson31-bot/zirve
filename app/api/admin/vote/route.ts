@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
@@ -14,7 +15,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { photoId, score } = await req.json();
-    if (!photoId || typeof score !== 'number' || !Number.isInteger(score) || score < 1 || score > 10)
+    if (!photoId || typeof photoId !== 'string' || !mongoose.Types.ObjectId.isValid(photoId))
+      return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
+    if (typeof score !== 'number' || !Number.isInteger(score) || score < 1 || score > 10)
       return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
 
     await connectDB();

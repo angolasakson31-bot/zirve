@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongoose';
 import { DailyVisitor } from '@/models/DailyVisitor';
 import { rateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
 
 export const runtime = 'nodejs';
 
@@ -12,7 +13,7 @@ function todayTr(): string {
 }
 
 export async function POST(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const rawIp = getClientIp(req);
   if (!pingLimit(rawIp)) return NextResponse.json({ ok: false }, { status: 429 });
 
   let sessionId: string;

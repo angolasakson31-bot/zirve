@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { rateLimit } from './rate-limit';
+import { getClientIp } from './get-ip';
 
 const adminLimit = rateLimit(10);
 
 export function checkAdmin(req: NextRequest): number | null {
-  const ip = req.headers.get('x-forwarded-for')?.split(',').pop()?.trim() ?? '0.0.0.0';
+  const ip = getClientIp(req);
   if (!adminLimit(ip)) return 429;
 
   const provided = req.headers.get('x-admin-password') ?? '';

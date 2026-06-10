@@ -5,6 +5,7 @@ import Photo from '@/models/Photo';
 import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 import { hashIp } from '@/lib/hash-ip';
+import { getClientIp } from '@/lib/get-ip';
 import { bayesianScore, DEFAULT_MEAN, BAYESIAN_C } from '@/lib/bayesian';
 export const runtime = 'nodejs';
 
@@ -14,7 +15,7 @@ const MAX_VOTERS = 10_000;
 const MAX_DEVICE_VOTERS = 10_000;
 
 export async function POST(req: NextRequest) {
-  const rawIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '0.0.0.0';
+  const rawIp = getClientIp(req);
   const ip = hashIp(rawIp);
   if (!checkLimit(rawIp))
     return NextResponse.json({ error: 'Çok fazla istek. Lütfen bekleyin.' }, { status: 429 });

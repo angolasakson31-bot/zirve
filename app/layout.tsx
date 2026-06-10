@@ -6,6 +6,7 @@ import './globals.css';
 import MediaGuard from '@/components/MediaGuard';
 import AgeGate from '@/components/AgeGate';
 import { isMaintenanceOn, isBannedIp } from '@/lib/maintenanceMode';
+import { getClientIpFromHeaders } from '@/lib/get-ip';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,8 +36,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const banSkip = skip || pathname.startsWith('/engellendi');
   if (!banSkip) {
-    const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim() ?? '';
-    if (ip && await isBannedIp(ip)) {
+    const ip = getClientIpFromHeaders(headersList);
+    if (ip && ip !== '0.0.0.0' && await isBannedIp(ip)) {
       redirect('/engellendi');
     }
   }

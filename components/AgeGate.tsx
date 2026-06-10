@@ -21,7 +21,8 @@ function writeConfirmed() {
   try { localStorage.setItem(LS_KEY, '1'); } catch {}
   try {
     const exp = new Date(Date.now() + ONE_YEAR * 1000).toUTCString();
-    document.cookie = `${COOKIE_NAME}=1; expires=${exp}; path=/; SameSite=Lax`;
+    const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${COOKIE_NAME}=1; expires=${exp}; path=/; SameSite=Lax${secure}`;
   } catch {}
 }
 
