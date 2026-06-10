@@ -41,14 +41,14 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">
-              En iyi kim{' '}
+              En iyi hangisi{' '}
               <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
                 sen karar ver
               </span>
             </h1>
             <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-              Fotoğrafını yükle, puanlan, zirveye çık. Kim olduğunu bilmeden
-              fotoğrafları puanla, halk kimi seçer?
+              Fotoğrafını yükle, puanlan, zirveye çık. Ne olduğunu bilmeden
+              fotoğrafları puanla, halk hangisini seçer?
               Takip kodunu al, zirvede kal ve sana ulaşsınlar.
             </p>
           </div>
