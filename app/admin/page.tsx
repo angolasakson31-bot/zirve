@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Ban, Eye, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download, ImagePlus, X, ShieldOff } from 'lucide-react';
+import { Trash2, Ban, Eye, EyeOff, Lock, RefreshCw, CheckCircle, Trophy, Archive, Download, ImagePlus, X, ShieldOff, Flag, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 
 interface AdminComment {
@@ -33,6 +33,50 @@ interface BannedEntry {
   createdAt: string;
   photoUrl?: string | null;
 }
+
+interface AdminReport {
+  _id: string;
+  photoId: string;
+  reason: 'ncii' | 'minor' | 'insult' | 'copyright' | 'personal_data' | 'other';
+  details: string;
+  createdAt: string;
+  photo: {
+    _id: string;
+    url: string;
+    trackingCode: string;
+    reportCount: number;
+    isHidden: boolean;
+    moderationStatus: string;
+  } | null;
+}
+
+interface AdminKvkkRequest {
+  _id: string;
+  name: string;
+  email: string;
+  requestType: 'access' | 'delete' | 'correct' | 'object' | 'other';
+  details: string;
+  trackingCode: string;
+  status: 'open' | 'in_progress' | 'resolved';
+  createdAt: string;
+}
+
+const REPORT_REASON_LABEL: Record<AdminReport['reason'], string> = {
+  ncii:          'Rıza dışı mahrem içerik',
+  minor:         '18 yaşından küçük',
+  insult:        'Hakaret / iftira',
+  copyright:     'Telif hakkı',
+  personal_data: 'Kişisel veri ifşası',
+  other:         'Diğer',
+};
+
+const KVKK_TYPE_LABEL: Record<AdminKvkkRequest['requestType'], string> = {
+  access:  'Bilgi talebi',
+  delete:  'Silme talebi',
+  correct: 'Düzeltme talebi',
+  object:  'İşlemeye itiraz',
+  other:   'Diğer',
+};
 
 const REASONS = ['Uygunsuz fotoğraf', 'Yanlış iletişim bilgisi'] as const;
 type Reason = typeof REASONS[number];
@@ -113,6 +157,8 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [bannedIps, setBannedIps] = useState<BannedEntry[]>([]);
+  const [reports, setReports] = useState<AdminReport[]>([]);
+  const [kvkkRequests, setKvkkRequests] = useState<AdminKvkkRequest[]>([]);
   const [actionModal, setActionModal] = useState<{ type: 'delete' | 'ban'; photo: AdminPhoto; reason: Reason } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -144,6 +190,56 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchReports = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/reports', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      setReports(data.reports ?? []);
+    }
+  }, []);
+
+  const fetchKvkkRequests = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/kvkk', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      setKvkkRequests(data.requests ?? []);
+    }
+  }, []);
+
+  const handleReportAction = async (photoId: string, action: 'hide' | 'unhide' | 'resolve' | 'dismiss') => {
+    const res = await fetch('/api/admin/reports', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ photoId, action }),
+    });
+    if (res.ok) {
+      const label =
+        action === 'hide' ? 'Fotoğraf gizlendi.' :
+        action === 'unhide' ? 'Fotoğraf yeniden açıldı.' :
+        action === 'resolve' ? 'Şikâyetler çözüldü işaretlendi.' :
+        'Şikâyetler geçersiz sayıldı.';
+      showToast(label);
+      fetchReports(password);
+      fetchPhotos(password);
+    } else {
+      showToast('İşlem başarısız.');
+    }
+  };
+
+  const handleKvkkAction = async (requestId: string, status: 'in_progress' | 'resolved') => {
+    const res = await fetch('/api/admin/kvkk', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ requestId, status }),
+    });
+    if (res.ok) {
+      showToast(status === 'resolved' ? 'Talep çözüldü.' : 'Talep işleme alındı.');
+      fetchKvkkRequests(password);
+    } else {
+      showToast('İşlem başarısız.');
+    }
+  };
+
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch('/api/admin/photos', { headers: { 'x-admin-password': password } });
@@ -152,6 +248,8 @@ export default function AdminPage() {
     const data = await res.json();
     setPhotos(data.photos ?? []);
     fetchBannedIps(password);
+    fetchReports(password);
+    fetchKvkkRequests(password);
   };
 
   useEffect(() => {
@@ -422,6 +520,150 @@ export default function AdminPage() {
                   >
                     <ShieldOff className="w-3.5 h-3.5" /> Kaldır
                   </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bekleyen Şikâyetler */}
+        {reports.length > 0 && (
+          <div className="mb-8 bg-zinc-900 border border-red-900/30 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 bg-red-500/5 border-b border-red-900/30">
+              <Flag className="w-4 h-4 text-red-400" />
+              <span className="text-sm font-bold text-red-400 uppercase tracking-wide">Bekleyen Şikâyetler</span>
+              <span className="text-zinc-600 text-xs ml-auto">{reports.length}</span>
+            </div>
+            <div className="divide-y divide-zinc-800/50">
+              {reports.map(r => (
+                <div key={r._id} className="flex items-start gap-3 px-4 py-3">
+                  {r.photo?.url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={r.photo.url}
+                      alt=""
+                      onClick={() => r.photo?.url && setLightbox(r.photo.url)}
+                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0 cursor-zoom-in"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-600 text-xs flex-shrink-0">
+                      yok
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-red-300 text-xs font-semibold bg-red-500/10 border border-red-500/30 rounded-full px-2 py-0.5">
+                        {REPORT_REASON_LABEL[r.reason]}
+                      </span>
+                      {r.photo?.trackingCode && (
+                        <span className="text-zinc-500 text-xs font-mono">{r.photo.trackingCode}</span>
+                      )}
+                      {r.photo && (
+                        <span className="text-zinc-600 text-xs">
+                          {r.photo.reportCount} şikâyet
+                          {r.photo.isHidden && <span className="text-amber-400 ml-1">· gizli</span>}
+                        </span>
+                      )}
+                    </div>
+                    {r.details && (
+                      <p className="text-zinc-400 text-xs leading-snug break-words">{r.details}</p>
+                    )}
+                    <p className="text-zinc-600 text-[10px] mt-1">
+                      {new Date(r.createdAt).toLocaleString('tr-TR')}
+                    </p>
+                  </div>
+                  {r.photo && (
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      {r.photo.isHidden ? (
+                        <button
+                          onClick={() => handleReportAction(r.photoId, 'unhide')}
+                          className="flex items-center gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10 px-2 py-1 rounded-lg transition"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Aç
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReportAction(r.photoId, 'hide')}
+                          className="flex items-center gap-1 text-xs text-amber-400 hover:bg-amber-500/10 px-2 py-1 rounded-lg transition"
+                        >
+                          <EyeOff className="w-3.5 h-3.5" /> Gizle
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleReportAction(r.photoId, 'resolve')}
+                        className="flex items-center gap-1 text-xs text-zinc-300 hover:bg-zinc-700 px-2 py-1 rounded-lg transition"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" /> Tamam
+                      </button>
+                      <button
+                        onClick={() => handleReportAction(r.photoId, 'dismiss')}
+                        className="flex items-center gap-1 text-xs text-zinc-500 hover:bg-zinc-700 px-2 py-1 rounded-lg transition"
+                      >
+                        <X className="w-3.5 h-3.5" /> Geçersiz
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* KVKK Talepleri */}
+        {kvkkRequests.length > 0 && (
+          <div className="mb-8 bg-zinc-900 border border-sky-900/30 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-3 bg-sky-500/5 border-b border-sky-900/30">
+              <ShieldCheck className="w-4 h-4 text-sky-400" />
+              <span className="text-sm font-bold text-sky-400 uppercase tracking-wide">KVKK Talepleri</span>
+              <span className="text-zinc-600 text-xs ml-auto">{kvkkRequests.length}</span>
+            </div>
+            <div className="divide-y divide-zinc-800/50">
+              {kvkkRequests.map(k => (
+                <div key={k._id} className="px-4 py-3 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sky-300 text-xs font-semibold bg-sky-500/10 border border-sky-500/30 rounded-full px-2 py-0.5">
+                      {KVKK_TYPE_LABEL[k.requestType]}
+                    </span>
+                    <span className="text-zinc-300 text-sm font-medium">{k.name}</span>
+                    <a
+                      href={`mailto:${k.email}?subject=KVKK%20Başvurunuz%20Hakkında&body=Sayın%20${encodeURIComponent(k.name)},%0A%0AKVKK%20kapsamındaki%20talebinizle%20ilgili...`}
+                      className="text-amber-400 hover:text-amber-300 text-xs underline underline-offset-2"
+                    >
+                      {k.email}
+                    </a>
+                    {k.trackingCode && (
+                      <span className="text-zinc-500 text-xs font-mono">[{k.trackingCode}]</span>
+                    )}
+                    {k.status === 'in_progress' && (
+                      <span className="text-amber-400 text-[10px] uppercase ml-auto">işlemde</span>
+                    )}
+                  </div>
+                  {k.details && (
+                    <p className="text-zinc-400 text-xs leading-snug whitespace-pre-wrap break-words">
+                      {k.details}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <p className="text-zinc-600 text-[10px]">
+                      {new Date(k.createdAt).toLocaleString('tr-TR')}
+                    </p>
+                    <div className="flex gap-1">
+                      {k.status !== 'in_progress' && (
+                        <button
+                          onClick={() => handleKvkkAction(k._id, 'in_progress')}
+                          className="flex items-center gap-1 text-xs text-amber-400 hover:bg-amber-500/10 px-2 py-1 rounded-lg transition"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> İşleme Al
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleKvkkAction(k._id, 'resolved')}
+                        className="flex items-center gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10 px-2 py-1 rounded-lg transition"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" /> Çözüldü
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
