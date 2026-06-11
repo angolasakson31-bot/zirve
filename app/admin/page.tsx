@@ -241,6 +241,21 @@ export default function AdminPage() {
     setRecalcing(false);
   };
 
+  const setChampionDirect = async (photoId: string, unset = false) => {
+    const res = await fetch('/api/admin/set-champion', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ photoId, unset }),
+    });
+    if (res.ok) {
+      showToast(unset ? 'Şampiyonluk kaldırıldı.' : 'Şampiyon olarak ayarlandı.');
+      fetchPhotos(password);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error ?? 'İşlem başarısız.');
+    }
+  };
+
   const downloadPhoto = (url: string, code: string) => {
     // Insert fl_attachment into Cloudinary URL to force browser download
     const downloadUrl = url.replace('/upload/', '/upload/fl_attachment/');
@@ -595,6 +610,18 @@ export default function AdminPage() {
                         ))}
                       </div>
                     </div>
+                    {/* Doğrudan şampiyon ayarı — oy/tarih kısıtı bypass */}
+                    <button
+                      onClick={() => setChampionDirect(photo._id, photo.isChampion)}
+                      className={`w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition ${
+                        photo.isChampion
+                          ? 'bg-amber-400 text-black hover:bg-amber-300'
+                          : 'bg-amber-500/15 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30'
+                      }`}
+                    >
+                      <Trophy className="w-3 h-3" />
+                      {photo.isChampion ? 'Şampiyonluğu Kaldır' : 'Şampiyon Yap'}
+                    </button>
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => downloadPhoto(photo.url, photo.trackingCode)}
