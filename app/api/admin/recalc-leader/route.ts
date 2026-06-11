@@ -3,6 +3,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { turkishStartOfDay } from '@/lib/daily-reset';
+import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
 
 export const runtime = 'nodejs';
 
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest) {
   const candidates = await Photo.find({
     championDate: null,
     isArchived: false,
+    isHidden: { $ne: true },
+    moderationStatus: { $ne: 'rejected' },
     voteCount: { $gte: LEADER_THRESHOLD },
     createdAt: { $gte: startOfDay },
   }).select('totalScore voteCount').lean();
@@ -27,9 +30,12 @@ export async function POST(req: NextRequest) {
   if (candidates.length === 0)
     return NextResponse.json({ ok: true, champion: null });
 
-  const best = candidates.reduce((a, b) =>
-    (a.totalScore / a.voteCount) >= (b.totalScore / b.voteCount) ? a : b
-  );
+  // Bayes skoru kullan — public leaderboard sıralamasıyla tutarlı kalsın.
+  const best = candidates.reduce((a, b) => {
+    const sa = bayesianScore(a.totalScore, a.voteCount, DEFAULT_MEAN);
+    const sb = bayesianScore(b.totalScore, b.voteCount, DEFAULT_MEAN);
+    return sa >= sb ? a : b;
+  });
 
   await Photo.findByIdAndUpdate(best._id, { isChampion: true });
 

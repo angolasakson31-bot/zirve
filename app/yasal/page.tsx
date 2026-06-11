@@ -7,9 +7,21 @@ export const metadata: Metadata = {
   description: 'Zirve X platformuna ait yasal uyarı, kullanım koşulları ve gizlilik politikası.',
 };
 
+// Saatte bir yeniden oluştur — dinamik tarih damgası ay değiştiğinde
+// otomatik güncellenir.
+export const revalidate = 3600;
+
 const CONTACT_EMAIL = 'angolasakson34@gmail.com';
 const CONTACT_TELEGRAM = '@zirvex_destek';
-const UPDATE_DATE = 'Mayıs 2026';
+
+function currentUpdateDate(): string {
+  const months = [
+    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+  ];
+  const now = new Date();
+  return `${months[now.getMonth()]} ${now.getFullYear()}`;
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -41,7 +53,7 @@ export default function YasalPage() {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <div>
           <h1 className="text-xl font-black text-white mb-1">Yasal Uyarı ve Kullanım Koşulları</h1>
-          <p className="text-zinc-600 text-xs">Son güncelleme: {UPDATE_DATE}</p>
+          <p className="text-zinc-600 text-xs">Son güncelleme: {currentUpdateDate()}</p>
         </div>
 
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 leading-relaxed">
@@ -265,12 +277,28 @@ export default function YasalPage() {
 
           {/* Çerez */}
           <Section title="13. Çerez Politikası">
-            <p>
-              Platform, oturum yönetimi ve takip kodu işlevleri için teknik çerezler kullanmaktadır.
-              Bu çerezler kişisel veri içermez ve yalnızca platformun düzgün çalışması amacıyla
-              kullanılır. Üçüncü taraf reklam veya analitik çerezi kullanılmamaktadır.
-              Tarayıcı ayarlarından çerezleri devre dışı bırakabilirsiniz; ancak bazı özellikler
-              çalışmayabilir.
+            <p className="font-semibold text-zinc-400">Zorunlu çerezler (varsayılan):</p>
+            <ul className="list-disc list-inside space-y-1 pl-1">
+              <li>
+                <strong className="text-zinc-400">Yaş onayı:</strong> 18+ teyidi için tarayıcıda kısa
+                ömürlü işaret ve sunucuda HttpOnly imzalı doğrulama çerezi.
+              </li>
+              <li>
+                <strong className="text-zinc-400">Oturum yönetimi:</strong> Takip kodu görüntüleme
+                ve fotoğraf yükleme akışları için tarayıcı yerel depolaması.
+              </li>
+            </ul>
+            <p className="font-semibold text-zinc-400 mt-1">Onaylı çerezler (Kabul ederseniz):</p>
+            <ul className="list-disc list-inside space-y-1 pl-1">
+              <li>
+                <strong className="text-zinc-400">Ziyaretçi sayacı:</strong> Anonim oturum kimliği
+                ile günlük tekil ziyaretçi sayısı tutulur. Onay vermezseniz bu kayıt yapılmaz —
+                sadece toplam sayıyı görürsünüz.
+              </li>
+            </ul>
+            <p className="mt-1">
+              Üçüncü taraf reklam veya analitik çerezi kullanılmamaktadır. Çerez tercihinizi sayfanın
+              alt köşesindeki banner üzerinden veya tarayıcı ayarlarınızdan değiştirebilirsiniz.
             </p>
           </Section>
 
@@ -320,7 +348,7 @@ export default function YasalPage() {
 
         <div className="border-t border-zinc-800 pt-4 flex items-center justify-between">
           <p className="text-zinc-700 text-xs">
-            Son güncelleme: {UPDATE_DATE} · © {new Date().getFullYear()} ZİRVE X
+            Son güncelleme: {currentUpdateDate()} · © {new Date().getFullYear()} ZİRVE X
           </p>
           <Link
             href="/"

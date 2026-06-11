@@ -41,6 +41,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
       return NextResponse.json({ error: 'Kod bulunamadı.' }, { status: 404 });
     }
 
+    // 2 yıllık KVKK retention sonunda anonimleştirilen fotoğraflar için url boş
+    // — "kaldırıldı" gibi davran, geri kalan istatistikleri sızdırma.
+    if (!photo.url) {
+      return NextResponse.json({ deleted: true, anonymized: true });
+    }
+
     const TZ = 3 * 60 * 60 * 1000;
     const trDate = toTurkishDateStr(photo.createdAt);
     const [y, m, d] = trDate.split('-').map(Number);

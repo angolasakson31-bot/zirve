@@ -19,6 +19,9 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://res.cloudinary.com",
       "connect-src 'self'",
       "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
     ].join('; '),
   },
 ];

@@ -34,15 +34,13 @@ export async function POST(req: NextRequest) {
     const banned = await BannedIP.exists({ ip });
     if (banned) return NextResponse.json({ error: 'Erişiminiz kısıtlanmıştır.' }, { status: 403 });
 
-    const incFields: Record<string, number> = { totalScore: score, voteCount: 1 };
-    if (score >= 6) incFields.likeCount = 1;
-    else incFields.dislikeCount = 1;
-
     const voteFilter: Record<string, unknown> = {
       _id: photoId,
       voters: { $ne: ip },
       uploaderIp: { $ne: ip },
       isArchived: false,
+      isHidden: { $ne: true },
+      moderationStatus: { $ne: 'rejected' },
       $expr: {
         $and: [
           { $lt: [{ $size: '$voters' }, MAX_VOTERS] },
@@ -55,28 +53,53 @@ export async function POST(req: NextRequest) {
       voteFilter.uploaderDevice = { $ne: dt };
     }
 
-    const pushFields: Record<string, unknown> = { voters: ip };
-    if (dt) pushFields.deviceVoters = dt;
+    // Tek atomik aggregation pipeline: skor inc + voters push + average hesabı
+    // hepsi tek MongoDB işleminde. Önceki "findOneAndUpdate + save" pattern'i
+    // eşzamanlı oylarda average alanını bozuyordu.
+    const updatePipeline: Record<string, unknown>[] = [
+      {
+        $set: {
+          totalScore: { $add: ['$totalScore', score] },
+          voteCount:  { $add: ['$voteCount', 1] },
+          likeCount:  {
+            $cond: [{ $gte: [score, 6] }, { $add: ['$likeCount', 1] }, '$likeCount'],
+          },
+          dislikeCount: {
+            $cond: [{ $lt: [score, 6] }, { $add: ['$dislikeCount', 1] }, '$dislikeCount'],
+          },
+          voters: { $concatArrays: ['$voters', [ip]] },
+          ...(dt ? { deviceVoters: { $concatArrays: ['$deviceVoters', [dt]] } } : {}),
+        },
+      },
+      {
+        $set: {
+          average: {
+            $cond: [
+              { $gt: ['$voteCount', 0] },
+              { $divide: ['$totalScore', '$voteCount'] },
+              0,
+            ],
+          },
+        },
+      },
+    ];
 
     const photo = await Photo.findOneAndUpdate(
       voteFilter,
-      { $inc: incFields, $push: pushFields },
+      updatePipeline,
       { new: true }
     );
 
     if (!photo) {
-      const existing = await Photo.findById(photoId).select('isArchived voters deviceVoters uploaderIp uploaderDevice');
-      if (!existing) return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
-      if (existing.isArchived) return NextResponse.json({ error: 'Arşivlenmiş fotoğrafa oy verilemez.' }, { status: 403 });
-      if (existing.uploaderIp === ip || (dt && existing.uploaderDevice === dt))
-        return NextResponse.json({ error: 'Kendi fotoğrafınıza oy veremezsiniz.' }, { status: 403 });
-      if (existing.voters.includes(ip) || (dt && existing.deviceVoters?.includes(dt)))
-        return NextResponse.json({ error: 'Zaten oyladınız.' }, { status: 409 });
-      return NextResponse.json({ error: 'Oy verilemedi.' }, { status: 400 });
+      const existing = await Photo.findById(photoId).select('isArchived isHidden moderationStatus voters deviceVoters uploaderIp uploaderDevice');
+      if (!existing) return NextResponse.json({ error: 'Oy verilemedi.' }, { status: 404 });
+      // Tüm "neden başarısız" durumlarını tek mesajda birleştir — kimlik
+      // fingerprint sızıntısını önler (saldırgan uploader/voter olup olmadığını
+      // hata mesajından öğrenemez).
+      if (existing.isArchived || existing.isHidden || existing.moderationStatus === 'rejected')
+        return NextResponse.json({ error: 'Bu fotoğraf şu an oylanamıyor.' }, { status: 403 });
+      return NextResponse.json({ error: 'Oy verilemedi.' }, { status: 403 });
     }
-
-    photo.average = photo.totalScore / photo.voteCount;
-    await photo.save();
 
     let leaderChanged = false;
     if (photo.voteCount >= LEADER_THRESHOLD) {

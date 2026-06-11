@@ -2,49 +2,24 @@
 import { useEffect, useState } from 'react';
 import { Cookie, X } from 'lucide-react';
 import Link from 'next/link';
-
-const LS_KEY = 'zirve_cookie_consent';
-const ONE_YEAR = 365 * 24 * 60 * 60 * 1000;
-
-interface ConsentRecord {
-  accepted: boolean;
-  at: number;
-}
-
-function read(): ConsentRecord | null {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as ConsentRecord;
-    if (Date.now() - parsed.at > ONE_YEAR) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function write(accepted: boolean) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify({ accepted, at: Date.now() }));
-  } catch {}
-}
+import { readConsent, writeConsent } from '@/lib/consent';
 
 export default function CookieConsent() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (read() === null) setShow(true);
+    if (readConsent() === null) setShow(true);
   }, []);
 
   if (!show) return null;
 
   const accept = () => {
-    write(true);
+    writeConsent(true);
     setShow(false);
   };
 
   const reject = () => {
-    write(false);
+    writeConsent(false);
     setShow(false);
   };
 
@@ -59,7 +34,9 @@ export default function CookieConsent() {
             <p className="font-bold text-zinc-200 text-sm">Çerez Tercihleri</p>
             <p className="text-zinc-500 text-xs leading-relaxed mt-1">
               Platform, oturum yönetimi ve yaş doğrulama gibi <strong className="text-zinc-400">teknik çerezler</strong>{' '}
-              kullanır. Üçüncü taraf reklam veya analitik çerezi kullanılmaz. Detaylar için{' '}
+              kullanır. <strong className="text-zinc-400">Kabul ediyorum</strong>'a basarsanız ziyaretçi sayacı için
+              anonim oturum kimliği de saklanır. Üçüncü taraf reklam veya analitik çerezi kullanılmaz.
+              Detaylar için{' '}
               <Link href="/yasal" className="text-amber-500 hover:underline">Çerez Politikası</Link>'na bakabilirsiniz.
             </p>
           </div>

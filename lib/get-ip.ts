@@ -10,13 +10,14 @@ export function getClientIp(req: NextRequest | Request | ReqLike): string {
 }
 
 export function getClientIpFromHeaders(h: HeaderLike): string {
+  // Render LB her zaman x-forwarded-for'a istemci IP'sini ekler. Son entry
+  // güvenilir kabul edilir. x-real-ip fallback'i istemci tarafından
+  // spoof'lanabildiği için kullanılmıyor — Render bunu zaten set'liyor olur.
   const xff = h.get('x-forwarded-for');
   if (xff) {
     const parts = xff.split(',').map(s => s.trim()).filter(Boolean);
     const last = parts[parts.length - 1];
     if (last) return last;
   }
-  const realIp = h.get('x-real-ip');
-  if (realIp) return realIp.trim();
   return FALLBACK;
 }

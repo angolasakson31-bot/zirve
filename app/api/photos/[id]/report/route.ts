@@ -12,7 +12,8 @@ export const runtime = 'nodejs';
 const checkLimit = rateLimit(5);
 
 // Bir fotoğrafa kaç farklı şikâyet geldikten sonra otomatik gizlenir?
-const AUTO_HIDE_THRESHOLD = 3;
+// Daha düşük eşik küçük bir IP rotasyonu ile lider fotoğrafları sansürleyebilirdi.
+const AUTO_HIDE_THRESHOLD = 10;
 
 const VALID_REASONS: ReportReason[] = [
   'ncii', 'minor', 'insult', 'copyright', 'personal_data', 'other',

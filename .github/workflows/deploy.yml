@@ -5,10 +5,14 @@ on:
     branches:
       - main
 
+# En düşük yetki — yalnızca deploy hook'unu tetiklemek için workflow'un
+# repo içeriğine veya başka bir şeye erişmesine gerek yok.
+permissions: {}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render Deploy
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          curl --fail --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"

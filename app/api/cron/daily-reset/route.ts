@@ -40,14 +40,21 @@ export async function POST(req: NextRequest) {
       { $set: { isArchived: true } }
     );
 
-    // KVKK: 2 yıldan eski kişisel verileri anonimleştir (sessizce, hata olursa
-    // ana akış etkilenmesin).
+    // KVKK: 2 yıldan eski kişisel verileri anonimleştir + Cloudinary'den sil.
+    // Hata olursa ana akış etkilenmesin ama bilgilendir.
     let anonymized = 0;
+    let cloudinaryDeleted = 0;
+    let cloudinaryFailed = 0;
+    let anonymizeError: string | null = null;
     try {
       const r = await anonymizeOldPersonalData();
       anonymized = r.anonymized;
+      cloudinaryDeleted = r.cloudinaryDeleted;
+      cloudinaryFailed = r.cloudinaryFailed;
+      console.log(`[kvkk] anonymized=${anonymized} cloudinaryDeleted=${cloudinaryDeleted} cloudinaryFailed=${cloudinaryFailed}`);
     } catch (err) {
-      console.error('kvkk anonymize error:', err);
+      anonymizeError = err instanceof Error ? err.message : 'unknown';
+      console.error('[kvkk] anonymize error:', err);
     }
 
     return NextResponse.json({
@@ -55,6 +62,9 @@ export async function POST(req: NextRequest) {
       champion: leader?._id ?? null,
       archived: result.modifiedCount,
       anonymized,
+      cloudinaryDeleted,
+      cloudinaryFailed,
+      anonymizeError,
     });
   } catch {
     return NextResponse.json({ error: 'Sıfırlama başarısız.' }, { status: 500 });

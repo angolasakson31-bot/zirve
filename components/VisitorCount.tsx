@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { hasTrackingConsent, CONSENT_EVENT } from '@/lib/consent';
 
 function getSessionId(): string {
   try {
@@ -18,11 +19,21 @@ function getSessionId(): string {
 
 export default function VisitorCount() {
   const [count, setCount] = useState<number | null>(null);
+  const pingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const sessionId = getSessionId();
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/visitors');
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.count === 'number') setCount(data.count);
+        }
+      } catch {}
+    };
 
     const ping = async () => {
+      const sessionId = getSessionId();
       try {
         const res = await fetch('/api/visitors', {
           method: 'POST',
@@ -36,22 +47,36 @@ export default function VisitorCount() {
       } catch {}
     };
 
-    const poll = async () => {
-      try {
-        const res = await fetch('/api/visitors');
-        if (res.ok) {
-          const data = await res.json();
-          if (typeof data.count === 'number') setCount(data.count);
-        }
-      } catch {}
+    const startPing = () => {
+      if (pingTimerRef.current) return;
+      ping();
+      pingTimerRef.current = setInterval(ping, 60_000);
+    };
+    const stopPing = () => {
+      if (pingTimerRef.current) {
+        clearInterval(pingTimerRef.current);
+        pingTimerRef.current = null;
+      }
     };
 
-    ping();
-    const pingInterval = setInterval(ping, 60_000);  // session kaydı — dakikada bir
-    const pollInterval = setInterval(poll, 10_000);  // sayı tazeleme — 10 saniyede bir
+    // Sayı tazeleme her zaman çalışır — anonim, KVKK kapsamı dışı.
+    poll();
+    const pollInterval = setInterval(poll, 10_000);
+
+    // Ping (oturum kimliği kaydı) yalnızca çerez onayı kabul edildiyse.
+    if (hasTrackingConsent()) startPing();
+
+    const handleConsent = (e: Event) => {
+      const detail = (e as CustomEvent<{ accepted: boolean }>).detail;
+      if (detail?.accepted) startPing();
+      else stopPing();
+    };
+    window.addEventListener(CONSENT_EVENT, handleConsent);
+
     return () => {
-      clearInterval(pingInterval);
       clearInterval(pollInterval);
+      stopPing();
+      window.removeEventListener(CONSENT_EVENT, handleConsent);
     };
   }, []);
 

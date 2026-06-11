@@ -36,10 +36,38 @@ export async function GET(req: NextRequest) {
       moderationStatus: { $ne: 'rejected' },
     };
 
-    const leader = await Photo.findOne({ isChampion: true, ...visibilityFilter })
-      .select('url albumUrls average voteCount createdAt comments blurPlaceholder');
-    const yesterday = await Photo.findOne({ championDate: getYesterdayStr(), ...visibilityFilter })
-      .select('url albumUrls average voteCount championDate comments blurPlaceholder');
+    type LeaderDoc = {
+      _id: unknown;
+      url: string;
+      albumUrls?: string[];
+      average: number;
+      voteCount: number;
+      createdAt: Date;
+      championDate?: string;
+      blurPlaceholder?: string;
+      comments?: { text: string; createdAt: Date; userHash?: string }[];
+    };
+
+    const stripComments = (p: LeaderDoc | null) => {
+      if (!p) return null;
+      const { comments, ...rest } = p;
+      return {
+        ...rest,
+        comments: (comments ?? []).map(c => ({ text: c.text, createdAt: c.createdAt })),
+      };
+    };
+
+    const [leaderRaw, yesterdayRaw] = await Promise.all([
+      Photo.findOne({ isChampion: true, ...visibilityFilter })
+        .select('url albumUrls average voteCount createdAt comments blurPlaceholder')
+        .lean<LeaderDoc>(),
+      Photo.findOne({ championDate: getYesterdayStr(), ...visibilityFilter })
+        .select('url albumUrls average voteCount championDate comments blurPlaceholder')
+        .lean<LeaderDoc>(),
+    ]);
+
+    const leader = stripComments(leaderRaw);
+    const yesterday = stripComments(yesterdayRaw);
 
     const allToday = await Photo.find({
       isArchived: false,
