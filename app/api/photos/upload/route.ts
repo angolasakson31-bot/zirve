@@ -9,6 +9,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { turkishStartOfDay } from '@/lib/daily-reset';
 import { hashIp } from '@/lib/hash-ip';
 import { getClientIp } from '@/lib/get-ip';
+import { isPreModerationEnabled } from '@/lib/pre-moderation';
 
 export const runtime = 'nodejs';
 
@@ -189,6 +190,14 @@ export async function POST(req: NextRequest) {
       trackingCode = generateCode();
     }
 
+    // Pre-moderation (admin toggle) açık ise Cloudinary moderation sonucundan
+    // bağımsız olarak fotoğrafı bekleyen kuyruğa al. Kapalı ise mevcut akış:
+    // Cloudinary moderation 'pending' dönerse yine bekletilir.
+    const adminPreModeration = await isPreModerationEnabled();
+    const finalStatus: 'pending' | 'approved' | 'rejected' =
+      adminPreModeration ? 'pending' : moderation.status;
+    const finalIsHidden = adminPreModeration || moderation.status === 'pending';
+
     const photo = await Photo.create({
       cloudinaryId: mainResult.public_id,
       url: mainResult.secure_url,
@@ -199,10 +208,9 @@ export async function POST(req: NextRequest) {
       trackingCode,
       fileHash,
       blurPlaceholder,
-      moderationStatus: moderation.status,
+      moderationStatus: finalStatus,
       moderationLabels: moderation.labels,
-      // Eğer manuel moderasyon "pending" döndüyse otomatik gizle — admin onaylar.
-      isHidden: moderation.status === 'pending',
+      isHidden: finalIsHidden,
     });
 
     return NextResponse.json({

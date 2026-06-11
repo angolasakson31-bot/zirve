@@ -20,6 +20,8 @@ interface AdminPhoto {
   totalScore: number;
   isChampion: boolean;
   isArchived: boolean;
+  isHidden?: boolean;
+  moderationStatus?: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   trackingCode: string;
   contactInfo?: string;
@@ -159,6 +161,8 @@ export default function AdminPage() {
   const [bannedIps, setBannedIps] = useState<BannedEntry[]>([]);
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [kvkkRequests, setKvkkRequests] = useState<AdminKvkkRequest[]>([]);
+  const [preModEnabled, setPreModEnabled] = useState<boolean | null>(null);
+  const [preModBusy, setPreModBusy] = useState(false);
   const [actionModal, setActionModal] = useState<{ type: 'delete' | 'ban'; photo: AdminPhoto; reason: Reason } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -206,6 +210,75 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchPreModStatus = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/pre-moderation', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      setPreModEnabled(Boolean(data.enabled));
+    }
+  }, []);
+
+  const togglePreMod = async () => {
+    if (preModEnabled === null) return;
+    setPreModBusy(true);
+    const target = !preModEnabled;
+    const res = await fetch('/api/admin/pre-moderation', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ enabled: target }),
+    });
+    if (res.ok) {
+      setPreModEnabled(target);
+      showToast(target ? 'Pre-moderation AÇIK: yeni yüklemeler onayınıza düşecek.' : 'Pre-moderation KAPALI: yüklemeler otomatik yayına çıkacak.');
+    } else {
+      showToast('Toggle başarısız.');
+    }
+    setPreModBusy(false);
+  };
+
+  const approvePending = async (photoId: string) => {
+    const res = await fetch('/api/admin/moderate', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ photoId, action: 'approve' }),
+    });
+    if (res.ok) {
+      showToast('Fotoğraf onaylandı, yayına alındı.');
+      fetchPhotos(password);
+    } else {
+      showToast('Onaylama başarısız.');
+    }
+  };
+
+  const rejectPending = async (photoId: string) => {
+    const res = await fetch('/api/admin/moderate', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ photoId, action: 'reject', reason: 'Onay reddedildi' }),
+    });
+    if (res.ok) {
+      showToast('Fotoğraf reddedildi ve silindi.');
+      fetchPhotos(password);
+    } else {
+      showToast('Reddetme başarısız.');
+    }
+  };
+
+  const forceUnhide = async (photoId: string) => {
+    const res = await fetch('/api/admin/unhide', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ photoId }),
+    });
+    if (res.ok) {
+      showToast('Fotoğraf yeniden yayında.');
+      fetchPhotos(password);
+      fetchReports(password);
+    } else {
+      showToast('Açma başarısız.');
+    }
+  };
+
   const handleReportAction = async (photoId: string, action: 'hide' | 'unhide' | 'resolve' | 'dismiss') => {
     const res = await fetch('/api/admin/reports', {
       method: 'POST',
@@ -250,6 +323,7 @@ export default function AdminPage() {
     fetchBannedIps(password);
     fetchReports(password);
     fetchKvkkRequests(password);
+    fetchPreModStatus(password);
   };
 
   useEffect(() => {
@@ -453,7 +527,24 @@ export default function AdminPage() {
             <h1 className="text-xl font-bold">Yönetici Paneli</h1>
             <span className="text-zinc-500 text-sm ml-2">({photos.length} fotoğraf)</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            {preModEnabled !== null && (
+              <button
+                onClick={togglePreMod}
+                disabled={preModBusy}
+                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-bold transition disabled:opacity-40 ${
+                  preModEnabled
+                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40'
+                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 border border-zinc-700'
+                }`}
+                title={preModEnabled
+                  ? 'AÇIK — yeni yüklemeler önce admin onayına düşer'
+                  : 'KAPALI — yeni yüklemeler otomatik yayına çıkar'}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Pre-Mod: {preModEnabled ? 'AÇIK' : 'KAPALI'}
+              </button>
+            )}
             <button onClick={recalcLeader} disabled={recalcing}
               className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition disabled:opacity-40">
               <Trophy className={`w-4 h-4 ${recalcing ? 'animate-pulse' : ''}`} /> Lideri Hesapla
@@ -525,6 +616,64 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Bekleyen Onaylar (pre-moderation) */}
+        {(() => {
+          const pending = photos.filter(p => p.moderationStatus === 'pending');
+          if (pending.length === 0) return null;
+          return (
+            <div className="mb-8 bg-zinc-900 border border-emerald-900/30 rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3 bg-emerald-500/5 border-b border-emerald-900/30">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-bold text-emerald-400 uppercase tracking-wide">Bekleyen Onaylar</span>
+                <span className="text-zinc-600 text-xs ml-auto">{pending.length}</span>
+              </div>
+              <div className="divide-y divide-zinc-800/50">
+                {pending.map(p => (
+                  <div key={p._id} className="flex items-start gap-3 px-4 py-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.url}
+                      alt={p.trackingCode}
+                      onClick={() => setLightbox(p.url)}
+                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0 cursor-zoom-in"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="text-zinc-300 text-xs font-mono">{p.trackingCode}</span>
+                        {p.albumUrls && p.albumUrls.length > 0 && (
+                          <span className="text-zinc-500 text-[10px]">+{p.albumUrls.length} albüm</span>
+                        )}
+                      </div>
+                      {p.contactInfo && (
+                        <p className="text-amber-400/80 text-xs bg-amber-500/10 rounded-lg px-2 py-1 inline-block max-w-full truncate">
+                          {p.contactInfo}
+                        </p>
+                      )}
+                      <p className="text-zinc-600 text-[10px] mt-1">
+                        {new Date(p.createdAt).toLocaleString('tr-TR')} · {p.uploaderIp.slice(0, 10)}…
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => approvePending(p._id)}
+                        className="flex items-center gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10 px-2 py-1 rounded-lg transition"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" /> Onayla
+                      </button>
+                      <button
+                        onClick={() => rejectPending(p._id)}
+                        className="flex items-center gap-1 text-xs text-red-400 hover:bg-red-500/10 px-2 py-1 rounded-lg transition"
+                      >
+                        <X className="w-3.5 h-3.5" /> Reddet
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Bekleyen Şikâyetler */}
         {reports.length > 0 && (
@@ -771,6 +920,16 @@ export default function AdminPage() {
                         <Archive className="w-3 h-3" /> Arşiv
                       </div>
                     )}
+                    {photo.isHidden && !photo.isArchived && (
+                      <div className="absolute top-1.5 right-1.5 bg-red-500/80 text-white text-xs px-2 py-0.5 rounded-lg flex items-center gap-1">
+                        <EyeOff className="w-3 h-3" /> Gizli
+                      </div>
+                    )}
+                    {photo.moderationStatus === 'pending' && (
+                      <div className="absolute bottom-1.5 left-1.5 bg-emerald-500/90 text-white text-xs px-2 py-0.5 rounded-lg flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" /> Onay Bekliyor
+                      </div>
+                    )}
                     {photo.albumUrls && photo.albumUrls.length > 0 && (
                       <div className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-1">
                         <span>+{photo.albumUrls.length}</span>
@@ -852,6 +1011,15 @@ export default function AdminPage() {
                         ))}
                       </div>
                     </div>
+                    {/* Yanlış gizlenmiş fotoğrafı geri aç */}
+                    {photo.isHidden && photo.moderationStatus !== 'pending' && (
+                      <button
+                        onClick={() => forceUnhide(photo._id)}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30"
+                      >
+                        <Eye className="w-3 h-3" /> Geri Aç (gizlemeyi kaldır)
+                      </button>
+                    )}
                     {/* Doğrudan şampiyon ayarı — oy/tarih kısıtı bypass */}
                     <button
                       onClick={() => setChampionDirect(photo._id, photo.isChampion)}
