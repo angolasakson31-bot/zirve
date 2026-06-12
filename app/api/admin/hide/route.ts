@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
       );
 
     await Photo.updateOne({ _id: photoId }, { $set: { isHidden: true } });
+    invalidateLeaderCache();
 
     return NextResponse.json({ ok: true });
   } catch (err) {

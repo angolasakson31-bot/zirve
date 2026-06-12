@@ -3,6 +3,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -21,5 +22,6 @@ export async function DELETE(req: NextRequest) {
 
   await Photo.deleteMany({});
 
+  invalidateLeaderCache();
   return NextResponse.json({ ok: true, deleted: all.length });
 }

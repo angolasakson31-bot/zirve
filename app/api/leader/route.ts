@@ -5,24 +5,24 @@ import { rateLimit } from '@/lib/rate-limit';
 import { maybeRunDailyReset, turkishStartOfDay } from '@/lib/daily-reset';
 import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
 import { getClientIp } from '@/lib/get-ip';
+import { readLeaderCache, writeLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const checkLimit = rateLimit(60);
 
-type LeaderCache = { data: unknown; at: number };
-let leaderCache: LeaderCache | null = null;
-const CACHE_TTL = 15_000; // 15 saniye
-
 export async function GET(req: NextRequest) {
   const ip = getClientIp(req);
   if (!checkLimit(ip))
     return NextResponse.json({ error: 'Çok fazla istek.' }, { status: 429 });
 
-  // Cache geçerliyse hemen dön
-  if (leaderCache && Date.now() - leaderCache.at < CACHE_TTL) {
-    return NextResponse.json(leaderCache.data);
+  // Cache geçerliyse hemen dön (vote ve admin endpoint'leri liderlik
+  // değiştirince invalidateLeaderCache() ile sıfırlar — eski veri
+  // gösterilmez).
+  const cached = readLeaderCache();
+  if (cached !== null) {
+    return NextResponse.json(cached);
   }
 
   try {
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
       }));
 
     const payload = { leader, yesterday, allPhotos };
-    leaderCache = { data: payload, at: Date.now() };
+    writeLeaderCache(payload);
     return NextResponse.json(payload);
   } catch {
     return NextResponse.json({ error: 'Lider alınamadı.' }, { status: 500 });

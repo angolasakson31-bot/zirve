@@ -6,6 +6,7 @@ import Photo from '@/models/Photo';
 import DeletedPhoto from '@/models/DeletedPhoto';
 import Report from '@/models/Report';
 import cloudinary from '@/lib/cloudinary';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
         { photoId, status: 'open' },
         { $set: { status: 'dismissed' } },
       );
+      invalidateLeaderCache();
       return NextResponse.json({ ok: true, action: 'approve' });
     }
 
@@ -77,6 +79,7 @@ export async function POST(req: NextRequest) {
     await destroyCloudinaryAsset(photo.cloudinaryId);
     await Photo.deleteOne({ _id: photoId });
 
+    invalidateLeaderCache();
     return NextResponse.json({ ok: true, action: 'reject' });
   } catch (err) {
     console.error('admin moderate error:', err);

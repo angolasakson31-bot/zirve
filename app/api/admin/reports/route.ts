@@ -4,6 +4,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Report from '@/models/Report';
 import Photo from '@/models/Photo';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Geçersiz işlem.' }, { status: 400 });
     }
 
+    invalidateLeaderCache();
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('admin reports POST error:', err);

@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongoose';
 import cloudinary from '@/lib/cloudinary';
 import Photo from '@/models/Photo';
 import DeletedPhoto from '@/models/DeletedPhoto';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -59,5 +60,6 @@ export async function DELETE(
     }
   }
 
+  invalidateLeaderCache();
   return NextResponse.json({ ok: true });
 }

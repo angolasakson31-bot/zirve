@@ -6,6 +6,7 @@ import BannedIP from '@/models/BannedIP';
 import { rateLimit } from '@/lib/rate-limit';
 import { hashIp } from '@/lib/hash-ip';
 import { getClientIp } from '@/lib/get-ip';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -49,6 +50,8 @@ export async function POST(req: NextRequest) {
       createdAt: c.createdAt,
     }));
 
+    // Liderlik kartı yorumları içerir — yeni yorum cache'i invalidate eder.
+    invalidateLeaderCache();
     return NextResponse.json({ comments: safeComments });
   } catch {
     return NextResponse.json({ error: 'Yorum eklenemedi.' }, { status: 500 });

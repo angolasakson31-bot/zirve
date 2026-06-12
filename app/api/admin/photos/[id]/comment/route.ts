@@ -3,6 +3,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { hashIp } from '@/lib/hash-ip';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,7 @@ export async function POST(
 
   if (!photo) return NextResponse.json({ error: 'Bulunamadı.' }, { status: 404 });
 
+  invalidateLeaderCache();
   return NextResponse.json({ ok: true, comments: photo.comments });
 }
 
@@ -55,5 +57,6 @@ export async function DELETE(
 
   if (!photo) return NextResponse.json({ error: 'Bulunamadı.' }, { status: 404 });
 
+  invalidateLeaderCache();
   return NextResponse.json({ ok: true, comments: photo.comments });
 }

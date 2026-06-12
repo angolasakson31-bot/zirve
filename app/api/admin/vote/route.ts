@@ -4,6 +4,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { turkishStartOfDay } from '@/lib/daily-reset';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -64,6 +65,8 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    invalidateLeaderCache();
 
     return NextResponse.json({
       photo: { _id: photo._id, average: photo.average, voteCount: photo.voteCount },

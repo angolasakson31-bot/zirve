@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { turkishStartOfDay } from '@/lib/daily-reset';
 import { bayesianScore, DEFAULT_MEAN } from '@/lib/bayesian';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -27,8 +28,10 @@ export async function POST(req: NextRequest) {
     createdAt: { $gte: startOfDay },
   }).select('totalScore voteCount').lean();
 
-  if (candidates.length === 0)
+  if (candidates.length === 0) {
+    invalidateLeaderCache();
     return NextResponse.json({ ok: true, champion: null });
+  }
 
   // Bayes skoru kullan — public leaderboard sıralamasıyla tutarlı kalsın.
   const best = candidates.reduce((a, b) => {
@@ -48,5 +51,6 @@ export async function POST(req: NextRequest) {
     await Photo.findByIdAndUpdate(best._id, { isChampion: true });
   }
 
+  invalidateLeaderCache();
   return NextResponse.json({ ok: true, champion: best._id });
 }

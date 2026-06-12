@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { hashIp } from '@/lib/hash-ip';
 import { getClientIp } from '@/lib/get-ip';
 import { bayesianScore, DEFAULT_MEAN, BAYESIAN_C } from '@/lib/bayesian';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(30);
@@ -57,19 +58,29 @@ export async function POST(req: NextRequest) {
     // Tek atomik aggregation pipeline: skor inc + voters push + average hesabı
     // hepsi tek MongoDB işleminde. Önceki "findOneAndUpdate + save" pattern'i
     // eşzamanlı oylarda average alanını bozuyordu.
+    // Defense-in-depth: $ifNull her alanın null olabileceği eski dokümanları
+    // güvenli işler. Yeni Photo'lar zaten schema default'ı ile 0/[] başlar.
     const updatePipeline: Record<string, unknown>[] = [
       {
         $set: {
-          totalScore: { $add: ['$totalScore', score] },
-          voteCount:  { $add: ['$voteCount', 1] },
+          totalScore: { $add: [{ $ifNull: ['$totalScore', 0] }, score] },
+          voteCount:  { $add: [{ $ifNull: ['$voteCount', 0] }, 1] },
           likeCount:  {
-            $cond: [{ $gte: [score, 6] }, { $add: ['$likeCount', 1] }, '$likeCount'],
+            $cond: [
+              { $gte: [score, 6] },
+              { $add: [{ $ifNull: ['$likeCount', 0] }, 1] },
+              { $ifNull: ['$likeCount', 0] },
+            ],
           },
           dislikeCount: {
-            $cond: [{ $lt: [score, 6] }, { $add: ['$dislikeCount', 1] }, '$dislikeCount'],
+            $cond: [
+              { $lt: [score, 6] },
+              { $add: [{ $ifNull: ['$dislikeCount', 0] }, 1] },
+              { $ifNull: ['$dislikeCount', 0] },
+            ],
           },
-          voters: { $concatArrays: ['$voters', [ip]] },
-          ...(dt ? { deviceVoters: { $concatArrays: ['$deviceVoters', [dt]] } } : {}),
+          voters: { $concatArrays: [{ $ifNull: ['$voters', []] }, [ip]] },
+          ...(dt ? { deviceVoters: { $concatArrays: [{ $ifNull: ['$deviceVoters', []] }, [dt]] } } : {}),
         },
       },
       {
@@ -137,6 +148,11 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    // Liderlik tablosu cache'ini sıfırla: kullanıcılar oydan hemen sonra
+    // güncel sıralamayı görmeli. Şampiyon değişmese bile average değiştiği
+    // için sıralama değişmiş olabilir.
+    invalidateLeaderCache();
 
     return NextResponse.json({
       photo: { _id: photo._id, average: photo.average, voteCount: photo.voteCount },

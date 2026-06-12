@@ -4,6 +4,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import Report from '@/models/Report';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       { $set: { status: 'dismissed' } },
     );
 
+    invalidateLeaderCache();
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error('admin unhide error:', err);

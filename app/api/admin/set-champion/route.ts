@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
+import { invalidateLeaderCache } from '@/lib/leader-cache';
 
 export const runtime = 'nodejs';
 
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
     if (unset === true) {
       // Sadece bu fotoğrafın şampiyonluğunu kaldır
       await Photo.findByIdAndUpdate(photoId, { $set: { isChampion: false } });
+      invalidateLeaderCache();
       return NextResponse.json({ ok: true, champion: null });
     }
 
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    invalidateLeaderCache();
     return NextResponse.json({ ok: true, champion: photoId });
   } catch {
     return NextResponse.json({ error: 'İşlem başarısız.' }, { status: 500 });

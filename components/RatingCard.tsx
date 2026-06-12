@@ -259,12 +259,16 @@ function Inner() {
     seenIds.current.add(String(photoId));
     saveSeenToStorage(seenIds.current);
 
-    // Oy gönder (sonucu beklemeden devam et)
+    // Oy gönder (sonucu beklemeden devam et). UI hızı için fire-and-forget,
+    // ama markVoted ve leaderChanged sadece BAŞARILI yanıtta tetiklenir —
+    // rate limit/ban durumunda yanlış "oy verdiniz" sinyali oluşmasın.
     fetch('/api/photos/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ photoId, score, dt: getDeviceToken() }),
-    }).then(r => r.json()).then(data => {
+    }).then(async r => {
+      if (!r.ok) return;
+      const data = await r.json();
       markVoted();
       if (data.leaderChanged) window.dispatchEvent(new CustomEvent('zirve:leaderChanged'));
     }).catch(() => {});
