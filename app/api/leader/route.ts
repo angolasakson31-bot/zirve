@@ -59,9 +59,12 @@ export async function GET(req: NextRequest) {
     };
 
     const [leaderRaw, yesterdayRaw] = await Promise.all([
-      Photo.findOne({ isChampion: true, ...visibilityFilter })
+      // "Günün Zirvesi" → arşivli stale şampiyon gösterilmesin (daily reset
+      // başarısız olsa bile defansif filtre).
+      Photo.findOne({ isChampion: true, isArchived: false, ...visibilityFilter })
         .select('url albumUrls average voteCount createdAt comments blurPlaceholder')
         .lean<LeaderDoc>(),
+      // "Dünün Zirvesi" → championDate üzerinden gelir, arşiv flag'i fark etmez.
       Photo.findOne({ championDate: getYesterdayStr(), ...visibilityFilter })
         .select('url albumUrls average voteCount championDate comments blurPlaceholder')
         .lean<LeaderDoc>(),

@@ -8,6 +8,7 @@ import { hashIp } from '@/lib/hash-ip';
 import { getClientIp } from '@/lib/get-ip';
 import { bayesianScore, DEFAULT_MEAN, BAYESIAN_C } from '@/lib/bayesian';
 import { invalidateLeaderCache } from '@/lib/leader-cache';
+import { demoteStaleChampions } from '@/lib/daily-reset';
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(30);
@@ -117,9 +118,18 @@ export async function POST(req: NextRequest) {
     if (photo.voteCount >= LEADER_THRESHOLD) {
       const myScore = bayesianScore(photo.totalScore, photo.voteCount, DEFAULT_MEAN);
 
+      // Defansif: arşivli ama isChampion=true kalmış stale şampiyonları temizle
+      // (championDate yoksa createdAt'tan üret). Aksi halde unique partial
+      // index yeni şampiyon set'lemeyi engelliyordu.
+      await demoteStaleChampions();
+
+      // Dethrone: SADECE aktif (arşivlenmemiş) şampiyonlar arasında Bayes
+      // karşılaştırması yap. Bugünün fotoğrafları yeniyse Bayes skoru yüksek
+      // olmaz, ama eski şampiyonların stale state'i dethrone'u engellemesin.
       const dethroned = await Photo.findOneAndUpdate(
         {
           isChampion: true,
+          isArchived: false,
           _id: { $ne: photo._id },
           $expr: {
             $lt: [
@@ -134,7 +144,7 @@ export async function POST(req: NextRequest) {
         { $set: { isChampion: false } }
       );
 
-      const noChampion = !(await Photo.exists({ isChampion: true }));
+      const noChampion = !(await Photo.exists({ isChampion: true, isArchived: false }));
       if (dethroned || noChampion) {
         try {
           await Photo.findByIdAndUpdate(photo._id, { $set: { isChampion: true } });
