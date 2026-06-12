@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
       uploaderIp: { $ne: ip },
       isArchived: false,
       isHidden:   { $ne: true },
-      moderationStatus: { $ne: 'rejected' },
+      // Pending fotoğraflar "available" sayılmaz — admin onayı bekliyor.
+      moderationStatus: { $nin: ['rejected', 'pending'] },
       createdAt:  { $gte: turkishStartOfDay() },
     };
 

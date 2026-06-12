@@ -37,7 +37,16 @@ export async function POST(req: NextRequest) {
     return sa >= sb ? a : b;
   });
 
-  await Photo.findByIdAndUpdate(best._id, { isChampion: true });
+  try {
+    await Photo.findByIdAndUpdate(best._id, { isChampion: true });
+  } catch (err) {
+    const e = err as { code?: number };
+    if (e?.code !== 11000) throw err;
+    // Çok nadir: updateMany ile findByIdAndUpdate arasına paralel bir vote
+    // girip şampiyon koltuğuna oturduysa, mevcut şampiyonu temizleyip tekrar dene.
+    await Photo.updateMany({ isChampion: true }, { $set: { isChampion: false } });
+    await Photo.findByIdAndUpdate(best._id, { isChampion: true });
+  }
 
   return NextResponse.json({ ok: true, champion: best._id });
 }

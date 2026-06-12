@@ -61,6 +61,20 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
+    // Pending fotoğraflar için unhide/dismiss yasak — durum tutarsızlığını
+    // (status='pending' + isHidden=false) önler. Admin pending fotoğrafı
+    // /api/admin/moderate (Onayla) ile yayına almalı.
+    const needsPendingGuard = action === 'unhide' || action === 'dismiss';
+    if (needsPendingGuard) {
+      const photo = await Photo.findById(photoId).select('moderationStatus');
+      if (photo?.moderationStatus === 'pending') {
+        return NextResponse.json(
+          { error: 'Onay bekleyen fotoğraf için "Onayla" butonunu kullanın.' },
+          { status: 400 },
+        );
+      }
+    }
+
     if (action === 'hide') {
       await Photo.updateOne({ _id: photoId }, { $set: { isHidden: true } });
     } else if (action === 'unhide') {

@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
       uploaderIp: { $ne: ip },
       isArchived: false,
       isHidden: { $ne: true },
-      moderationStatus: { $ne: 'rejected' },
+      // Pending ve rejected fotoğraflara oy verilemez (random/has-new ile tutarlı).
+      moderationStatus: { $nin: ['rejected', 'pending'] },
       $expr: {
         $and: [
           { $lt: [{ $size: '$voters' }, MAX_VOTERS] },
@@ -124,9 +125,16 @@ export async function POST(req: NextRequest) {
 
       const noChampion = !(await Photo.exists({ isChampion: true }));
       if (dethroned || noChampion) {
-        await Photo.findByIdAndUpdate(photo._id, { $set: { isChampion: true } });
-        photo.isChampion = true;
-        leaderChanged = true;
+        try {
+          await Photo.findByIdAndUpdate(photo._id, { $set: { isChampion: true } });
+          photo.isChampion = true;
+          leaderChanged = true;
+        } catch (err) {
+          // Unique partial index sayesinde başkası zaten şampiyon olduysa
+          // 11000 (duplicate key) gelir — sessizce kabul et, mevcut şampiyon kalır.
+          const e = err as { code?: number };
+          if (e?.code !== 11000) throw err;
+        }
       }
     }
 

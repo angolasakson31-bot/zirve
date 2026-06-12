@@ -48,10 +48,15 @@ export async function POST(req: NextRequest) {
           { isChampion: true, _id: { $ne: topPhoto._id } },
           { $set: { isChampion: false } }
         );
-        // Doğru şampiyonu ata
+        // Doğru şampiyonu ata (unique partial index — split-brain'i engeller)
         if (!topPhoto.isChampion) {
-          await Photo.findByIdAndUpdate(topPhoto._id, { $set: { isChampion: true } });
-          leaderChanged = true;
+          try {
+            await Photo.findByIdAndUpdate(topPhoto._id, { $set: { isChampion: true } });
+            leaderChanged = true;
+          } catch (err) {
+            const e = err as { code?: number };
+            if (e?.code !== 11000) throw err;
+          }
         }
         // Oyladığımız fotoğraf şampiyon olduysa local state'i güncelle
         if (topId === photo._id.toString()) {

@@ -198,9 +198,11 @@ function Inner() {
 
   useEffect(() => {
     const handler = () => {
-      seenIds.current = new Set();
-      saveSeenToStorage(seenIds.current);
-      initialized.current = false;
+      // seenIds (oy verilmiş fotoğraflar) ASLA temizlenmemeli — aksi halde
+      // server tarafı vote dedup'ı (IP_SALT rotation, fire-and-forget hatası
+      // vb. nedenlerle) tutmazsa kullanıcı zaten oyladığı fotoğrafları
+      // önünde tekrar görebilir. Yükleme sonrası sadece prefetch'i sıfırla
+      // ve içeriği yeniden çek.
       prefetchedPhoto.current = null;
       load();
     };

@@ -26,13 +26,18 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const result = await Photo.findByIdAndUpdate(
-      photoId,
-      { $set: { isHidden: true } },
-      { new: true },
-    ).select('_id');
-    if (!result)
+    // Pending fotoğraf zaten isHidden=true; gereksiz işlem yapma + UX'i
+    // koru (admin Onayla/Reddet kullanmalı).
+    const existing = await Photo.findById(photoId).select('moderationStatus');
+    if (!existing)
       return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
+    if (existing.moderationStatus === 'pending')
+      return NextResponse.json(
+        { error: 'Bu fotoğraf zaten onay bekliyor. "Reddet" ile siler veya "Onayla" ile yayına alırsınız.' },
+        { status: 400 },
+      );
+
+    await Photo.updateOne({ _id: photoId }, { $set: { isHidden: true } });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

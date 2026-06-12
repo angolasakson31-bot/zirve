@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
 
     const visibilityFilter = {
       isHidden: { $ne: true },
-      moderationStatus: { $ne: 'rejected' },
+      // Pending ve rejected fotoğraflar liderlik tablosuna gelmesin.
+      moderationStatus: { $nin: ['rejected', 'pending'] },
     };
 
     type LeaderDoc = {

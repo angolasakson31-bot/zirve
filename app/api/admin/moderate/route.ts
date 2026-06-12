@@ -4,6 +4,7 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import DeletedPhoto from '@/models/DeletedPhoto';
+import Report from '@/models/Report';
 import cloudinary from '@/lib/cloudinary';
 
 export const runtime = 'nodejs';
@@ -41,18 +42,24 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     if (action === 'approve') {
-      // Yayına çıkar — pending/hidden durumunu kaldır
+      // Yayına çıkar — pending/hidden durumunu kaldır + reportCount sıfırla
+      // (bekleyenken birikmiş olabilir) ve açık şikâyetleri dismiss et.
       const result = await Photo.findByIdAndUpdate(
         photoId,
-        { $set: { moderationStatus: 'approved', isHidden: false } },
+        { $set: { moderationStatus: 'approved', isHidden: false, reportCount: 0 } },
         { new: true },
       ).select('_id');
       if (!result)
         return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
+      await Report.updateMany(
+        { photoId, status: 'open' },
+        { $set: { status: 'dismissed' } },
+      );
       return NextResponse.json({ ok: true, action: 'approve' });
     }
 
-    // reject: tombstone bırak, Cloudinary'den ve DB'den sil
+    // reject: tombstone bırak, açık şikâyetleri çözüldü işaretle,
+    // Cloudinary'den ve DB'den sil
     const photo = await Photo.findById(photoId);
     if (!photo)
       return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
@@ -61,6 +68,11 @@ export async function POST(req: NextRequest) {
       trackingCode: photo.trackingCode,
       reason: reason || 'Onay reddedildi',
     });
+
+    await Report.updateMany(
+      { photoId, status: 'open' },
+      { $set: { status: 'resolved' } },
+    );
 
     await destroyCloudinaryAsset(photo.cloudinaryId);
     await Photo.deleteOne({ _id: photoId });

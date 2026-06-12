@@ -35,10 +35,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, champion: null });
     }
 
-    // Diğer tüm şampiyonları temizle (eşzamanlı çift şampiyon riskini önle)
-    await Photo.updateMany({ isChampion: true }, { $set: { isChampion: false } });
-    // Seçilen fotoğrafı şampiyon yap
-    await Photo.findByIdAndUpdate(photoId, { $set: { isChampion: true } });
+    // Diğer tüm şampiyonları temizle (eşzamanlı çift şampiyon riskini önle).
+    // Sonra seçilen fotoğrafı şampiyon yap. Unique partial index sayesinde
+    // çift şampiyon mümkün değil; çakışırsa retry et.
+    let attempts = 0;
+    while (attempts++ < 3) {
+      await Photo.updateMany({ isChampion: true }, { $set: { isChampion: false } });
+      try {
+        await Photo.findByIdAndUpdate(photoId, { $set: { isChampion: true } });
+        break;
+      } catch (err) {
+        const e = err as { code?: number };
+        if (e?.code !== 11000 || attempts >= 3) throw err;
+        // 11000: başka biri arada şampiyon yaptı; tekrar dene
+      }
+    }
 
     return NextResponse.json({ ok: true, champion: photoId });
   } catch {

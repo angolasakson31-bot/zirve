@@ -78,7 +78,13 @@ PhotoSchema.index({ uploaderIp: 1 });
 PhotoSchema.index({ uploaderDevice: 1 });
 PhotoSchema.index({ fileHash: 1 });
 PhotoSchema.index({ isArchived: 1, createdAt: -1 });
-PhotoSchema.index({ isChampion: 1 });
+// Unique partial index — aynı anda iki document'in isChampion=true olmasını
+// MongoDB seviyesinde engeller. Eşzamanlı vote'larda split-brain'i önler.
+// isChampion=false olan dokümanlar bu indexte yer almaz (partialFilterExpression).
+PhotoSchema.index(
+  { isChampion: 1 },
+  { unique: true, partialFilterExpression: { isChampion: true } },
+);
 PhotoSchema.index({ championDate: 1 });
 PhotoSchema.index({ deviceVoters: 1 });
 PhotoSchema.index({ isHidden: 1 });

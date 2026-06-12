@@ -38,7 +38,9 @@ export async function GET(req: NextRequest) {
       uploaderIp: { $ne: ip },
       isArchived: false,
       isHidden: { $ne: true },
-      moderationStatus: { $ne: 'rejected' },
+      // Pending (onay bekliyor) ve rejected fotoğraflar puanlamaya gelmemeli.
+      // isHidden zaten pending olanları kapsıyor ama defense-in-depth.
+      moderationStatus: { $nin: ['rejected', 'pending'] },
       createdAt: { $gte: startOfDay },
     };
 
