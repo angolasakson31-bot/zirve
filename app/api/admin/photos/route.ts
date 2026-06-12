@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   // <img> render'ı önler ve gereksiz yere PII alanlarını gözden geçirmez.
   const photos = await Photo.find({ url: { $ne: '' } })
     .sort({ createdAt: -1 })
-    .select('_id url albumUrls cloudinaryId uploaderIp average voteCount totalScore isChampion isArchived createdAt trackingCode contactInfo championDate comments')
+    .select('_id url albumUrls cloudinaryId uploaderIp average voteCount totalScore isChampion isArchived isHidden moderationStatus reportCount createdAt trackingCode contactInfo championDate comments')
     .lean();
   return NextResponse.json({ photos });
 }
