@@ -6,14 +6,11 @@ import Report, { ReportReason } from '@/models/Report';
 import { rateLimit } from '@/lib/rate-limit';
 import { hashIp } from '@/lib/hash-ip';
 import { getClientIp } from '@/lib/get-ip';
+import { getReportAutoHideThreshold } from '@/lib/report-threshold';
 
 export const runtime = 'nodejs';
 
 const checkLimit = rateLimit(5);
-
-// Bir fotoğrafa kaç farklı şikâyet geldikten sonra otomatik gizlenir?
-// Daha düşük eşik küçük bir IP rotasyonu ile lider fotoğrafları sansürleyebilirdi.
-const AUTO_HIDE_THRESHOLD = 10;
 
 const VALID_REASONS: ReportReason[] = [
   'ncii', 'minor', 'insult', 'copyright', 'personal_data', 'other',
@@ -68,13 +65,13 @@ export async function POST(
       throw err;
     }
 
-    const reportCount = await Report.countDocuments({
-      photoId: id,
-      status: 'open',
-    });
+    const [reportCount, threshold] = await Promise.all([
+      Report.countDocuments({ photoId: id, status: 'open' }),
+      getReportAutoHideThreshold(),
+    ]);
 
     const update: Record<string, unknown> = { reportCount };
-    if (reportCount >= AUTO_HIDE_THRESHOLD) {
+    if (reportCount >= threshold) {
       update.isHidden = true;
     }
     await Photo.updateOne({ _id: id }, { $set: update });
@@ -82,7 +79,7 @@ export async function POST(
     return NextResponse.json({
       ok: true,
       reportCount,
-      autoHidden: reportCount >= AUTO_HIDE_THRESHOLD,
+      autoHidden: reportCount >= threshold,
     });
   } catch (err) {
     console.error('report route error:', err);

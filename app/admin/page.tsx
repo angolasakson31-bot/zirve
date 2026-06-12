@@ -163,6 +163,9 @@ export default function AdminPage() {
   const [kvkkRequests, setKvkkRequests] = useState<AdminKvkkRequest[]>([]);
   const [preModEnabled, setPreModEnabled] = useState<boolean | null>(null);
   const [preModBusy, setPreModBusy] = useState(false);
+  const [reportThreshold, setReportThreshold] = useState<number>(10);
+  const [reportThresholdInput, setReportThresholdInput] = useState<string>('10');
+  const [reportThresholdBusy, setReportThresholdBusy] = useState(false);
   const [actionModal, setActionModal] = useState<{ type: 'delete' | 'ban'; photo: AdminPhoto; reason: Reason } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -217,6 +220,57 @@ export default function AdminPage() {
       setPreModEnabled(Boolean(data.enabled));
     }
   }, []);
+
+  const fetchReportThreshold = useCallback(async (pw: string) => {
+    const res = await fetch('/api/admin/report-threshold', { headers: { 'x-admin-password': pw } });
+    if (res.ok) {
+      const data = await res.json();
+      const v = Number(data.threshold);
+      if (Number.isFinite(v)) {
+        setReportThreshold(v);
+        setReportThresholdInput(String(v));
+      }
+    }
+  }, []);
+
+  const saveReportThreshold = async () => {
+    const v = parseInt(reportThresholdInput, 10);
+    if (!Number.isFinite(v) || v < 1 || v > 100) {
+      showToast('Eşik 1 ile 100 arasında olmalı.');
+      setReportThresholdInput(String(reportThreshold));
+      return;
+    }
+    setReportThresholdBusy(true);
+    const res = await fetch('/api/admin/report-threshold', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ threshold: v }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const saved = Number(data.threshold);
+      setReportThreshold(saved);
+      setReportThresholdInput(String(saved));
+      showToast(`Şikâyet eşiği: ${saved} olarak ayarlandı.`);
+    } else {
+      showToast('Eşik güncellenemedi.');
+    }
+    setReportThresholdBusy(false);
+  };
+
+  const hidePhoto = async (photoId: string) => {
+    const res = await fetch('/api/admin/hide', {
+      method: 'POST',
+      headers: headers(password),
+      body: JSON.stringify({ photoId }),
+    });
+    if (res.ok) {
+      showToast('Fotoğraf gizlendi.');
+      fetchPhotos(password);
+    } else {
+      showToast('Gizleme başarısız.');
+    }
+  };
 
   const togglePreMod = async () => {
     if (preModEnabled === null) return;
@@ -324,6 +378,7 @@ export default function AdminPage() {
     fetchReports(password);
     fetchKvkkRequests(password);
     fetchPreModStatus(password);
+    fetchReportThreshold(password);
   };
 
   useEffect(() => {
@@ -545,6 +600,28 @@ export default function AdminPage() {
                 Pre-Mod: {preModEnabled ? 'AÇIK' : 'KAPALI'}
               </button>
             )}
+            <div
+              className="flex items-center gap-1.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1"
+              title="Bir fotoğrafa kaç şikâyet gelince otomatik gizlensin (1-100)"
+            >
+              <Flag className="w-4 h-4 text-red-400" />
+              <span className="text-zinc-400 text-xs">Eşik:</span>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={reportThresholdInput}
+                onChange={e => setReportThresholdInput(e.target.value)}
+                className="w-12 bg-transparent border-b border-zinc-700 text-zinc-200 text-sm font-bold text-center focus:outline-none focus:border-amber-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+              <button
+                onClick={saveReportThreshold}
+                disabled={reportThresholdBusy || parseInt(reportThresholdInput, 10) === reportThreshold}
+                className="text-xs text-amber-400 hover:text-amber-300 disabled:text-zinc-600 disabled:cursor-not-allowed transition"
+              >
+                {reportThresholdBusy ? '...' : 'Kaydet'}
+              </button>
+            </div>
             <button onClick={recalcLeader} disabled={recalcing}
               className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300 transition disabled:opacity-40">
               <Trophy className={`w-4 h-4 ${recalcing ? 'animate-pulse' : ''}`} /> Lideri Hesapla
@@ -1018,6 +1095,15 @@ export default function AdminPage() {
                         className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30"
                       >
                         <Eye className="w-3 h-3" /> Geri Aç (gizlemeyi kaldır)
+                      </button>
+                    )}
+                    {/* Admin'in kendi inisiyatifiyle gizle — sadece şu an görünür ve onay-beklemiyor olanlarda */}
+                    {!photo.isHidden && photo.moderationStatus !== 'pending' && !photo.isArchived && (
+                      <button
+                        onClick={() => hidePhoto(photo._id)}
+                        className="w-full flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700"
+                      >
+                        <EyeOff className="w-3 h-3" /> Gizle (yayından çek)
                       </button>
                     )}
                     {/* Doğrudan şampiyon ayarı — oy/tarih kısıtı bypass */}
