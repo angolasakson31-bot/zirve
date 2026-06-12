@@ -2,14 +2,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { hasTrackingConsent, CONSENT_EVENT } from '@/lib/consent';
 
+// sessionStorage YERİNE localStorage — sekme kapansa, browser restart
+// edilse bile aynı session ID kalır. Server tarafı zaten IP-bazlı dedup
+// yapıyor (asıl koruma orada); sessionId sadece legacy compat için.
 function getSessionId(): string {
   try {
-    let id = sessionStorage.getItem('zirve_sid');
+    let id = localStorage.getItem('zirve_sid');
     if (!id) {
       const arr = new Uint8Array(16);
       crypto.getRandomValues(arr);
       id = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
-      sessionStorage.setItem('zirve_sid', id);
+      localStorage.setItem('zirve_sid', id);
     }
     return id;
   } catch {
@@ -20,6 +23,7 @@ function getSessionId(): string {
 export default function VisitorCount() {
   const [count, setCount] = useState<number | null>(null);
   const pingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasPingedRef = useRef<boolean>(false);
 
   useEffect(() => {
     const poll = async () => {
@@ -43,14 +47,23 @@ export default function VisitorCount() {
         if (res.ok) {
           const data = await res.json();
           if (typeof data.count === 'number') setCount(data.count);
+          hasPingedRef.current = true;
         }
       } catch {}
     };
 
     const startPing = () => {
       if (pingTimerRef.current) return;
-      ping();
-      pingTimerRef.current = setInterval(ping, 60_000);
+      // İlk açılışta bir kez ping at — sonrası polling sürekli sayıyı tazeler.
+      // Eski 60 sn ping interval'i kaldırıldı: server zaten IP-bazlı dedup
+      // yapıyor, tekrarlı POST'ların pratik faydası yok (sayı değişmez,
+      // sadece DB trafik üretir).
+      if (!hasPingedRef.current) ping();
+      pingTimerRef.current = setInterval(() => {
+        // Gün değişince (00:00 sonrası) bir kez daha ping atalım ki yeni
+        // günün sayısına dahil olalım. Aksi halde sadece poll'a güven.
+        if (!hasPingedRef.current) ping();
+      }, 10 * 60 * 1000); // 10 dk'da bir hâlâ ping atılmadıysa dene
     };
     const stopPing = () => {
       if (pingTimerRef.current) {
@@ -59,11 +72,11 @@ export default function VisitorCount() {
       }
     };
 
-    // Sayı tazeleme her zaman çalışır — anonim, KVKK kapsamı dışı.
+    // Sayı tazeleme her zaman çalışır — anonim count, KVKK kapsamı dışı.
     poll();
     const pollInterval = setInterval(poll, 10_000);
 
-    // Ping (oturum kimliği kaydı) yalnızca çerez onayı kabul edildiyse.
+    // Ping (kayıt) yalnızca çerez onayı kabul edildiyse.
     if (hasTrackingConsent()) startPing();
 
     const handleConsent = (e: Event) => {
@@ -73,8 +86,17 @@ export default function VisitorCount() {
     };
     window.addEventListener(CONSENT_EVENT, handleConsent);
 
+    // Yeni gün başlarsa hasPinged'i sıfırla (gece yarısı tarayıcı açıksa).
+    const dayResetInterval = setInterval(() => {
+      const nowTrIso = new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+      const last = (window as { __zirveVisitorPingDay?: string }).__zirveVisitorPingDay;
+      if (last && last !== nowTrIso) hasPingedRef.current = false;
+      (window as { __zirveVisitorPingDay?: string }).__zirveVisitorPingDay = nowTrIso;
+    }, 60_000);
+
     return () => {
       clearInterval(pollInterval);
+      clearInterval(dayResetInterval);
       stopPing();
       window.removeEventListener(CONSENT_EVENT, handleConsent);
     };
