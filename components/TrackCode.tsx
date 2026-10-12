@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Search, ThumbsUp, ThumbsDown, Star, Trophy, BarChart2, Share2, Check } from 'lucide-react';
 import ProtectedImage from '@/components/ProtectedImage';
+import { copyText } from '@/lib/copy';
 
 interface TrackResult {
   url: string;
@@ -30,7 +31,7 @@ export default function TrackCode() {
     if (navigator.share) {
       try { await navigator.share({ title: 'ZİRVE X', text, url }); return; } catch {}
     }
-    await navigator.clipboard.writeText(`${text} ${url}`);
+    if (!(await copyText(`${text} ${url}`))) return;
     setShared(true);
     setTimeout(() => setShared(false), 2000);
   };

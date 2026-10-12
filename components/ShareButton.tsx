@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
+import { copyText } from '@/lib/copy';
 
 export default function ShareButton() {
   const [copied, setCopied] = useState(false);
@@ -13,7 +14,7 @@ export default function ShareButton() {
         return;
       } catch {}
     }
-    await navigator.clipboard.writeText(url);
+    if (!(await copyText(url))) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Trophy, Star, Clock } from 'lucide-react';
+import { Trophy, Star, Clock, Copy, Check } from 'lucide-react';
+import { copyText } from '@/lib/copy';
 import AlbumViewer from '@/components/AlbumViewer';
 import PixelImg from '@/components/PixelImg';
 import ReportButton from '@/components/ReportButton';
@@ -152,6 +153,7 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
 }
 
 function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
+  const [copied, setCopied] = useState(false);
   const colonIdx = info.indexOf(': ');
   const platform = colonIdx !== -1 ? info.slice(0, colonIdx) : null;
   const value = colonIdx !== -1 ? info.slice(colonIdx + 2) : info;
@@ -171,7 +173,19 @@ function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
         {platform && platformStyle && (
           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full border ${platformStyle}`}>{platform}</span>
         )}
-        <span className={`text-xs font-semibold break-all ${gold ? 'text-white' : 'text-zinc-200'}`}>{value}</span>
+        <span className={`text-xs font-semibold break-all select-all ${gold ? 'text-white' : 'text-zinc-200'}`}>{value}</span>
+        <button
+          onClick={async () => {
+            if (!(await copyText(value))) return;
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+          className="ml-auto flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md hover:bg-zinc-700/50 transition"
+        >
+          {copied
+            ? <><Check className="w-3 h-3 text-green-400" /><span className="text-green-400">Kopyalandı</span></>
+            : <><Copy className="w-3 h-3" />Kopyala</>}
+        </button>
       </div>
     </div>
   );

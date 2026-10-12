@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import { Upload, ImagePlus, Copy, Check, AlertCircle, Sparkles, Share2, X, Images } from 'lucide-react';
 import { markUploaded, saveOwnPhotoId, getDeviceToken } from '@/hooks/useUploadGate';
+import { copyText } from '@/lib/copy';
 
 const MAX_FILES = 3;
 
@@ -75,7 +76,7 @@ export default function UploadForm() {
   };
 
   const copy = async () => {
-    await navigator.clipboard.writeText(trackingCode);
+    if (!(await copyText(trackingCode))) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -136,7 +137,7 @@ export default function UploadForm() {
         <div className="p-5 space-y-4">
           <p className="text-zinc-400 text-sm">Takip kodun — bunu kaydet, fotoğrafının istatistiklerini görmek için kullanacaksın:</p>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-zinc-800 border border-zinc-600 rounded-xl px-4 py-3 font-mono text-xl font-bold text-white tracking-widest text-center">
+            <div className="flex-1 bg-zinc-800 border border-zinc-600 rounded-xl px-4 py-3 font-mono text-xl font-bold text-white tracking-widest text-center select-all">
               {trackingCode}
             </div>
             <button onClick={copy} className="shrink-0 p-3 bg-zinc-700 hover:bg-zinc-600 rounded-xl transition">
@@ -149,7 +150,7 @@ export default function UploadForm() {
               if (navigator.share) {
                 try { await navigator.share({ title: 'ZİRVE X', text: 'Zirveye çıkıyorum! Fotoğrafıma oy ver, bana ulaş.', url }); return; } catch {}
               }
-              await navigator.clipboard.writeText(url);
+              await copyText(url);
             }}
             className="w-full py-2.5 rounded-xl bg-amber-400/10 border border-amber-500/40 text-amber-400 hover:bg-amber-400/20 text-sm font-medium transition flex items-center justify-center gap-2"
           >
