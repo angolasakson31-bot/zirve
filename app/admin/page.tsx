@@ -159,6 +159,10 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [bannedIps, setBannedIps] = useState<BannedEntry[]>([]);
+  const [wmCode, setWmCode] = useState('');
+  const [wmResult, setWmResult] = useState<{ ipHash: string; lastSeen: string; banned: boolean } | null>(null);
+  const [wmError, setWmError] = useState('');
+  const [wmLoading, setWmLoading] = useState(false);
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [kvkkRequests, setKvkkRequests] = useState<AdminKvkkRequest[]>([]);
   const [preModEnabled, setPreModEnabled] = useState<boolean | null>(null);
@@ -408,6 +412,25 @@ export default function AdminPage() {
     }
     setActionModal(null);
     setActionLoading(false);
+  };
+
+  const lookupWatermark = async () => {
+    setWmLoading(true); setWmError(''); setWmResult(null);
+    const res = await fetch(`/api/admin/viewer-code?code=${encodeURIComponent(wmCode.trim())}`, { headers: headers(password) });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) setWmResult(data);
+    else setWmError(data.error ?? 'Sorgu başarısız.');
+    setWmLoading(false);
+  };
+
+  const banWatermark = async () => {
+    if (!wmResult) return;
+    const res = await fetch('/api/admin/ban', {
+      method: 'POST', headers: headers(password),
+      body: JSON.stringify({ ip: wmResult.ipHash, reason: `Ekran görüntüsü sızdırma (${wmCode.trim().toUpperCase()})` }),
+    });
+    if (res.ok) { setWmResult({ ...wmResult, banned: true }); showToast('Engellendi.'); fetchBannedIps(password); }
+    else showToast('Engelleme başarısız.');
   };
 
   const unbanIp = async (ip: string) => {
@@ -662,6 +685,53 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Filigran kodu sorgulama — sızan ekran görüntüsünün kaynağını bul */}
+        <div className="mb-8 bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3 border-b border-zinc-800">
+            <ShieldCheck className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-bold text-amber-400 uppercase tracking-wide">Filigran Kodu Sorgula</span>
+          </div>
+          <div className="p-4 space-y-3">
+            <p className="text-zinc-500 text-xs">Sızan ekran görüntüsündeki 6 karakterlik kodu gir (örn. zirve… · <span className="font-mono">A7K3PX</span> · 12.10 14:05).</p>
+            <div className="flex gap-2">
+              <input
+                value={wmCode}
+                onChange={e => setWmCode(e.target.value.toUpperCase())}
+                onKeyDown={e => { if (e.key === 'Enter' && wmCode.trim()) lookupWatermark(); }}
+                maxLength={6}
+                placeholder="A7K3PX"
+                className="flex-1 bg-zinc-800 border border-zinc-700 focus:border-amber-500/70 outline-none rounded-xl px-3 py-2 text-sm text-white font-mono tracking-widest"
+              />
+              <button
+                onClick={lookupWatermark}
+                disabled={!wmCode.trim() || wmLoading}
+                className="px-4 py-2 rounded-xl bg-amber-400 text-black text-sm font-bold disabled:opacity-40"
+              >
+                Sorgula
+              </button>
+            </div>
+            {wmError && <p className="text-red-400 text-xs">{wmError}</p>}
+            {wmResult && (
+              <div className="flex items-center gap-3 bg-zinc-800/60 rounded-xl px-3 py-2.5">
+                <div className="flex-1 min-w-0">
+                  <div className="text-zinc-300 text-xs font-mono truncate">{wmResult.ipHash}</div>
+                  <div className="text-zinc-500 text-[11px]">Son görülme: {new Date(wmResult.lastSeen).toLocaleString('tr-TR')}</div>
+                </div>
+                {wmResult.banned ? (
+                  <span className="text-xs text-red-400">Zaten engelli</span>
+                ) : (
+                  <button
+                    onClick={banWatermark}
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-lg hover:bg-red-500/10"
+                  >
+                    <Ban className="w-3.5 h-3.5" /> Engelle
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Engellenen IP Listesi */}
         {bannedIps.length > 0 && (

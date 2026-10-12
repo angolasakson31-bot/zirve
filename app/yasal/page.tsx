@@ -236,6 +236,12 @@ export default function YasalPage() {
                 kullanıcıları tanımlamak için anonimleştirilmiş hash kaydı tutulur; gerçek kimlik
                 veya IP doğrudan saklanmaz.
               </li>
+              <li>
+                <strong className="text-zinc-400">Filigran kodu:</strong> Fotoğrafların üzerine,
+                IP adresinizin hash değerinden türetilen kişiye özel bir kod basılır. Kod; izinsiz
+                ekran görüntüsü ve paylaşımların kaynağını tespit etmek amacıyla, hash değeriyle
+                eşleştirilerek en fazla 90 gün saklanır.
+              </li>
             </ul>
             <p className="font-semibold text-zinc-400 mt-1">Uluslararası veri transferi:</p>
             <p>

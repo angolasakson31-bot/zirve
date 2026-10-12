@@ -11,6 +11,7 @@ export default function UploadForm() {
   const [contactPlatform, setContactPlatform] = useState('Telegram');
   const [contactValue, setContactValue] = useState('');
   const [consent, setConsent] = useState(false);
+  const [ageConsent, setAgeConsent] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
@@ -82,7 +83,7 @@ export default function UploadForm() {
   const reset = () => {
     setFiles([]); setPreviews([]);
     setContactPlatform('Telegram'); setContactValue('');
-    setTrackingCode(''); setError(''); setConsent(false);
+    setTrackingCode(''); setError(''); setConsent(false); setAgeConsent(false);
   };
 
   const submit = async () => {
@@ -290,13 +291,27 @@ export default function UploadForm() {
           </span>
         </label>
 
+        {/* Onay 2 — yaş ve fotoğraftaki kişinin rızası */}
+        <label className="flex items-start gap-2.5 cursor-pointer group">
+          <input
+            type="checkbox"
+            checked={ageConsent}
+            onChange={e => setAgeConsent(e.target.checked)}
+            className="mt-0.5 w-4 h-4 shrink-0 accent-amber-400 cursor-pointer"
+          />
+          <span className="text-zinc-500 text-xs leading-relaxed group-hover:text-zinc-400 transition">
+            <strong className="text-zinc-400">18 yaşından büyüğüm.</strong> Fotoğraftaki kişi benim ya da
+            fotoğraftaki herkes 18 yaşından büyük ve paylaşılmasına açık rıza verdi.
+          </span>
+        </label>
+
         {error && (
           <div className="flex items-center gap-2 text-red-400 text-sm bg-red-950/40 rounded-lg px-3 py-2">
             <AlertCircle className="w-4 h-4 shrink-0" /> {error}
           </div>
         )}
 
-        <button onClick={submit} disabled={!files.length || !contactValue.trim() || !consent || uploading}
+        <button onClick={submit} disabled={!files.length || !contactValue.trim() || !consent || !ageConsent || uploading}
           className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm">
           {uploading
             ? <><span className="animate-spin w-4 h-4 border-2 border-black/30 border-t-black rounded-full inline-block" /> Yükleniyor...</>
