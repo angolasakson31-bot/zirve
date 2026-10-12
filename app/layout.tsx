@@ -45,7 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="tr" className="h-full">
-      <body className={`${inter.className} min-h-full bg-zinc-950 select-none`}>
+      <body className={`${inter.className} min-h-full bg-zinc-950`}>
         <AgeGate />
         <MediaGuard />
         {children}

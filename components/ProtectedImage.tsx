@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { addWatermark, pixelateUrl } from '@/lib/cloudinaryWatermark';
+import WatermarkOverlay from '@/components/WatermarkOverlay';
 
 interface Props {
   src: string;
@@ -32,6 +33,7 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
 
   return (
     <div
+      data-protected
       className="relative w-full overflow-hidden select-none"
       style={{ maxHeight }}
       onContextMenu={e => e.preventDefault()}
@@ -96,6 +98,8 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
           }}
         />
       )}
+
+      {imgLoaded && !failed && !pixelate && <WatermarkOverlay />}
 
       <div className="absolute inset-0" style={{ zIndex: 10 }} onContextMenu={e => e.preventDefault()} />
     </div>

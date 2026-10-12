@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { addWatermark, pixelateUrlSquare } from '@/lib/cloudinaryWatermark';
+import WatermarkOverlay from '@/components/WatermarkOverlay';
 
 interface Props {
   src: string;
@@ -23,7 +24,7 @@ export default function PixelImg({ src, alt, blurPlaceholder, pixelate, pixelSiz
   const displaySrc = pixelate ? pixelateUrlSquare(src, pixelSize) : addWatermark(src);
 
   return (
-    <div className="relative w-full h-full" onContextMenu={e => e.preventDefault()}>
+    <div data-protected className="relative w-full h-full overflow-hidden" onContextMenu={e => e.preventDefault()}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={displaySrc}
@@ -64,6 +65,8 @@ export default function PixelImg({ src, alt, blurPlaceholder, pixelate, pixelSiz
           }}
         />
       )}
+
+      {loaded && !pixelate && <WatermarkOverlay dense />}
     </div>
   );
 }

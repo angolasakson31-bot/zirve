@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import ProtectedImage from '@/components/ProtectedImage';
 import PixelImg from '@/components/PixelImg';
 import { addWatermark } from '@/lib/cloudinaryWatermark';
+import WatermarkOverlay from '@/components/WatermarkOverlay';
+import ScreenshotNotice from '@/components/ScreenshotNotice';
 
 interface Props {
   urls: string[];
@@ -36,6 +38,12 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
         </div>
       </div>
 
+      {!pixelate && (
+        <div className="px-3 pt-2">
+          <ScreenshotNotice />
+        </div>
+      )}
+
       {isAlbum && (
         <div className="flex gap-2 px-3 py-2 bg-zinc-950/60 overflow-x-auto">
           {urls.map((url, i) => (
@@ -62,8 +70,10 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
         >
           {/* background-image div — <img> yok, "Save Image" seçeneği çıkmaz */}
           <div
+            data-protected
             role="img"
             aria-label="Tam boyut"
+            className="relative overflow-hidden"
             style={{
               backgroundImage: `url(${addWatermark(lightbox)})`,
               backgroundSize: 'contain',
@@ -73,7 +83,12 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
               height: '90vh',
               borderRadius: '0.75rem',
             }}
-          />
+          >
+            <WatermarkOverlay />
+          </div>
+          <div className="absolute bottom-3 inset-x-0 px-4">
+            <ScreenshotNotice />
+          </div>
         </div>
       )}
     </>

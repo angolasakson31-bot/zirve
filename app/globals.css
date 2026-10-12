@@ -27,8 +27,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  /* iOS uzun basma "Kaydet" menüsünü tüm sayfa genelinde engelle */
-  -webkit-touch-callout: none;
 }
 
 @keyframes zirve-scroll-up {
@@ -36,13 +34,26 @@ body {
   to   { transform: translateY(-50%); }
 }
 
-/* Fotoğraf koruma — iOS uzun basma, Android sağ tık, tüm tarayıcı sürükleme.
-   pointer-events:none → tarayıcı hit-test'te img değil üstündeki div'i görür,
-   "Save Image" seçeneği hiç sunulmaz. onLoad/onError etkilenmez. */
-img {
+/* Fotoğraf koruma — yalnızca [data-protected] alanlarında (ProtectedImage,
+   PixelImg, lightbox). Admin paneli ve formlar etkilenmez.
+   iOS uzun basma "Kaydet" menüsü, seçim ve sürükleme kapalı. */
+[data-protected],
+[data-protected] * {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
-  pointer-events: none;
+}
+
+/* Pencere odağı kaybolunca / ekran alma kısayolunda (MediaGuard) fotoğrafları
+   anında bulanıklaştır. Geçiş animasyonu yok — ekran görüntüsü o anda alınır. */
+html.zv-shield [data-protected] {
+  filter: blur(28px) brightness(0.6);
+}
+
+/* Yazdırma / PDF'e kaydetme: fotoğraflar çıkmaz */
+@media print {
+  [data-protected] {
+    visibility: hidden !important;
+  }
 }
