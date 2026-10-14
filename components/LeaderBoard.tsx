@@ -152,7 +152,7 @@ function CommentFeed({ comments }: { comments: PhotoComment[] }) {
   );
 }
 
-function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
+function ContactBadge({ info, gold, photoId }: { info: string; gold?: boolean; photoId: string }) {
   const [copied, setCopied] = useState(false);
   const colonIdx = info.indexOf(': ');
   const platform = colonIdx !== -1 ? info.slice(0, colonIdx) : null;
@@ -174,18 +174,22 @@ function ContactBadge({ info, gold }: { info: string; gold?: boolean }) {
           <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full border ${platformStyle}`}>{platform}</span>
         )}
         <span className={`text-xs font-semibold break-all select-all ${gold ? 'text-white' : 'text-zinc-200'}`}>{value}</span>
+      </div>
+      {/* Kopyala ve Şikâyet yan yana */}
+      <div className="flex items-center justify-between gap-2 mt-1.5">
         <button
           onClick={async () => {
             if (!(await copyText(value))) return;
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
           }}
-          className="ml-auto flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-md hover:bg-zinc-700/50 transition"
+          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white transition"
         >
           {copied
-            ? <><Check className="w-3 h-3 text-green-400" /><span className="text-green-400">Kopyalandı</span></>
-            : <><Copy className="w-3 h-3" />Kopyala</>}
+            ? <><Check className="w-3.5 h-3.5 text-green-400" /><span className="text-green-400">Kopyalandı</span></>
+            : <><Copy className="w-3.5 h-3.5" />Kopyala</>}
         </button>
+        <ReportButton photoId={photoId} compact />
       </div>
     </div>
   );
@@ -316,11 +320,11 @@ export default function LeaderBoard() {
                   </div>
                 )}
               </div>
-              {!pixelate && leaderContact && <ContactBadge info={leaderContact} gold />}
+              {!pixelate && leaderContact && <ContactBadge info={leaderContact} gold photoId={leader._id} />}
               {!pixelate && leader.comments && leader.comments.length > 0 && (
                 <CommentFeed comments={leader.comments} />
               )}
-              {!pixelate && (
+              {!pixelate && !leaderContact && (
                 <div className="px-3 py-1.5 border-t border-amber-500/20 bg-amber-500/5 flex justify-end">
                   <ReportButton photoId={leader._id} compact />
                 </div>
@@ -374,11 +378,11 @@ export default function LeaderBoard() {
                   </div>
                 )}
               </div>
-              {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} />}
+              {!pixelate && yesterdayContact && <ContactBadge info={yesterdayContact} photoId={yesterday._id} />}
               {!pixelate && yesterday.comments && yesterday.comments.length > 0 && (
                 <CommentFeed comments={yesterday.comments} />
               )}
-              {!pixelate && (
+              {!pixelate && !yesterdayContact && (
                 <div className="px-3 py-1.5 border-t border-zinc-700 bg-zinc-800/40 flex justify-end">
                   <ReportButton photoId={yesterday._id} compact />
                 </div>
