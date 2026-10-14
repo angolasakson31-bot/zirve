@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { connectDB } from '@/lib/mongoose';
-import Photo from '@/models/Photo';
-import { toTurkishDateStr, turkishStartOfDay } from '@/lib/daily-reset';
+import { runDailyReset } from '@/lib/daily-reset';
 import { anonymizeOldPersonalData } from '@/lib/kvkk-retention';
 
 export const runtime = 'nodejs';
@@ -24,21 +23,9 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    // Sadece dünden önce yüklenmiş (bugünün başlangıcından önce oluşturulmuş) fotoğrafları arşivle.
-    // Bu, cron birden fazla çağrılırsa bugünün yüklenenlerini yanlışlıkla arşivlemekten korur.
-    const cutoff = turkishStartOfDay();
-
-    const leader = await Photo.findOne({ isChampion: true, createdAt: { $lt: cutoff } });
-    if (leader) {
-      leader.championDate = toTurkishDateStr(leader.createdAt as Date);
-      leader.isChampion = false;
-      await leader.save();
-    }
-
-    const result = await Photo.updateMany(
-      { isArchived: false, createdAt: { $lt: cutoff } },
-      { $set: { isArchived: true } }
-    );
+    // Sayfa isteklerindeki sıfırlamayla aynı mantık (şampiyonu dünün zirvesine
+    // taşı, stale state'i temizle, eski fotoğrafları arşivle). İdempotent.
+    const reset = await runDailyReset();
 
     // KVKK: 2 yıldan eski kişisel verileri anonimleştir + Cloudinary'den sil.
     // Hata olursa ana akış etkilenmesin ama bilgilendir.
@@ -59,8 +46,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      champion: leader?._id ?? null,
-      archived: result.modifiedCount,
+      champion: reset.championId,
+      archived: reset.archived,
       anonymized,
       cloudinaryDeleted,
       cloudinaryFailed,

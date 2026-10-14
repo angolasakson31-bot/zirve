@@ -498,7 +498,12 @@ export default function AdminPage() {
       body: JSON.stringify({ photoId, unset }),
     });
     if (res.ok) {
-      showToast(unset ? 'Şampiyonluk kaldırıldı.' : 'Şampiyon olarak ayarlandı.');
+      const data = await res.json().catch(() => ({}));
+      showToast(
+        unset ? 'Şampiyonluk kaldırıldı.'
+        : data.championDate ? `${data.championDate} gününün zirvesi olarak ayarlandı.`
+        : 'Şampiyon olarak ayarlandı.',
+      );
       fetchPhotos(password);
     } else {
       const data = await res.json().catch(() => ({}));
