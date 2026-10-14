@@ -97,7 +97,8 @@ export default function Home() {
             İçerik yükleyerek paylaştığınız fotoğrafın telif, özel hayat ve kişilik haklarına aykırı
             olmadığını taahhüt etmiş olursunuz. Hakaret, telif ihlali, kişisel veri ifşası ve hukuka
             aykırı içerik kesinlikle yasaktır; sorumluluk kullanıcıya aittir. Yüklenen fotoğraflar
-            Cloudinary (ABD) altyapısında saklanır.
+            Cloudinary (ABD) altyapısında saklanır. Fotoğraflar her ziyaretçiye özel kodla
+            işaretlidir; ekran görüntüsü alıp paylaşmak TCK 134 kapsamında suçtur ve kaynağı tespit edilebilir.
           </p>
           <p>
             İçerik kaldırma ve KVKK başvuruları:{' '}
