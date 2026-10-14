@@ -17,13 +17,23 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
   const [useFallback, setUseFallback] = useState(false);
   const [failed, setFailed]       = useState(false);
   const [prevSrc, setPrevSrc]     = useState(src);
+  // Fotoğrafın en/boy oranı — görüntü kutusu buna göre boyutlanır ki
+  // filigran fotoğrafın dışındaki boşluğa taşmasın.
+  const [ratio, setRatio]         = useState<number | null>(null);
 
   if (src !== prevSrc) {
     setPrevSrc(src);
     setImgLoaded(false);
     setUseFallback(false);
     setFailed(false);
+    setRatio(null);
   }
+
+  const onImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+    if (w && h) setRatio(w / h);
+    setImgLoaded(true);
+  };
 
   const watermarkedSrc = useFallback ? src : addWatermark(src);
   const displaySrc     = pixelate ? pixelateUrl(src, 20) : watermarkedSrc;
@@ -43,10 +53,10 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {pixelate ? (
         <img src={pixelateUrl(src, 20)} alt="" aria-hidden style={{ display: 'none' }}
-          onLoad={() => setImgLoaded(true)} />
+          onLoad={onImgLoad} />
       ) : (
         <img src={watermarkedSrc} alt="" aria-hidden style={{ display: 'none' }}
-          onLoad={() => setImgLoaded(true)} onError={handleError} />
+          onLoad={onImgLoad} onError={handleError} />
       )}
 
       {failed && (
@@ -83,23 +93,28 @@ export default function ProtectedImage({ src, alt, maxHeight = 600, dimmed = fal
       )}
 
       {imgLoaded && !failed && (
-        <div
-          role="img"
-          aria-label={alt}
-          style={{
-            backgroundImage: `url(${displaySrc})`,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            width: '100%',
-            height: skelH,
-            opacity: dimmed ? 0.7 : 1,
-            imageRendering: pixelate ? 'pixelated' : undefined,
-          }}
-        />
+        <div className="w-full flex items-center justify-center" style={{ height: skelH }}>
+          {/* Kutu fotoğrafın oranında — filigran sadece fotoğrafın üstünde kalır */}
+          <div
+            role="img"
+            aria-label={alt}
+            className="relative overflow-hidden"
+            style={{
+              backgroundImage: `url(${displaySrc})`,
+              backgroundSize: ratio ? '100% 100%' : 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              ...(ratio
+                ? { width: `min(100%, ${Math.round(skelH * ratio)}px)`, aspectRatio: String(ratio) }
+                : { width: '100%', height: skelH }),
+              opacity: dimmed ? 0.7 : 1,
+              imageRendering: pixelate ? 'pixelated' : undefined,
+            }}
+          >
+            {!pixelate && <WatermarkOverlay />}
+          </div>
+        </div>
       )}
-
-      {imgLoaded && !failed && !pixelate && <WatermarkOverlay />}
 
       <div className="absolute inset-0" style={{ zIndex: 10 }} onContextMenu={e => e.preventDefault()} />
     </div>

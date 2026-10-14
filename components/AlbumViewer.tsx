@@ -19,6 +19,7 @@ interface Props {
 export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, blurPlaceholder, pixelate }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lbRatio, setLbRatio] = useState<number | null>(null);
   const isAlbum = urls.length > 1;
   const lightboxAllowed = !pixelate;
 
@@ -26,7 +27,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
     <>
       <div
         className={lightboxAllowed ? 'cursor-zoom-in' : undefined}
-        onClick={() => lightboxAllowed && setLightbox(urls[active])}
+        onClick={() => { if (lightboxAllowed) { setLbRatio(null); setLightbox(urls[active]); } }}
       >
         <div className="relative">
           <ProtectedImage src={urls[active]} alt="Fotoğraf" maxHeight={maxHeight} dimmed={dimmed} blurPlaceholder={active === 0 ? blurPlaceholder : undefined} pixelate={pixelate} />
@@ -62,24 +63,39 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
           onClick={() => setLightbox(null)}
           onContextMenu={e => e.preventDefault()}
         >
-          {/* background-image div — <img> yok, "Save Image" seçeneği çıkmaz */}
-          <div
-            data-protected
-            role="img"
-            aria-label="Tam boyut"
-            className="relative overflow-hidden"
-            style={{
-              backgroundImage: `url(${addWatermark(lightbox)})`,
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              width: '90vw',
-              height: '90vh',
-              borderRadius: '0.75rem',
+          {/* Gizli img — sadece fotoğrafın en/boy oranını öğrenmek için */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={addWatermark(lightbox)}
+            alt=""
+            aria-hidden
+            style={{ display: 'none' }}
+            onLoad={e => {
+              const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+              setLbRatio(w && h ? w / h : 1);
             }}
-          >
-            <WatermarkOverlay />
-          </div>
+            onError={() => setLbRatio(1)}
+          />
+          {/* background-image div — <img> yok, "Save Image" seçeneği çıkmaz.
+              Kutu fotoğrafın oranında; filigran fotoğrafın dışına taşmaz. */}
+          {lbRatio && (
+            <div
+              data-protected
+              role="img"
+              aria-label="Tam boyut"
+              className="relative overflow-hidden"
+              style={{
+                backgroundImage: `url(${addWatermark(lightbox)})`,
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+                width: `min(90vw, calc(85vh * ${lbRatio}))`,
+                aspectRatio: String(lbRatio),
+                borderRadius: '0.75rem',
+              }}
+            >
+              <WatermarkOverlay />
+            </div>
+          )}
           <div className="absolute bottom-4 inset-x-0 px-4 flex justify-center pointer-events-none">
             <ScreenshotNotice />
           </div>
