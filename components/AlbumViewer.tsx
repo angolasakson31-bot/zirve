@@ -38,12 +38,6 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
         </div>
       </div>
 
-      {!pixelate && (
-        <div className="px-3 pt-2">
-          <ScreenshotNotice />
-        </div>
-      )}
-
       {isAlbum && (
         <div className="flex gap-2 px-3 py-2 bg-zinc-950/60 overflow-x-auto">
           {urls.map((url, i) => (
@@ -86,7 +80,7 @@ export default function AlbumViewer({ urls, maxHeight, dimmed, bottomOverlay, bl
           >
             <WatermarkOverlay />
           </div>
-          <div className="absolute bottom-3 inset-x-0 px-4">
+          <div className="absolute bottom-4 inset-x-0 px-4 flex justify-center pointer-events-none">
             <ScreenshotNotice />
           </div>
         </div>
