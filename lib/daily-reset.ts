@@ -48,13 +48,46 @@ let lastResetCheck = 0;
 let lastResetDay = '';
 
 /**
- * Günlük temizlik:
- *   1) Dünden kalan şampiyonu demote et (championDate = createdAt'in TR günü).
- *   2) "isChampion=true + isArchived=true" gibi tutarsız stale state'i temizle.
+ * Gün sonu işlemleri (throttle'sız). Hem sayfa istekleriyle tetiklenen
+ * maybeRunDailyReset hem de gece yarısı cron'u bunu çağırır — iki yol aynı
+ * mantığı kullanır.
+ *   1) Dünden kalan şampiyonu demote et; championDate = fotoğrafın yüklendiği
+ *      TR günü. (Günün Zirvesi yalnızca o gün yüklenen fotoğraflardan olur —
+ *      admin set-champion da eski fotoğrafa isChampion vermez.)
+ *   2) "isChampion=true + isArchived=true" tutarsız stale state'i temizle.
  *   3) Bugünden eski non-archived photoları arşivle.
- *
- * Idempotent — birden fazla çağrılsa bile yanlış sonuç üretmez. Her endpoint
- * GET'inde 60 sn cache ile no-op olur.
+ */
+export async function runDailyReset(): Promise<{ championId: unknown; archived: number }> {
+  const startOfToday = turkishStartOfDay();
+
+  // Arşivli stale şampiyonlar 2. adımda (demoteStaleChampions) temizlenir.
+  const oldChampion = await Photo.findOne({
+    isChampion: true,
+    isArchived: false,
+    createdAt: { $lt: startOfToday },
+  }).select('_id createdAt');
+  if (oldChampion) {
+    // save() tüm dokümanı yeniden doğrular; ilgisiz bir alan geçersizse taşıma
+    // başarısız olurdu. Sadece iki alanı güncelle.
+    await Photo.updateOne(
+      { _id: oldChampion._id },
+      { $set: { isChampion: false, championDate: toTurkishDateStr(oldChampion.createdAt as Date) } },
+    );
+  }
+
+  await demoteStaleChampions();
+
+  const result = await Photo.updateMany(
+    { isArchived: false, createdAt: { $lt: startOfToday } },
+    { $set: { isArchived: true } },
+  );
+
+  return { championId: oldChampion?._id ?? null, archived: result.modifiedCount };
+}
+
+/**
+ * Sayfa istekleriyle tetiklenen günlük temizlik. Aynı gün içinde en fazla
+ * 60 saniyede bir runDailyReset çalıştırır (idempotent).
  */
 export async function maybeRunDailyReset(): Promise<void> {
   const now = Date.now();
@@ -64,28 +97,11 @@ export async function maybeRunDailyReset(): Promise<void> {
   lastResetCheck = now;
   lastResetDay = todayStr;
 
-  const startOfToday = turkishStartOfDay();
-
-  // 1) Dünden gelen şampiyonu demote et — championDate set'le ki "Dünün Zirvesi"
-  //    olarak gösterilebilsin.
-  const oldChampion = await Photo.findOne({
-    isChampion: true,
-    createdAt: { $lt: startOfToday },
-  });
-  if (oldChampion) {
-    oldChampion.championDate = toTurkishDateStr(oldChampion.createdAt as Date);
-    oldChampion.isChampion = false;
-    await oldChampion.save();
+  try {
+    await runDailyReset();
+  } catch (err) {
+    // Hata olursa bir sonraki istekte tekrar dene
+    lastResetCheck = 0;
+    throw err;
   }
-
-  // 2) Tutarsız stale state cleanup: isChampion=true ama isArchived=true olan
-  //    fotoğraflar yeni şampiyon seçimini engelliyordu. Tek atomik pipeline
-  //    update — championDate yoksa createdAt'tan üretilir.
-  await demoteStaleChampions();
-
-  // 3) Bugünden eski non-archived photoları arşivle.
-  await Photo.updateMany(
-    { isArchived: false, createdAt: { $lt: startOfToday } },
-    { $set: { isArchived: true } },
-  );
 }

@@ -4,13 +4,17 @@ import { checkAdmin } from '@/lib/admin-auth';
 import { connectDB } from '@/lib/mongoose';
 import Photo from '@/models/Photo';
 import { invalidateLeaderCache } from '@/lib/leader-cache';
+import { turkishStartOfDay, toTurkishDateStr } from '@/lib/daily-reset';
 
 export const runtime = 'nodejs';
 
 // Admin'in oy/tarih kısıtı olmadan herhangi bir fotoğrafı doğrudan şampiyon
 // yapmasını sağlar. Otomatik şampiyon hesabı bu seçimi sonradan değiştirebilir
-// (oylar geldikçe), ama anında dünün veya bugünün herhangi bir fotoğrafını
-// manuel olarak şampiyon koltuğuna oturtmak için kullanılır.
+// (oylar geldikçe).
+//  - Bugünün fotoğrafı → "Günün Zirvesi" (isChampion)
+//  - Önceki bir günün fotoğrafı → o günün zirvesi (championDate); dünün
+//    fotoğrafıysa "Dünün Zirvesi"nde görünür. Arşivli bir fotoğrafa
+//    isChampion verilirse hiçbir yerde görünmüyordu.
 export async function POST(req: NextRequest) {
   const authErr = checkAdmin(req);
   if (authErr !== null)
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const photo = await Photo.findById(photoId).select('_id isChampion');
+    const photo = await Photo.findById(photoId).select('_id isChampion isArchived createdAt');
     if (!photo)
       return NextResponse.json({ error: 'Fotoğraf bulunamadı.' }, { status: 404 });
 
@@ -35,6 +39,15 @@ export async function POST(req: NextRequest) {
       await Photo.findByIdAndUpdate(photoId, { $set: { isChampion: false } });
       invalidateLeaderCache();
       return NextResponse.json({ ok: true, champion: null });
+    }
+
+    if (photo.isArchived || (photo.createdAt as Date) < turkishStartOfDay()) {
+      // O günün zirvesi olarak ata: aynı güne ait önceki seçimi kaldır.
+      const day = toTurkishDateStr(photo.createdAt as Date);
+      await Photo.updateMany({ championDate: day, _id: { $ne: photo._id } }, { $set: { championDate: null } });
+      await Photo.findByIdAndUpdate(photoId, { $set: { championDate: day, isChampion: false } });
+      invalidateLeaderCache();
+      return NextResponse.json({ ok: true, champion: photoId, championDate: day });
     }
 
     // Diğer tüm şampiyonları temizle (eşzamanlı çift şampiyon riskini önle).
