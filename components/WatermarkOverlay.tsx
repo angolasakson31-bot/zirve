@@ -26,8 +26,8 @@ export default function WatermarkOverlay({ dense = false }: { dense?: boolean })
   if (!code) return null;
   const label = `${domain} · ${code} · ${time}`;
   // Şerit konumları (yüzde). Ortadaki %50'de Cloudinary'nin site adı var;
-  // kod onun üstünden ve altından geçer. Küçük görsellerde tek şerit.
-  const bands = dense ? [50] : [30, 70];
+  // kod onun üstünden ve altından ikişer şeritle geçer. Küçük görsellerde tek şerit.
+  const bands = dense ? [50] : [18, 34, 66, 82];
 
   return (
     <div
@@ -42,9 +42,9 @@ export default function WatermarkOverlay({ dense = false }: { dense?: boolean })
           style={{
             top: `${top}%`,
             transform: 'translate(-50%, -50%) rotate(-25deg)',
-            fontSize: dense ? 9 : 14,
+            fontSize: dense ? 9 : 15,
             letterSpacing: '0.04em',
-            color: 'rgba(255,255,255,0.38)',
+            color: 'rgba(255,255,255,0.42)',
             textShadow: '0 0 3px rgba(0,0,0,0.55)',
           }}
         >
