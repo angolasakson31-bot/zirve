@@ -10,8 +10,9 @@ function stamp(): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-// Fotoğrafın üzerine kişiye özel, döşenmiş filigran. Ekran görüntüsüne de
-// girer; sızan görüntüdeki kod admin panelinden sorgulanabilir.
+// Kişiye özel filigran: fotoğrafı boydan boya kesen birkaç çapraz şerit.
+// Az ama belirgin — biri ortadan geçtiği için kırpılarak silinemez.
+// Ekran görüntüsündeki kod admin panelinden sorgulanabilir.
 export default function WatermarkOverlay({ dense = false }: { dense?: boolean }) {
   const code = useViewerCode();
   const [time, setTime] = useState('');
@@ -24,7 +25,9 @@ export default function WatermarkOverlay({ dense = false }: { dense?: boolean })
 
   if (!code) return null;
   const label = `${domain} · ${code} · ${time}`;
-  const rows = dense ? 3 : 8;
+  // Şerit konumları (yüzde). Ortadaki %50'de Cloudinary'nin site adı var;
+  // kod onun üstünden ve altından geçer. Küçük görsellerde tek şerit.
+  const bands = dense ? [50] : [30, 70];
 
   return (
     <div
@@ -32,25 +35,22 @@ export default function WatermarkOverlay({ dense = false }: { dense?: boolean })
       className="absolute inset-0 overflow-hidden pointer-events-none select-none"
       style={{ zIndex: 5 }}
     >
-      <div
-        className="absolute flex flex-col justify-around"
-        style={{ inset: '-50%', transform: 'rotate(-25deg)' }}
-      >
-        {Array.from({ length: rows * 2 }, (_, i) => (
-          <div
-            key={i}
-            className="whitespace-nowrap font-bold"
-            style={{
-              fontSize: dense ? 9 : 13,
-              color: 'rgba(255,255,255,0.22)',
-              textShadow: '0 0 2px rgba(0,0,0,0.35)',
-              marginLeft: i % 2 ? '-6em' : 0,
-            }}
-          >
-            {`${label}     `.repeat(6)}
-          </div>
-        ))}
-      </div>
+      {bands.map(top => (
+        <div
+          key={top}
+          className="absolute left-1/2 whitespace-nowrap font-bold"
+          style={{
+            top: `${top}%`,
+            transform: 'translate(-50%, -50%) rotate(-25deg)',
+            fontSize: dense ? 9 : 14,
+            letterSpacing: '0.04em',
+            color: 'rgba(255,255,255,0.38)',
+            textShadow: '0 0 3px rgba(0,0,0,0.55)',
+          }}
+        >
+          {Array.from({ length: 4 }, () => label).join('\u2003\u2003·\u2003\u2003')}
+        </div>
+      ))}
     </div>
   );
 }
